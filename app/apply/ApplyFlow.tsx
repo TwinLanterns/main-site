@@ -122,13 +122,14 @@ export default function ApplyFlow() {
           data.school.trim().length > 1
         );
       default:
-        return data.built.trim().length > 0;
+        return data.built.trim().length > 19;
     }
   }, [step, data]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!valid) return;
+
     if (step < steps.length - 1) {
       setStep((s) => s + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -378,7 +379,7 @@ export default function ApplyFlow() {
                   <div className="mt-8 space-y-7">
                     <Field
                       label="Something you built, ran or fixed"
-                      hint={`${data.built.trim().length} characters — a few sentences is plenty.`}
+                      hint={`${data.built.trim().length} characters — a few sentences is plenty. At least 20 characters.`}
                     >
                       <Textarea
                         rows={5}
