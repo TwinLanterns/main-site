@@ -455,7 +455,6 @@ function BlobPhoto({
     </svg>
   );
 }
-
 function Founders() {
   return (
     <section id="team" className="overflow-hidden border-t border-line py-20 sm:py-28">
@@ -623,7 +622,6 @@ export default function Landing() {
       <Process />
       <Statement />
       <Roles />
-      <Founders />
       <Faq />
       <Cta />
     </>
