@@ -1,11 +1,49 @@
 import { NextResponse } from "next/server";
+import { getSupabaseServerClient } from "@/lib/supabase-server";
+
+type StudentPayload = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  level?: string;
+  school?: string;
+  gradYear?: string;
+  location?: string;
+  interests?: string[];
+  hours?: string;
+  startWeeks?: string;
+  setup?: string;
+  priorities?: string[];
+  built?: string;
+  links?: string;
+};
+
+type CompanyPayload = {
+  company?: string;
+  website?: string;
+  name?: string;
+  email?: string;
+  stage?: string;
+  team?: string;
+  fn?: string;
+  title?: string;
+  outcome?: string;
+  setup?: string;
+  city?: string;
+  commitment?: string;
+  pay?: string;
+  timeline?: string;
+};
 
 /**
  * Receives student applications and company briefs.
  *
- * If RESEND_API_KEY and TL_NOTIFY_EMAIL are set the submission is emailed to
- * the founders; otherwise it is logged to the deployment's runtime logs so
- * nothing is silently lost while the mail provider is being set up.
+ * Each is written to its own readable table in Supabase (student_applications
+ * / company_briefs) with named columns, plus the raw payload as a jsonb
+ * backup. If RESEND_API_KEY and TL_NOTIFY_EMAIL are also set, a notification
+ * email is sent on top of that, but a missing or failing email never blocks
+ * the submission from being saved.
  */
 export async function POST(req: Request) {
   let body: {
@@ -24,6 +62,67 @@ export async function POST(req: Request) {
   if (!kind || !payload || typeof payload !== "object") {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
+  if (kind !== "student" && kind !== "company") {
+    return NextResponse.json({ error: "Invalid kind" }, { status: 400 });
+  }
+
+  try {
+    const supabase = getSupabaseServerClient();
+
+    if (kind === "student") {
+      const p = payload as StudentPayload;
+      const { error: dbError } = await supabase.from("student_applications").insert({
+        first_name: p.firstName ?? "",
+        last_name: p.lastName ?? null,
+        email: p.email ?? "",
+        phone: p.phone ?? null,
+        level: p.level ?? null,
+        school: p.school ?? null,
+        grad_year: p.gradYear ?? null,
+        location: p.location ?? null,
+        interests: p.interests ?? [],
+        hours_per_week: p.hours ?? null,
+        start_timing: p.startWeeks ?? null,
+        work_setup: p.setup ?? null,
+        priorities: p.priorities ?? [],
+        built: p.built ?? null,
+        links: p.links ?? null,
+        resume_name: attachment?.name ?? null,
+        resume_data: attachment?.data ?? null,
+        raw_payload: payload,
+      });
+      if (dbError) {
+        console.error("supabase insert error (student_applications)", dbError);
+        return NextResponse.json({ error: "Save failed" }, { status: 502 });
+      }
+    } else {
+      const p = payload as CompanyPayload;
+      const { error: dbError } = await supabase.from("company_briefs").insert({
+        company: p.company ?? "",
+        website: p.website ?? null,
+        contact_name: p.name ?? "",
+        contact_email: p.email ?? "",
+        stage: p.stage ?? null,
+        team_size: p.team ?? null,
+        function: p.fn ?? null,
+        title: p.title ?? null,
+        outcome: p.outcome ?? null,
+        work_setup: p.setup ?? null,
+        city: p.city ?? null,
+        commitment: p.commitment ?? null,
+        pay: p.pay ?? null,
+        timeline: p.timeline ?? null,
+        raw_payload: payload,
+      });
+      if (dbError) {
+        console.error("supabase insert error (company_briefs)", dbError);
+        return NextResponse.json({ error: "Save failed" }, { status: 502 });
+      }
+    }
+  } catch (err) {
+    console.error("supabase config error", err);
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+  }
 
   const key = process.env.RESEND_API_KEY;
   const to = process.env.TL_NOTIFY_EMAIL;
@@ -38,38 +137,41 @@ export async function POST(req: Request) {
       )
       .join("");
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: process.env.TL_FROM_EMAIL ?? "Twin Lanterns <onboarding@resend.dev>",
-        to: [to],
-        subject:
-          kind === "student"
-            ? `New student application — ${payload.firstName ?? ""} ${payload.lastName ?? ""}`
-            : `New role brief — ${payload.company ?? ""}`,
-        html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif"><h2 style="font-weight:400">${
-          kind === "student" ? "Student application" : "Company brief"
-        }</h2><table>${rows}</table></div>`,
-        ...(attachment?.data
-          ? {
-              attachments: [
-                { filename: attachment.name, content: attachment.data },
-              ],
-            }
-          : {}),
-      }),
-    });
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: process.env.TL_FROM_EMAIL ?? "Twin Lanterns <onboarding@resend.dev>",
+          to: [to],
+          subject:
+            kind === "student"
+              ? `New student application — ${payload.firstName ?? ""} ${payload.lastName ?? ""}`
+              : `New role brief — ${payload.company ?? ""}`,
+          html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif"><h2 style="font-weight:400">${
+            kind === "student" ? "Student application" : "Company brief"
+          }</h2><table>${rows}</table></div>`,
+          ...(attachment?.data
+            ? {
+                attachments: [
+                  { filename: attachment.name, content: attachment.data },
+                ],
+              }
+            : {}),
+        }),
+      });
 
-    if (!res.ok) {
-      console.error("resend error", await res.text());
-      return NextResponse.json({ error: "Delivery failed" }, { status: 502 });
+      if (!res.ok) {
+        console.error("resend error", await res.text());
+      }
+    } catch (err) {
+      console.error("resend request failed", err);
     }
   } else {
-    console.log(`[twin-lanterns] ${kind} submission`, JSON.stringify(payload));
+    console.log(`[twin-lanterns] ${kind} submission saved to Supabase (no email configured)`);
   }
 
   return NextResponse.json({ ok: true });
