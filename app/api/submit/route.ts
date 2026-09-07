@@ -126,6 +126,34 @@ export async function POST(req: Request) {
 
   const key = process.env.RESEND_API_KEY;
   const to = process.env.TL_NOTIFY_EMAIL;
+  const from = process.env.TL_FROM_EMAIL ?? "Twin Lanterns <onboarding@resend.dev>";
+
+  async function sendEmail(args: {
+    to: string[];
+    subject: string;
+    html: string;
+    withAttachment?: boolean;
+  }) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from,
+        to: args.to,
+        subject: args.subject,
+        html: args.html,
+        ...(args.withAttachment && attachment?.data
+          ? { attachments: [{ filename: attachment.name, content: attachment.data }] }
+          : {}),
+      }),
+    });
+    if (!res.ok) {
+      console.error("resend error", args.to, await res.text());
+    }
+  }
 
   if (key && to) {
     const rows = Object.entries(payload)
@@ -137,38 +165,45 @@ export async function POST(req: Request) {
       )
       .join("");
 
+    // Internal notification to the founders.
     try {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${key}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: process.env.TL_FROM_EMAIL ?? "Twin Lanterns <onboarding@resend.dev>",
-          to: [to],
+      await sendEmail({
+        to: [to],
+        subject:
+          kind === "student"
+            ? `New student application — ${payload.firstName ?? ""} ${payload.lastName ?? ""}`
+            : `New role brief — ${payload.company ?? ""}`,
+        html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif"><h2 style="font-weight:400">${
+          kind === "student" ? "Student application" : "Company brief"
+        }</h2><table>${rows}</table></div>`,
+        withAttachment: true,
+      });
+    } catch (err) {
+      console.error("resend request failed (internal notify)", err);
+    }
+
+    // Confirmation back to whoever submitted the form.
+    const submitterEmail = typeof payload.email === "string" ? payload.email.trim() : "";
+    if (submitterEmail) {
+      const firstName = kind === "student" ? String(payload.firstName ?? "") : String(payload.name ?? "");
+      const greeting = firstName ? `Hi ${firstName},` : "Hi there,";
+      const bodyText =
+        kind === "student"
+          ? "Thanks for applying to Twin Lanterns. We review every application ourselves — if there's a role that fits, you'll hear from us, and if there isn't one today, you stay in the pool for the next one."
+          : `Thanks for the brief on the role at ${payload.company ?? "your company"}. We'll confirm by email today and get a 30-minute intake call on the calendar. Your first shortlist lands 48 hours after that call.`;
+
+      try {
+        await sendEmail({
+          to: [submitterEmail],
           subject:
             kind === "student"
-              ? `New student application — ${payload.firstName ?? ""} ${payload.lastName ?? ""}`
-              : `New role brief — ${payload.company ?? ""}`,
-          html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif"><h2 style="font-weight:400">${
-            kind === "student" ? "Student application" : "Company brief"
-          }</h2><table>${rows}</table></div>`,
-          ...(attachment?.data
-            ? {
-                attachments: [
-                  { filename: attachment.name, content: attachment.data },
-                ],
-              }
-            : {}),
-        }),
-      });
-
-      if (!res.ok) {
-        console.error("resend error", await res.text());
+              ? "We've got your application — Twin Lanterns"
+              : "We've got your brief — Twin Lanterns",
+          html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif;max-width:480px"><p>${greeting}</p><p>${bodyText}</p><p>— Twin Lanterns</p></div>`,
+        });
+      } catch (err) {
+        console.error("resend request failed (confirmation)", err);
       }
-    } catch (err) {
-      console.error("resend request failed", err);
     }
   } else {
     console.log(`[twin-lanterns] ${kind} submission saved to Supabase (no email configured)`);
