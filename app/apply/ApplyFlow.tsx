@@ -122,7 +122,7 @@ export default function ApplyFlow() {
           data.school.trim().length > 1
         );
       default:
-        return data.built.trim().length > 19;
+        return data.built.trim().length > 0;
     }
   }, [step, data]);
 
