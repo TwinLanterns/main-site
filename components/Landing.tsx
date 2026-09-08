@@ -708,7 +708,6 @@ export default function Landing() {
     <>
       <Hero />
       <Stats />
-      <Banner />
       <Split />
       <Process />
       <Statement />
