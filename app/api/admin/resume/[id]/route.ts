@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { cookies } from "next/headers";
+import { verifySessionToken } from "@/lib/admin-auth"; // 👈 Import this
 
 const MIME_BY_EXT: Record<string, string> = {
   pdf: "application/pdf",
@@ -21,17 +22,15 @@ function guessMimeType(filename: string) {
 // Helper function to check if user is admin
 async function isAdmin() {
   const cookieStore = await cookies();
-  const adminSession = cookieStore.get("admin_session");
+  const sessionToken = cookieStore.get("admin_session")?.value;
   
-  if (!adminSession) return false;
+  if (!sessionToken) return false;
   
-  // Verify the session against your stored secret
-  const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET;
-  if (!ADMIN_SESSION_SECRET) return false;
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret) return false;
   
-  // Simple check - you should implement proper session validation
-  // This assumes your admin login sets a cookie with a value
-  return adminSession.value === ADMIN_SESSION_SECRET;
+  // ✅ Use the proper verification function
+  return await verifySessionToken(sessionToken, secret);
 }
 
 export async function GET(

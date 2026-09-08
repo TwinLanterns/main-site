@@ -48,55 +48,22 @@ export async function verifySessionToken(
   token: string | undefined | null,
   secret: string,
 ): Promise<boolean> {
-  console.log("=== VERIFY SESSION TOKEN ===");
-  console.log("Token provided:", !!token);
-  
-  if (!token) {
-    console.log("❌ No token provided");
-    return false;
-  }
-
-  console.log("Token length:", token.length);
-  console.log("Token preview:", token.substring(0, 50) + "...");
+  if (!token) return false;
 
   const lastDot = token.lastIndexOf(".");
-  console.log("Last dot position:", lastDot);
-  if (lastDot === -1) {
-    console.log("❌ No dot found");
-    return false;
-  }
+  if (lastDot === -1) return false;
 
   const payload = token.slice(0, lastDot);
   const signature = token.slice(lastDot + 1);
-  console.log("Payload:", payload);
-  console.log("Signature length:", signature.length);
 
   const parts = payload.split(".");
-  console.log("Parts length:", parts.length);
-  if (parts.length !== 2 || parts[0] !== "admin") {
-    console.log("❌ Invalid payload format. Parts:", parts);
-    return false;
-  }
+  if (parts.length !== 2 || parts[0] !== "admin") return false;
 
   const expiresAt = Number(parts[1]);
-  console.log("Expires at:", new Date(expiresAt).toISOString());
-  console.log("Current time:", new Date().toISOString());
-  console.log("Time until expiry (ms):", expiresAt - Date.now());
-  
-  if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) {
-    console.log("❌ Token expired or invalid");
-    return false;
-  }
+  if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return false;
 
-  console.log("✅ Payload valid, verifying signature...");
   const key = await getHmacKey(secret);
   const expectedSignature = bufferToHex(await crypto.subtle.sign("HMAC", key, encoder.encode(payload)));
-  
-  console.log("Expected signature (first 20 chars):", expectedSignature.substring(0, 20) + "...");
-  console.log("Actual signature (first 20 chars):", signature.substring(0, 20) + "...");
-  console.log("Signatures match:", expectedSignature === signature);
 
-  const isValid = timingSafeEqualHex(signature, expectedSignature);
-  console.log("✅ Signature valid:", isValid);
-  return isValid;
+  return timingSafeEqualHex(signature, expectedSignature);
 }
