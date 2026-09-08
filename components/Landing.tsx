@@ -177,7 +177,7 @@ const panels = [
     tone: "bg-ink text-white",
     shape: "burst" as const,
     label: "For companies",
-    title: "Three people. All of them right.",
+    title: "Every single person you need, vetted and checked.",
     points: [
       "A 30-minute intake call turns a vague need into a real role",
       "Every candidate interviewed by us before you see them",
