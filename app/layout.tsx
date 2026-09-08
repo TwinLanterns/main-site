@@ -29,7 +29,15 @@ export const metadata: Metadata = {
     siteName: "Twin Lanterns",
     type: "website",
   },
-  icons: { icon: [{ url: "/mark.svg", type: "image/svg+xml" }] },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "192x192" },
+      { url: "/mark.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
