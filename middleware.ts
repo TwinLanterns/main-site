@@ -1,0 +1,33 @@
+import { NextRequest, NextResponse } from "next/server";
+import { verifySessionToken } from "@/lib/admin-auth";
+
+export const config = {
+  matcher: ["/admin/:path*", "/api/admin/resume/:path*"],
+};
+
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Let the login page itself through — everything else under /admin is gated.
+  if (pathname === "/admin/login") {
+    return NextResponse.next();
+  }
+
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret) {
+    // Fail closed: if the secret isn't configured, nobody gets in.
+    console.error("ADMIN_SESSION_SECRET is not set — blocking /admin access.");
+    return NextResponse.redirect(new URL("/admin/login", req.url));
+  }
+
+  const token = req.cookies.get("admin_session")?.value;
+  const valid = await verifySessionToken(token, secret);
+
+  if (!valid) {
+    const loginUrl = new URL("/admin/login", req.url);
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return NextResponse.next();
+}
