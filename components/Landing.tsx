@@ -139,7 +139,7 @@ const stats = [
 function Stats() {
   return (
     <section className="border-y border-line">
-      <div className={`${wrap} grid divide-y divide-line sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-${stats.length}`}>
+      <div className={`${wrap} grid divide-y divide-line sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-3`}>
         {stats.map(([k, v], i) => (
           <Reveal
             key={v}
