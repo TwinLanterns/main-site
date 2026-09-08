@@ -134,6 +134,13 @@ export async function POST(req: Request) {
     html: string;
     withAttachment?: boolean;
   }) {
+    const attachmentsList: any[] = [
+      {
+        path: "https://twinlanterns.com",
+        filename: "mark.svg",
+        contentId: "mark",
+      }
+    ]
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
