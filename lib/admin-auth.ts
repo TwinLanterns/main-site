@@ -1,69 +1,52 @@
-/**
- * Minimal signed-cookie session for the admin dashboard.
- *
- * No user table, no bcrypt, no sessions table — just an HMAC-signed token
- * so the cookie can't be forged without knowing ADMIN_SESSION_SECRET.
- * Uses Web Crypto (`crypto.subtle`) so the same code works in both the
- * Edge runtime (middleware.ts) and the Node runtime (API routes).
- */
-
-const encoder = new TextEncoder();
-
-function bufferToHex(buf: ArrayBuffer) {
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function timingSafeEqualHex(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return mismatch === 0;
-}
-
-async function getHmacKey(secret: string) {
-  return crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign", "verify"],
-  );
-}
-
-/** Creates a `payload.expiresAtMs.signature` token good for `maxAgeSeconds`. */
-export async function createSessionToken(secret: string, maxAgeSeconds: number) {
-  const expiresAt = Date.now() + maxAgeSeconds * 1000;
-  const payload = `admin.${expiresAt}`;
-  const key = await getHmacKey(secret);
-  const signature = bufferToHex(await crypto.subtle.sign("HMAC", key, encoder.encode(payload)));
-  return `${payload}.${signature}`;
-}
-
 /** Verifies signature + expiry. Returns false on any malformed/expired/forged token. */
 export async function verifySessionToken(
   token: string | undefined | null,
   secret: string,
 ): Promise<boolean> {
-  if (!token) return false;
+  console.log("=== VERIFY SESSION TOKEN ===");
+  console.log("Token provided:", !!token);
+  if (!token) {
+    console.log("❌ No token provided");
+    return false;
+  }
+
+  console.log("Token length:", token.length);
+  console.log("Token preview:", token.substring(0, 50) + "...");
 
   const lastDot = token.lastIndexOf(".");
-  if (lastDot === -1) return false;
+  console.log("Last dot position:", lastDot);
+  if (lastDot === -1) {
+    console.log("❌ No dot found");
+    return false;
+  }
 
   const payload = token.slice(0, lastDot);
   const signature = token.slice(lastDot + 1);
+  console.log("Payload:", payload);
+  console.log("Signature length:", signature.length);
 
   const parts = payload.split(".");
-  if (parts.length !== 2 || parts[0] !== "admin") return false;
+  console.log("Parts length:", parts.length);
+  if (parts.length !== 2 || parts[0] !== "admin") {
+    console.log("❌ Invalid payload format. Parts:", parts);
+    return false;
+  }
 
   const expiresAt = Number(parts[1]);
-  if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return false;
+  console.log("Expires at:", expiresAt);
+  console.log("Current time:", Date.now());
+  if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) {
+    console.log("❌ Token expired or invalid");
+    return false;
+  }
 
+  console.log("✅ Payload valid, verifying signature...");
   const key = await getHmacKey(secret);
   const expectedSignature = bufferToHex(await crypto.subtle.sign("HMAC", key, encoder.encode(payload)));
+  console.log("Expected signature:", expectedSignature.substring(0, 20) + "...");
+  console.log("Actual signature:", signature.substring(0, 20) + "...");
 
-  return timingSafeEqualHex(signature, expectedSignature);
+  const isValid = timingSafeEqualHex(signature, expectedSignature);
+  console.log("Signature valid:", isValid);
+  return isValid;
 }
