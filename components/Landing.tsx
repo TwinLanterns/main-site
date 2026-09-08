@@ -144,7 +144,7 @@ function Stats() {
           <Reveal
             key={v}
             delay={i * 0.05}
-            className={`py-8 sm:py-10 ${i > 0 ? "lg:border-l lg:border-line lg:pl-8" : ""} ${i === 1 || i === 3 ? "sm:border-l sm:border-line sm:pl-8" : ""}`}
+            className={`py-8 sm:py-10 text-center ${i > 0 ? "lg:border-l lg:border-line lg:pl-8" : ""} ${i === 1 || i === 3 ? "sm:border-l sm:border-line sm:pl-8" : ""}`}
           >
             <p className="display text-[clamp(2rem,3.4vw,2.8rem)]">{k}</p>
             <p className="mt-2 text-[14px] text-muted">{v}</p>
