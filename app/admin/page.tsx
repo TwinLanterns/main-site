@@ -15,12 +15,36 @@ export default async function AdminPage() {
         // on demand via /api/admin/resume/[id] so the dashboard stays light
         // even once there are a lot of resumes attached.
         .select(
-          "id, first_name, last_name, email, phone, level, school, grad_year, location, interests, hours_per_week, start_timing, work_setup, priorities, built, links, resume_name, raw_payload, created_at",
+          `id, 
+           first_name, 
+           last_name, 
+           email, 
+           phone, 
+           level, 
+           school, 
+           grad_year, 
+           location, 
+           interests, 
+           hours_per_week, 
+           start_timing, 
+           work_setup, 
+           priorities, 
+           built, 
+           links, 
+           resume_name, 
+           raw_payload, 
+           created_at,
+           candidate_ai_tags (
+             vibe_tags,
+             soft_skills,
+             hard_skills,
+             ai_summary
+           )`,
         )
         .order("created_at", { ascending: false }),
       supabase.from("company_briefs").select("*").order("created_at", { ascending: false }),
     ]);
-
+  console.log("First application with AI tags:", JSON.stringify(applications?.[0], null, 2));
   if (applicationsError || briefsError) {
     return (
       <div className="p-8 text-sm text-red-600">
