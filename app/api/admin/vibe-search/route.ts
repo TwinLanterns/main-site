@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { cookies } from "next/headers";
+import { verifySessionToken } from "@/lib/admin-auth";
 
 // ============================================
 // CONFIGURATION
@@ -642,7 +644,11 @@ function formatCandidateForResponse(
 // MAIN API ROUTE (unchanged)
 // ============================================
 export async function POST(req: NextRequest) {
-    
+    const secret = process.env.ADMIN_SESSION_SECRET;
+    const token = (await cookies()).get("admin_session")?.value;
+    if (!secret || !(await verifySessionToken(token, secret))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   try {
     const { query } = await req.json();
 
