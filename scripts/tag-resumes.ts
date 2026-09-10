@@ -1,13 +1,15 @@
 /**
- * One-time script: Process all student resumes through Gemini AI
+ * One-time script: Process all student applications through Groq AI
  * and store the results in candidate_ai_tags.
+ *
+ * Uses BOTH resume text AND raw application payload for tagging.
  *
  * Usage:
  *   Dry run (default):  npx tsx --env-file=.env.local scripts/tag-resumes.ts
  *   Commit (real run):  npx tsx --env-file=.env.local scripts/tag-resumes.ts --commit
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import * as mammoth from "mammoth";
 import { getSupabaseServerClient } from "../lib/supabase-server";
@@ -16,16 +18,15 @@ import { getSupabaseServerClient } from "../lib/supabase-server";
 // 1. CONFIGURATION
 // ============================================
 const COMMIT = process.argv.includes("--commit");
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-if (!GEMINI_API_KEY) {
-  console.error("Missing GEMINI_API_KEY. Check your .env.local file.");
+if (!GROQ_API_KEY) {
+  console.error("Missing GROQ_API_KEY. Check your .env.local file.");
   process.exit(1);
 }
 
 const supabase = getSupabaseServerClient();
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+const groq = new Groq({ apiKey: GROQ_API_KEY });
 
 // ============================================
 // 2. TYPES
@@ -37,6 +38,7 @@ interface StudentApplication {
   email: string;
   resume_data: string | null;
   resume_name: string | null;
+  raw_payload: any;
 }
 
 interface AITags {
@@ -62,7 +64,6 @@ async function extractTextFromBuffer(buffer: Buffer, fileName: string): Promise<
   
   try {
     if (ext === "pdf") {
-      // Use legacy build for Node.js compatibility
       const pdf = await pdfjsLib.getDocument({ 
         data: new Uint8Array(buffer),
       }).promise;
@@ -92,36 +93,56 @@ async function extractTextFromBuffer(buffer: Buffer, fileName: string): Promise<
     return "";
   }
 }
-// ============================================
-// 5. THE TAGGING FUNCTION
-// ============================================
-async function tagResume(resumeText: string, studentName: string): Promise<AITags> {
-  const prompt = `
-You are an expert recruiting AI. Read the resume text below and extract the candidate's professional profile.
 
-Return ONLY valid JSON. Do not include markdown or extra text. Use this exact schema:
-{{
+// ============================================
+// 5. THE TAGGING FUNCTION (Now with raw_payload)
+// ============================================
+async function tagResume(
+  resumeText: string, 
+  rawPayload: any, 
+  studentName: string
+): Promise<AITags> {
+  const prompt = `
+You are an expert recruiting AI. Analyze this candidate's complete profile including their resume AND application form responses.
+
+Return ONLY valid JSON. Use this exact schema:
+{
   "hard_skills": ["skill1", "skill2", "skill3", "skill4", "skill5"],
   "soft_skills": ["trait1", "trait2", "trait3", "trait4"],
   "vibe_tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "one_line_summary": "A single sentence describing the type of worker this person is."
-}}
-However, don't let this template limit you. List as many skills and tags as possible, but make the summary as accurate as possible.
+}
+
+However, don't let this template limit you. List as many skills and tags as possible. Make the summary as accurate as possible.
 
 Instructions for the tags:
 - "hard_skills" should be technical skills, tools, or methodologies (e.g., Salesforce, Python, Cold Calling).
 - "soft_skills" should be personality/workplace traits (e.g., Detail-Oriented, Calm Under Pressure).
-- "vibe_tags" should be short, punchy, modern descriptors of their professional persona (e.g., Scrappy, Grinder, Big Picture Thinker, Data-Driven, Independent Worker, Fast-Paced).
+- "vibe_tags" should be short, punchy, modern descriptors of their professional persona (e.g., Scrappy, Grinder, Big Picture Thinker, Data-Driven, Independent Worker, Fast-Paced, Entrepreneurial, Community Builder).
 
+RESUME TEXT:
+${resumeText || "NO RESUME PROVIDED"}
 
-Resume Text:
-${resumeText}
+APPLICATION FORM DATA:
+${JSON.stringify(rawPayload, null, 2)}
 `;
 
-  const result = await model.generateContent(prompt);
-  const response = result.response;
-  const rawText = response.text();
+  const response = await groq.chat.completions.create({
+    model: "openai/gpt-oss-120b",
+    messages: [
+      { 
+        role: "system", 
+        content: "You are an expert recruiting AI. Always return valid JSON without markdown code blocks." 
+      },
+      { role: "user", content: prompt },
+    ],
+    temperature: 0.2,
+    response_format: { type: "json_object" },
+  });
+
+  const rawText = response.choices[0]?.message?.content || "";
   
+  // Clean up if Groq still adds markdown
   let cleanText = rawText;
   if (cleanText.includes("```")) {
     cleanText = cleanText.split("```")[1];
@@ -142,7 +163,7 @@ async function main() {
   
   const { data: students, error } = await supabase
     .from("student_applications")
-    .select("id, first_name, last_name, email, resume_data, resume_name")
+    .select("id, first_name, last_name, email, resume_data, resume_name, raw_payload")
     .order("created_at", { ascending: true });
   
   if (error) {
@@ -164,31 +185,51 @@ async function main() {
   for (let i = 0; i < students.length; i++) {
     const student = students[i] as StudentApplication;
     const fullName = `${student.first_name} ${student.last_name || ""}`.trim();
-    const fileName = student.resume_name || "unknown";
+    const fileName = student.resume_name || "no-resume";
     
     console.log(`[${i + 1}/${students.length}] Processing: ${fullName} (${fileName})`);
-    
-    if (!student.resume_data) {
-      console.log(`  ✗ No resume on file. Skipping.\n`);
-      skippedCount++;
-      continue;
+    // In the main loop, before calling Groq:
+    const existing = await supabase
+    .from("candidate_ai_tags")
+    .select("id")
+    .eq("student_id", student.id)
+    .eq("prompt_version", "v2")
+    .maybeSingle();
+
+    if (existing.data) {
+        console.log(`  ✓ Already tagged (v2). Skipping.\n`);
+        continue;
     }
-    
     try {
-      const buffer = decodeResumeData(student.resume_data);
-      const resumeText = await extractTextFromBuffer(buffer, fileName);
+      let resumeText = "";
       
-      if (!resumeText || resumeText.length < 50) {
-        console.log(`  ✗ Could not extract meaningful text. Skipping.\n`);
+      // Try to extract resume text if available
+      if (student.resume_data) {
+        const buffer = decodeResumeData(student.resume_data);
+        resumeText = await extractTextFromBuffer(buffer, fileName);
+        
+        if (resumeText && resumeText.length >= 50) {
+          console.log(`  ✓ Extracted ${resumeText.length} characters from resume.`);
+        } else {
+          console.log(`  ⚠ No usable resume text. Using application form data only.`);
+          resumeText = "";
+        }
+      } else {
+        console.log(`  ⚠ No resume on file. Using application form data only.`);
+      }
+      
+      // Check if we have either resume text OR raw payload
+      const hasRawPayload = student.raw_payload && Object.keys(student.raw_payload).length > 0;
+      
+      if (!resumeText && !hasRawPayload) {
+        console.log(`  ✗ No resume text AND no application data. Skipping.\n`);
         skippedCount++;
         continue;
       }
       
-      console.log(`  ✓ Extracted ${resumeText.length} characters of text.`);
-      
       if (COMMIT) {
-        // Real run: Call Gemini and write to Supabase
-        const tags = await tagResume(resumeText, fullName);
+        // Real run: Call Groq and write to Supabase
+        const tags = await tagResume(resumeText, student.raw_payload, fullName);
         
         const { error: upsertError } = await supabase
           .from("candidate_ai_tags")
@@ -199,10 +240,11 @@ async function main() {
               soft_skills: tags.soft_skills,
               vibe_tags: tags.vibe_tags,
               ai_summary: tags.one_line_summary,
-              model_used: "gemini-3.6-flash",
-              prompt_version: "v1",
+              model_used: "llama-3.3-70b-versatile",
+              prompt_version: "v2",
               source_file_name: fileName,
               ai_processed_at: new Date().toISOString(),
+              raw_ai_response: tags,
             },
             { onConflict: "student_id,prompt_version" }
           );
@@ -218,16 +260,25 @@ async function main() {
       } else {
         // Dry run: Just print what would happen
         processedCount++;
-        console.log(`  → Would call Gemini and upsert to candidate_ai_tags`);
-        console.log(`    First 150 chars: ${resumeText.slice(0, 150).replace(/\n/g, " ")}...\n`);
+        console.log(`  → Would call Groq and upsert to candidate_ai_tags`);
+        const preview = resumeText || JSON.stringify(student.raw_payload).slice(0, 150);
+        console.log(`    Preview: ${preview.replace(/\n/g, " ")}...\n`);
       }
       
     } catch (err) {
-      errorCount++;
-      console.error(`  ✗ Error: ${err instanceof Error ? err.message : err}\n`);
-    }
+  errorCount++;
+  if (err instanceof Error) {
+    console.error(`  ✗ Error: ${err.message}`);
+  } else if (typeof err === "object") {
+    console.error(`  ✗ Error: ${JSON.stringify(err, null, 2)}`);
+  } else {
+    console.error(`  ✗ Error: ${err}`);
+  }
+  console.error("");
+}
     
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Small delay to be nice to the API (Groq is fast, so 200ms is fine)
+    await new Promise((resolve) => setTimeout(resolve, 200));
   }
   
   console.log("\n" + "=".repeat(60));

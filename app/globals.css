@@ -157,3 +157,64 @@ body {
   transform-origin: center;
   animation: tl-blob 30s ease-in-out infinite;
 }
+@keyframes progress {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 70%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.animate-progress {
+  animation: progress 3s ease-in-out infinite;
+}
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reorder {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.7s ease-out forwards;
+}
+
+.animate-reorder {
+  animation: reorder 0.7s ease-in-out;
+}
+
+.animate-fade-out {
+  animation: fadeOut 0.7s ease-in forwards;
+}
