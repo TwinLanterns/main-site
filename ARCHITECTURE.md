@@ -817,8 +817,6 @@ and `public`.
 
 ## 13. Known Gaps / Follow-Ups
 
-- `components/Nav.tsx` has the "Team" link commented out even though the
-  Founders section exists on the homepage.
 - `public/` contains five Next.js boilerplate SVGs (`file.svg`, `globe.svg`,
   `next.svg`, `vercel.svg`, `window.svg`) and the `team/` folder with two
   orphaned founder photos. All safe to delete.
