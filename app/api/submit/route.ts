@@ -36,6 +36,14 @@ type CompanyPayload = {
   timeline?: string;
 };
 
+type ResendAttachment = {
+  filename: string;
+  content?: string;
+  path?: string;
+  content_id?: string;
+  content_type?: string;
+};
+
 /**
  * Receives student applications and company briefs.
  *
@@ -140,13 +148,22 @@ export async function POST(req: Request) {
     html: string;
     withAttachment?: boolean;
   }) {
-    const attachmentsList: any[] = [
+    const attachments: ResendAttachment[] = [
       {
-        path: "https://twinlanterns.co",
-        filename: "mark.svg",
-        contentId: "mark",
+        filename: "icon.png",
+        path: "https://twinlanterns.co/icon.png",
+        content_id: "mark",
+        content_type: "image/png",
       },
     ];
+
+    if (args.withAttachment && attachment?.data) {
+      attachments.push({
+        filename: attachment.name,
+        content: attachment.data,
+      });
+    }
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -158,13 +175,7 @@ export async function POST(req: Request) {
         to: args.to,
         subject: args.subject,
         html: args.html,
-        ...(args.withAttachment && attachment?.data
-          ? {
-              attachments: [
-                { filename: attachment.name, content: attachment.data },
-              ],
-            }
-          : {}),
+        attachments,
       }),
     });
     if (!res.ok) {
@@ -190,9 +201,13 @@ export async function POST(req: Request) {
           kind === "student"
             ? `New student application — ${payload.firstName ?? ""} ${payload.lastName ?? ""}`
             : `New role brief — ${payload.company ?? ""}`,
-        html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif"><h2 style="font-weight:400">${
-          kind === "student" ? "Student application" : "Company brief"
-        }</h2><table>${rows}</table></div>`,
+        html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif">
+          <img src="cid:mark" alt="Twin Lanterns" width="32" height="32" style="display:block;margin-bottom:14px;border:0;outline:none;text-decoration:none" />
+          <h2 style="font-weight:400">${
+            kind === "student" ? "Student application" : "Company brief"
+          }</h2>
+          <table>${rows}</table>
+        </div>`,
         withAttachment: true,
       });
     } catch (err) {
@@ -220,7 +235,12 @@ export async function POST(req: Request) {
             kind === "student"
               ? "We've got your application — Twin Lanterns"
               : "We've got your brief — Twin Lanterns",
-          html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif;max-width:480px"><p>${greeting}</p><p>${bodyText}</p><p>— Twin Lanterns</p></div>`,
+          html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif;max-width:480px">
+            <img src="cid:mark" alt="Twin Lanterns" width="32" height="32" style="display:block;margin-bottom:16px;border:0;outline:none;text-decoration:none" />
+            <p>${greeting}</p>
+            <p>${bodyText}</p>
+            <p>— Twin Lanterns</p>
+          </div>`,
         });
       } catch (err) {
         console.error("resend request failed (confirmation)", err);
