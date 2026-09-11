@@ -151,8 +151,12 @@ of them run.
 │   └── test-deepseek-api.ts        Interactive CLI chat against the proxy
 │
 ├── public/
-│   ├── favicon.ico, icon.png, mark.svg
-│   └── team/{carlos,cameron}.png
+│   ├── favicon.ico, icon.png       icon.png also serves as the email logo
+│   ├── mark.svg                    Logo source (used by components/Mark.tsx)
+│   ├── file.svg, globe.svg,        Next.js boilerplate — dead
+│   │   next.svg, vercel.svg,
+│   │   window.svg
+│   └── team/{carlos,cameron}.png   Orphaned — Founders section removed
 │
 ├── proxy.ts                        Next.js 16 middleware — gates /admin/*
 │                                   and the two protected admin API routes
@@ -510,9 +514,14 @@ Sends two emails per submission:
 1. Internal notification to founders (with resume attachment if present)
 2. Confirmation to the submitter
 
-Both embed the Twin Lanterns mark by `contentId: "mark"`. Resend fetches the SVG
-from `https://twinlanterns.co/mark.svg` at send time (the `.co` domain — the old
-`.com` path was fixed in `fix: retrieves logo from correct site`).
+Both emails embed the Twin Lanterns mark inline as `cid:mark`, backed by an
+attachment that Resend fetches from `https://twinlanterns.co/icon.png`. The
+logo attachment is unconditional; the student's resume is added only to the
+founder notification when they included one.
+
+Note: `icon.png` is currently the favicon — small and possibly padded. If it
+looks off at 32px, generate a dedicated `mark.png` from `mark.svg` and swap
+the URL.
 
 > Any failure is logged, never returned to the client.
 
@@ -810,6 +819,9 @@ and `public`.
 
 - `components/Nav.tsx` has the "Team" link commented out even though the
   Founders section exists on the homepage.
+- `public/` contains five Next.js boilerplate SVGs (`file.svg`, `globe.svg`,
+  `next.svg`, `vercel.svg`, `window.svg`) and the `team/` folder with two
+  orphaned founder photos. All safe to delete.
 - `OPENAI_API_KEY` / `@google/generative-ai` are in `package.json` but not
   referenced by any runtime code in this repo — likely leftovers or intended for
   future use.
