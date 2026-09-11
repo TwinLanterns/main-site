@@ -632,7 +632,9 @@ All exported from one file. Used by both `ApplyFlow.tsx` and `HireFlow.tsx`.
 
 | Module | Notes |
 | --- | --- |
-| **Shapes** (`components/Shapes.tsx`) | Six SVG shapes: `clover`, `hex`, `arch`, `squircle`, `scallop` (14-point smooth ring), `burst` (12-point sharp star). `scallop` and `burst` are generated procedurally by `ring(points, rOuter, rInner, sharp)`. The exported `shapePaths` record is also used by `Landing.tsx` to clip founder photos into morphing blobs. |
+| **Shapes** (`components/Shapes.tsx`) | Six SVG shapes: `clover`, `hex`, `arch`, `squircle`, `scallop` (14-point smooth ring), `burst` (12-point sharp star). `scallop` and `burst` are generated procedurally by `ring(points, rOuter, rInner, sharp)`. The exported `shapePaths` record is consumed by `Landing.tsx` for morphing SVG
+decorations (`<path d={shapePaths[kind]} className="blob-morph" />`) and by the
+`Shape` component itself.|
 | **Mark** (`components/Mark.tsx`) | The Twin Lanterns logo: two angled panels plus a flickering spark in `--color-flame`. |
 | **Reveal** (`components/Reveal.tsx`) | Single motion primitive. Every section entrance on the site uses it: fade up 12px, once, `amount: 0.25`. |
 | **Nav** (`components/Nav.tsx`) | Fixed floating pill, centered. After 40px of scroll it collapses to `w-max`, hides the brand text, and moves the CTAs to a corner cluster. Mobile menu slides down from the pill. |
