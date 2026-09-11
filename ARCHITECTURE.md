@@ -67,26 +67,31 @@ Two user-facing funnels feed the same Supabase tables. An admin surface reads fr
 them, runs AI semantic search over tagged candidates, and can stream resumes back
 to the browser.
 
+`proxy.ts` (Next.js 16's renamed `middleware.ts`) sits in front of `/admin/*` and
+the two protected admin API routes, verifying the HMAC session cookie before any
+of them run.
+
 ---
 
 ## 2. Tech Stack
 
-| Layer                | Choice                                                                                                                 |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Framework**        | Next.js 16 (App Router, React 19)                                                                                      |
-| **Language**         | TypeScript (strict)                                                                                                    |
-| **Styling**          | Tailwind CSS v4 + custom CSS vars (`ink`, `line`, `flame`, `sky`, `lemon`, `lilac`, `lime`, `blush`, `shell`, `muted`) |
-| **Fonts**            | DM Sans via `next/font/google` → CSS var `--font-dm`                                                                   |
-| **Animations**       | Motion (`motion/react`, Framer Motion v11+)                                                                            |
-| **Database**         | Supabase (Postgres, service-role client)                                                                               |
-| **AI (tagging)**     | Groq SDK — `openai/gpt-oss-120b` for resume tagging                                                                    |
-| **AI (search)**      | DeepSeek via a self-hosted Playwright reverse proxy                                                                    |
-| **Parsing**          | `pdfjs-dist`, `mammoth` (docx), `pdf-parse`                                                                            |
-| **Email**            | Resend (optional — non-blocking)                                                                                       |
-| **Analytics**        | Vercel Analytics                                                                                                       |
-| **Deployment**       | Vercel                                                                                                                 |
-| **Scripts runner**   | `tsx`                                                                                                                  |
-| **Legacy DB bridge** | `pg` (Lovable backup restore)                                                                                          |
+| Layer | Choice |
+| --- | --- |
+| **Framework** | Next.js 16 (App Router, React 19) |
+| **Language** | TypeScript (strict) |
+| **Styling** | Tailwind CSS v4 + custom CSS vars (`ink`, `line`, `flame`, `sky`, `lemon`, `lilac`, `lime`, `blush`, `shell`, `muted`) |
+| **Fonts** | DM Sans via `next/font/google` → CSS var `--font-dm` |
+| **Animations** | Motion (`motion/react`, Framer Motion v11+) |
+| **Database** | Supabase (Postgres, service-role client) |
+| **AI (tagging)** | Groq SDK — `openai/gpt-oss-120b` for resume tagging |
+| **AI (search)** | DeepSeek via a self-hosted Playwright reverse proxy |
+| **Parsing** | `pdfjs-dist`, `mammoth` (docx), `pdf-parse` |
+| **Email** | Resend (optional — non-blocking) |
+| **Analytics** | Vercel Analytics |
+| **Deployment** | Vercel |
+| **Scripts runner** | `tsx` |
+| **Formatting** | Prettier `3.9.6` (pinned, `--save-exact`) |
+| **Legacy DB bridge** | `pg` (Lovable backup restore) |
 
 ---
 
@@ -111,7 +116,8 @@ to the browser.
 │   │   ├── page.tsx                Server component, fetches rows for dashboard
 │   │   ├── AdminDashboard.tsx      Client dashboard + VibeSearch
 │   │   └── login/
-│   │       └── page.tsx            Client login (Suspense-wrapped form)
+│   │       └── page.tsx            Client login (Suspense-wrapped form;
+│   │                               honors ?from= with /admin allowlist)
 │   │
 │   └── api/
 │       ├── submit/route.ts         POST — student + company submissions
@@ -135,6 +141,7 @@ to the browser.
 ├── lib/
 │   ├── supabase-server.ts          Service-role Supabase client factory
 │   ├── admin-auth.ts               HMAC-signed cookie sessions (Web Crypto)
+│   │                               + ADMIN_COOKIE_NAME / ADMIN_SESSION_MAX_AGE
 │   └── deepseek.ts                 Streaming DeepSeek proxy client (SSE)
 │
 ├── scripts/
@@ -147,10 +154,14 @@ to the browser.
 │   ├── favicon.ico, icon.png, mark.svg
 │   └── team/{carlos,cameron}.png
 │
+├── proxy.ts                        Next.js 16 middleware — gates /admin/*
+│                                   and the two protected admin API routes
 ├── next.config.ts                  Empty (defaults)
 ├── tsconfig.json                   @/* → ./*
 ├── eslint.config.mjs
 ├── postcss.config.mjs
+├── .prettierrc
+├── .prettierignore
 └── package.json
 ```
 
@@ -183,12 +194,12 @@ Supabase (student_applications)
 
 **Failure modes**
 
-| Condition                                    | Response                   |
-| -------------------------------------------- | -------------------------- |
-| Invalid JSON / missing `kind` / wrong `kind` | `400`                      |
-| Supabase misconfigured (missing env)         | `500 Server misconfigured` |
-| Insert error                                 | `502 Save failed`          |
-| Email failure                                | logged, never fails        |
+| Condition | Response |
+| --- | --- |
+| Invalid JSON / missing `kind` / wrong `kind` | `400` |
+| Supabase misconfigured (missing env) | `500 Server misconfigured` |
+| Insert error | `502 Save failed` |
+| Email failure | logged, never fails |
 
 ### 4.2 Company Brief — `POST /api/submit` with `kind: "company"`
 
@@ -201,10 +212,10 @@ Same endpoint. Writes to `company_briefs`. No attachment; no resume columns.
 │
 ├── 500 if ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_SESSION_SECRET missing
 ├── 401 if username/password wrong (constant-time compare)
-└── 200 → sets admin_session cookie
+└── 200 → sets ADMIN_COOKIE_NAME cookie
           payload   = "admin.<expiresAtMs>"
           signature = HMAC-SHA256(payload, SECRET)
-          httpOnly, sameSite=lax, secure in prod, 7 days
+          httpOnly, sameSite=lax, secure in prod, ADMIN_SESSION_MAX_AGE
 ```
 
 ### 4.4 Vibe Search — `POST /api/admin/vibe-search`
@@ -294,39 +305,77 @@ vars.
 admin.<expiresAtMs>.<hmac_sha256_hex>
 ```
 
+The `admin` prefix comes from `TOKEN_PREFIX` in `lib/admin-auth.ts` and lets
+`verifySessionToken` reject unrelated cookies without doing crypto work.
+
 **Code:** `lib/admin-auth.ts`
 
-| Function                                    | Behaviour                                                                                       |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `createSessionToken(secret, maxAgeSeconds)` | Signs `"admin.<expiry>"` with HMAC-SHA256                                                       |
-| `verifySessionToken(token, secret)`         | Checks structure, numeric expiry, and constant-time signature comparison (`timingSafeEqualHex`) |
+| Export | Purpose |
+| --- | --- |
+| `ADMIN_COOKIE_NAME` | `"admin_session"` — single source of truth for the cookie name |
+| `ADMIN_SESSION_MAX_AGE` | `60 * 60 * 24 * 7` — shared cookie lifetime (7 days) |
+| `createSessionToken(secret, maxAgeSeconds)` | Signs `<prefix>.<expiry>` with HMAC-SHA256; throws on non-positive `maxAgeSeconds` |
+| `verifySessionToken(token, secret)` | Checks length bound, structure, numeric expiry, and constant-time signature comparison (`timingSafeEqualHex`). Accepts `string \| undefined \| null`. |
 
 Uses **Web Crypto** (`crypto.subtle`) so the same code runs in both the Edge
-runtime (middleware) and Node runtime (API routes).
+runtime (`proxy.ts`) and Node runtime (API routes).
 
-**Cookie: `admin_session`**
+**Cookie: `ADMIN_COOKIE_NAME`**
 
-| Attribute  | Value         |
-| ---------- | ------------- |
-| `httpOnly` | yes           |
-| `sameSite` | `lax`         |
-| `secure`   | in production |
-| `path`     | `/`           |
-| `maxAge`   | 7 days        |
+| Attribute | Value |
+| --- | --- |
+| `httpOnly` | yes |
+| `sameSite` | `lax` |
+| `secure` | in production |
+| `path` | `/` |
+| `maxAge` | `ADMIN_SESSION_MAX_AGE` (7 days) |
 
 **Login comparison** (`app/api/admin/login/route.ts`): uses Node
 `crypto.timingSafeEqual` behind a helper that still compares buffers of unequal
 length (prevents leaking length via timing).
 
+**Middleware — `proxy.ts`**
+
+Next.js 16 renamed `middleware.ts` to `proxy.ts`; the export is `proxy()`. It
+matches exactly three surfaces:
+
+```
+/admin/:path*
+/api/admin/resume/:path*
+/api/admin/vibe-search/:path*
+```
+
+`/api/admin/login` and `/api/admin/logout` are deliberately **not** matched —
+login issues the cookie, logout clears it, neither needs a valid session first.
+
+Behavior:
+
+| Condition | `/admin/*` pages | `/api/admin/*` routes |
+| --- | --- | --- |
+| `ADMIN_SESSION_SECRET` missing | `302 → /admin/login` (fail closed) | `500 { error: "Server misconfigured" }` |
+| Cookie missing or invalid | `302 → /admin/login?from=<path>` | `401 { error: "Unauthorized" }` |
+| Cookie valid, visiting `/admin/login` | `302 → /admin` | n/a |
+| Cookie valid, any other match | pass through | pass through |
+
+API routes return **JSON 401** (not a redirect) so SSE clients and `fetch()`
+callers don't get an HTML redirect they can't parse.
+
+**`?from=` round trip**
+
+`proxy.ts` sets `?from=<pathname>` when redirecting to the login page. The login
+form (`app/admin/login/page.tsx`) reads it, validates `startsWith("/admin")`
+(allowlist — blocks open-redirect payloads like `?from=//evil.com`), and pushes
+that path after a successful login.
+
 **Where auth is enforced**
 
-| Route                    | Enforcement                                                                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `/api/admin/login`       | issues the cookie                                                                                                                        |
-| `/api/admin/logout`      | clears the cookie (no auth check needed)                                                                                                 |
-| `/api/admin/resume/[id]` | `isAdmin()` before file lookup                                                                                                           |
-| `/api/admin/vibe-search` | `verifySessionToken` before streaming                                                                                                    |
-| `/admin` page            | assumed server-side (needs `middleware.ts` or per-page check; the repo tree includes `proxy.ts` at root, likely a middleware equivalent) |
+| Surface | Enforcement |
+| --- | --- |
+| `/admin` and `/admin/*` pages | `proxy.ts` verifies the HMAC cookie before the page renders |
+| `/api/admin/resume/[id]` | `proxy.ts` returns `401 JSON` before the handler runs; handler also calls `isAdmin()` as defense-in-depth |
+| `/api/admin/vibe-search` | `proxy.ts` returns `401 JSON` before the handler runs; handler also calls `verifySessionToken` before opening the SSE stream |
+| `/api/admin/login` | Issues the cookie; 401 on bad creds |
+| `/api/admin/logout` | Clears the cookie (no auth check needed — idempotent) |
 
 ---
 
@@ -340,75 +389,75 @@ length (prevents leaking length via timing).
 > ⚠️ Never import from a `"use client"` component.
 > Never expose `SUPABASE_SERVICE_ROLE_KEY` with a `NEXT_PUBLIC_` prefix.
 
-| Env | Value                                                     |
-| --- | --------------------------------------------------------- |
+| Env | Value |
+| --- | --- |
 | URL | `SUPABASE_URL` (falls back to `NEXT_PUBLIC_SUPABASE_URL`) |
-| Key | `SUPABASE_SERVICE_ROLE_KEY`                               |
+| Key | `SUPABASE_SERVICE_ROLE_KEY` |
 
 #### Tables
 
 **`student_applications`**
 
-| Column           | Type        | Notes                                             |
-| ---------------- | ----------- | ------------------------------------------------- |
-| `id`             | uuid        | PK                                                |
-| `first_name`     | text        |                                                   |
-| `last_name`      | text        | nullable                                          |
-| `email`          | text        |                                                   |
-| `phone`          | text        | nullable                                          |
-| `level`          | text        | High school / Undergraduate / Graduate / Gap year |
-| `school`         | text        |                                                   |
-| `grad_year`      | text        |                                                   |
-| `location`       | text        |                                                   |
-| `interests`      | text[]      |                                                   |
-| `hours_per_week` | text        | e.g. `"10 hrs / week"` or `"Full time"`           |
-| `start_timing`   | text        | e.g. `"In about 2 weeks"`                         |
-| `work_setup`     | text        | Remote / Hybrid / In person / No preference       |
-| `priorities`     | text[]      | rank-prefixed (`"1. ..."`)                        |
-| `built`          | text        | free-form "something you built"                   |
-| `links`          | text        | newline-joined URLs                               |
-| `resume_name`    | text        | nullable                                          |
-| `resume_data`    | text        | base64 (nullable)                                 |
-| `raw_payload`    | jsonb       | verbatim original submission                      |
-| `created_at`     | timestamptz |                                                   |
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | uuid | PK |
+| `first_name` | text | |
+| `last_name` | text | nullable |
+| `email` | text | |
+| `phone` | text | nullable |
+| `level` | text | High school / Undergraduate / Graduate / Gap year |
+| `school` | text | |
+| `grad_year` | text | |
+| `location` | text | |
+| `interests` | text[] | |
+| `hours_per_week` | text | e.g. `"10 hrs / week"` or `"Full time"` |
+| `start_timing` | text | e.g. `"In about 2 weeks"` |
+| `work_setup` | text | Remote / Hybrid / In person / No preference |
+| `priorities` | text[] | rank-prefixed (`"1. ..."`) |
+| `built` | text | free-form "something you built" |
+| `links` | text | newline-joined URLs |
+| `resume_name` | text | nullable |
+| `resume_data` | text | base64 (nullable) |
+| `raw_payload` | jsonb | verbatim original submission |
+| `created_at` | timestamptz | |
 
 **`company_briefs`**
 
-| Column          | Type          |
-| --------------- | ------------- |
-| `id`            | uuid PK       |
-| `company`       | text          |
-| `website`       | text nullable |
-| `contact_name`  | text          |
-| `contact_email` | text          |
-| `stage`         | text          |
-| `team_size`     | text          |
-| `function`      | text          |
-| `title`         | text          |
-| `outcome`       | text          |
-| `work_setup`    | text          |
-| `city`          | text          |
-| `commitment`    | text          |
-| `pay`           | text          |
-| `timeline`      | text          |
-| `raw_payload`   | jsonb         |
-| `created_at`    | timestamptz   |
+| Column | Type |
+| --- | --- |
+| `id` | uuid PK |
+| `company` | text |
+| `website` | text nullable |
+| `contact_name` | text |
+| `contact_email` | text |
+| `stage` | text |
+| `team_size` | text |
+| `function` | text |
+| `title` | text |
+| `outcome` | text |
+| `work_setup` | text |
+| `city` | text |
+| `commitment` | text |
+| `pay` | text |
+| `timeline` | text |
+| `raw_payload` | jsonb |
+| `created_at` | timestamptz |
 
 **`candidate_ai_tags`**
 
-| Column             | Type        | Notes                            |
-| ------------------ | ----------- | -------------------------------- |
-| `id`               | uuid        | PK                               |
-| `student_id`       | uuid        | FK → `student_applications.id`   |
-| `vibe_tags`        | text[]      |                                  |
-| `soft_skills`      | text[]      |                                  |
-| `hard_skills`      | text[]      |                                  |
-| `ai_summary`       | text        | one-line summary                 |
-| `model_used`       | text        | e.g. `"llama-3.3-70b-versatile"` |
-| `prompt_version`   | text        | e.g. `"v2"`                      |
-| `source_file_name` | text        |                                  |
-| `ai_processed_at`  | timestamptz |                                  |
-| `raw_ai_response`  | jsonb       |                                  |
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | uuid | PK |
+| `student_id` | uuid | FK → `student_applications.id` |
+| `vibe_tags` | text[] | |
+| `soft_skills` | text[] | |
+| `hard_skills` | text[] | |
+| `ai_summary` | text | one-line summary |
+| `model_used` | text | e.g. `"llama-3.3-70b-versatile"` |
+| `prompt_version` | text | e.g. `"v2"` |
+| `source_file_name` | text | |
+| `ai_processed_at` | timestamptz | |
+| `raw_ai_response` | jsonb | |
 
 > **Unique constraint:** `(student_id, prompt_version)` — the tagging script
 > upserts on this pair.
@@ -419,17 +468,17 @@ Self-hosted Playwright proxy that drives the DeepSeek web UI and returns either 
 streamed SSE response (`stream: true`) or a single JSON object (`stream: false`)
 shaped like OpenAI's `/v1/chat/completions`.
 
-| Item            | Value                                                  |
-| --------------- | ------------------------------------------------------ |
-| Env             | `DEEPSEEK_PROXY_URL`, `DEEPSEEK_API_KEY_REVERSE_PROXY` |
-| Model requested | `deepseek-chat`                                        |
+| Item | Value |
+| --- | --- |
+| Env | `DEEPSEEK_PROXY_URL`, `DEEPSEEK_API_KEY_REVERSE_PROXY` |
+| Model requested | `deepseek-chat` |
 
 **Two client paths**
 
-| Path                                 | Behaviour                                                                                                                                                                                                                            |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `lib/deepseek.ts`                    | streaming (`stream: true`), yields `"append"` / `"replace"` events. `"replace"` exists because DeepSeek's DOM can re-render mid-response (e.g. table separators becoming real content), which append-only streaming can't represent. |
-| `app/api/admin/vibe-search/route.ts` | non-streaming (`stream: false`) with per-call timeouts.                                                                                                                                                                              |
+| Path | Behaviour |
+| --- | --- |
+| `lib/deepseek.ts` | streaming (`stream: true`), yields `"append"` / `"replace"` events. `"replace"` exists because DeepSeek's DOM can re-render mid-response (e.g. table separators becoming real content), which append-only streaming can't represent. |
+| `app/api/admin/vibe-search/route.ts` | non-streaming (`stream: false`) with per-call timeouts. |
 
 - **Timeout:** 200s client-side via `AbortController` (server hard cap is 180s).
 - **Reasoning tokens:** `<think>...</think>` blocks are stripped before use.
@@ -438,11 +487,11 @@ shaped like OpenAI's `/v1/chat/completions`.
 
 Used **only** by `scripts/tag-resumes.ts`, not by any runtime API route.
 
-| Item            | Value                                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Env             | `GROQ_API_KEY`                                                                                                            |
-| Model           | `openai/gpt-oss-120b` (older runs used `llama-3.3-70b-versatile`; the `model_used` column records what was actually used) |
-| Response format | `{ type: "json_object" }`                                                                                                 |
+| Item | Value |
+| --- | --- |
+| Env | `GROQ_API_KEY` |
+| Model | `openai/gpt-oss-120b` (older runs used `llama-3.3-70b-versatile`; the `model_used` column records what was actually used) |
+| Response format | `{ type: "json_object" }` |
 
 **Produces:** `hard_skills`, `soft_skills`, `vibe_tags`, `one_line_summary`
 
@@ -450,16 +499,20 @@ Used **only** by `scripts/tag-resumes.ts`, not by any runtime API route.
 
 Used **only** by `app/api/submit/route.ts`, and entirely non-blocking.
 
-| Env               | Notes                                               |
-| ----------------- | --------------------------------------------------- |
-| `RESEND_API_KEY`  |                                                     |
-| `TL_NOTIFY_EMAIL` |                                                     |
-| `TL_FROM_EMAIL`   | defaults to `"Twin Lanterns onboarding@resend.dev"` |
+| Env | Notes |
+| --- | --- |
+| `RESEND_API_KEY` | |
+| `TL_NOTIFY_EMAIL` | |
+| `TL_FROM_EMAIL` | defaults to `"Twin Lanterns onboarding@resend.dev"` |
 
 Sends two emails per submission:
 
 1. Internal notification to founders (with resume attachment if present)
 2. Confirmation to the submitter
+
+Both embed the Twin Lanterns mark by `contentId: "mark"`. Resend fetches the SVG
+from `https://twinlanterns.co/mark.svg` at send time (the `.co` domain — the old
+`.com` path was fixed in `fix: retrieves logo from correct site`).
 
 > Any failure is logged, never returned to the client.
 
@@ -473,23 +526,23 @@ Sends two emails per submission:
 
 **Server-only** (never `NEXT_PUBLIC_`):
 
-| Variable                         | Used by                                     |
-| -------------------------------- | ------------------------------------------- |
-| `SUPABASE_URL`                   | `lib/supabase-server`                       |
-| `NEXT_PUBLIC_SUPABASE_URL`       | fallback URL                                |
-| `SUPABASE_SERVICE_ROLE_KEY`      | RLS-bypassing key                           |
-| `ADMIN_USERNAME`                 | `api/admin/login`                           |
-| `ADMIN_PASSWORD`                 | `api/admin/login`                           |
-| `ADMIN_SESSION_SECRET`           | `lib/admin-auth`, `api/admin/*`             |
-| `DEEPSEEK_PROXY_URL`             | `lib/deepseek`, `vibe-search`               |
-| `DEEPSEEK_API_KEY_REVERSE_PROXY` | `lib/deepseek`, `vibe-search`               |
-| `RESEND_API_KEY`                 | `api/submit` (optional)                     |
-| `TL_NOTIFY_EMAIL`                | `api/submit`                                |
-| `TL_FROM_EMAIL`                  | `api/submit` (optional)                     |
-| `GROQ_API_KEY`                   | `scripts/tag-resumes`                       |
-| `OLD_DATABASE_URL`               | `scripts/migrate-lovable`                   |
-| `RESUME_DIR`                     | `scripts/migrate-resumes`                   |
-| `DEBUG`                          | `lib/deepseek`, `scripts/test-deepseek-api` |
+| Variable | Used by |
+| --- | --- |
+| `SUPABASE_URL` | `lib/supabase-server` |
+| `NEXT_PUBLIC_SUPABASE_URL` | fallback URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | RLS-bypassing key |
+| `ADMIN_USERNAME` | `api/admin/login` |
+| `ADMIN_PASSWORD` | `api/admin/login` |
+| `ADMIN_SESSION_SECRET` | `lib/admin-auth`, `proxy.ts`, `api/admin/*` |
+| `DEEPSEEK_PROXY_URL` | `lib/deepseek`, `vibe-search` |
+| `DEEPSEEK_API_KEY_REVERSE_PROXY` | `lib/deepseek`, `vibe-search` |
+| `RESEND_API_KEY` | `api/submit` (optional) |
+| `TL_NOTIFY_EMAIL` | `api/submit` |
+| `TL_FROM_EMAIL` | `api/submit` (optional) |
+| `GROQ_API_KEY` | `scripts/tag-resumes` |
+| `OLD_DATABASE_URL` | `scripts/migrate-lovable` |
+| `RESUME_DIR` | `scripts/migrate-resumes` |
+| `DEBUG` | `lib/deepseek`, `scripts/test-deepseek-api` |
 
 ---
 
@@ -501,11 +554,11 @@ Sends two emails per submission:
 
 **Three tabs**
 
-| Tab                      | Contents                                                                                                               |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Tab | Contents |
+| --- | --- |
 | **Student applications** | Table with fixed columns + AI columns (`vibe_tags`, `soft_skills`, `hard_skills`, `ai_summary`) + resume download link |
-| **Company briefs**       | Table with `BRIEF_COLUMNS`                                                                                             |
-| **Search**               | `<VibeSearch />`                                                                                                       |
+| **Company briefs** | Table with `BRIEF_COLUMNS` |
+| **Search** | `<VibeSearch />` |
 
 **Table features** (internal to `AdminDashboard.tsx`)
 
@@ -522,8 +575,7 @@ Sends two emails per submission:
 
 **VibeSearch UI**
 
-- Text input + "Semantic Search" button
-- Example prompts for quick fill
+- Text input + "Semantic Search" button; example prompts for quick fill
 - Manual SSE parsing of the `/api/admin/vibe-search` response
 - Stepper shows progress across
   `initializing → filtering → analyzing → ranking → complete`
@@ -552,29 +604,29 @@ Sends two emails per submission:
 
 All exported from one file. Used by both `ApplyFlow.tsx` and `HireFlow.tsx`.
 
-| Export                        | Description                                                                               |
-| ----------------------------- | ----------------------------------------------------------------------------------------- |
-| `ease`                        | `[0.22, 1, 0.36, 1]` — site-wide cubic bezier                                             |
-| `Field`                       | Label + hint wrapper around any control                                                   |
-| `Input`, `Textarea`, `Select` | Styled HTML controls sharing a base class                                                 |
-| `Pills`                       | Single- or multi-select pill group; `aria-pressed` set                                    |
-| `ChoiceCards`                 | Grid of tappable cards with a rotating Shape icon                                         |
-| `Slider`                      | Range input with `format(value)` display + optional ticks                                 |
-| `RankList` / `RankItem`       | Drag-to-reorder list (Motion `Reorder`) with drag controls                                |
-| `DropZone` / `Upload`         | File drop zone; reads to base64; 4 MB cap; accepts `.pdf,.doc,.docx,.png,.jpg,.jpeg,.txt` |
-| `StepHeader`                  | "Step X of Y", title, blurb                                                               |
-| `StepRail`                    | Vertical step navigation; completed steps clickable                                       |
-| `Progress`                    | 0.5px top bar; `width = value * 100%`                                                     |
-| `NavButtons`                  | Back (button) + Next (submit); loading state "Sending..."                                 |
+| Export | Description |
+| --- | --- |
+| `ease` | `[0.22, 1, 0.36, 1]` — site-wide cubic bezier |
+| `Field` | Label + hint wrapper around any control |
+| `Input`, `Textarea`, `Select` | Styled HTML controls sharing a base class |
+| `Pills` | Single- or multi-select pill group; `aria-pressed` set |
+| `ChoiceCards` | Grid of tappable cards with a rotating Shape icon |
+| `Slider` | Range input with `format(value)` display + optional ticks |
+| `RankList` / `RankItem` | Drag-to-reorder list (Motion `Reorder`) with drag controls |
+| `DropZone` / `Upload` | File drop zone; reads to base64; 4 MB cap; accepts `.pdf,.doc,.docx,.png,.jpg,.jpeg,.txt` |
+| `StepHeader` | "Step X of Y", title, blurb |
+| `StepRail` | Vertical step navigation; completed steps clickable |
+| `Progress` | 0.5px top bar; `width = value * 100%` |
+| `NavButtons` | Back (button) + Next (submit); loading state "Sending..." |
 
 ### 9.2 Visual System
 
-| Module                               | Notes                                                                                                                                                                                                                                                                                                                       |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module | Notes |
+| --- | --- |
 | **Shapes** (`components/Shapes.tsx`) | Six SVG shapes: `clover`, `hex`, `arch`, `squircle`, `scallop` (14-point smooth ring), `burst` (12-point sharp star). `scallop` and `burst` are generated procedurally by `ring(points, rOuter, rInner, sharp)`. The exported `shapePaths` record is also used by `Landing.tsx` to clip founder photos into morphing blobs. |
-| **Mark** (`components/Mark.tsx`)     | The Twin Lanterns logo: two angled panels plus a flickering spark in `--color-flame`.                                                                                                                                                                                                                                       |
-| **Reveal** (`components/Reveal.tsx`) | Single motion primitive. Every section entrance on the site uses it: fade up 12px, once, `amount: 0.25`.                                                                                                                                                                                                                    |
-| **Nav** (`components/Nav.tsx`)       | Fixed floating pill, centered. After 40px of scroll it collapses to `w-max`, hides the brand text, and moves the CTAs to a corner cluster. Mobile menu slides down from the pill.                                                                                                                                           |
+| **Mark** (`components/Mark.tsx`) | The Twin Lanterns logo: two angled panels plus a flickering spark in `--color-flame`. |
+| **Reveal** (`components/Reveal.tsx`) | Single motion primitive. Every section entrance on the site uses it: fade up 12px, once, `amount: 0.25`. |
+| **Nav** (`components/Nav.tsx`) | Fixed floating pill, centered. After 40px of scroll it collapses to `w-max`, hides the brand text, and moves the CTAs to a corner cluster. Mobile menu slides down from the pill. |
 
 - **Typography utilities:** `display`, `label`, `eyebrow`
 - **Motion:** all animations import from `motion/react`. `AnimatePresence` is
@@ -626,14 +678,14 @@ OLD_DATABASE_URL="postgres://..." npx tsx scripts/migrate-lovable.ts --commit
 
 **Field mapping**
 
-| Old                                            | New              |
-| ---------------------------------------------- | ---------------- |
-| `university`                                   | `school`         |
-| `graduation_year`                              | `grad_year`      |
-| `hours_available`                              | `hours_per_week` |
-| `start_date`                                   | `start_timing`   |
-| `work_preference`                              | `work_setup`     |
-| `experience_summary`                           | `built`          |
+| Old | New |
+| --- | --- |
+| `university` | `school` |
+| `graduation_year` | `grad_year` |
+| `hours_available` | `hours_per_week` |
+| `start_date` | `start_timing` |
+| `work_preference` | `work_setup` |
+| `experience_summary` | `built` |
 | `linkedin_url`, `portfolio_url`, `website_url` | `links` (joined) |
 
 Preserves `id` and upserts on conflict `id` — re-running after a partial commit
@@ -697,17 +749,18 @@ Type `exit`, `quit`, or `q` to end the session.
 
 ## 11. Deployment
 
-| Item               | Value                                                                 |
-| ------------------ | --------------------------------------------------------------------- |
-| **Platform**       | Vercel                                                                |
+| Item | Value |
+| --- | --- |
+| **Platform** | Vercel |
 | **Production URL** | https://twin-lanterns.vercel.app (`metadataBase` in `app/layout.tsx`) |
 
 **Runtime**
-The SSE route `/api/admin/vibe-search` sets `X-Accel-Buffering: no` to defeat
-proxy buffering on Vercel.
+`proxy.ts` runs on Vercel's Edge runtime. The SSE route
+`/api/admin/vibe-search` sets `X-Accel-Buffering: no` to defeat proxy buffering
+on Vercel.
 
 **Cookie security**
-`admin_session` is only `secure` when `NODE_ENV === "production"`.
+`ADMIN_COOKIE_NAME` is only `secure` when `NODE_ENV === "production"`.
 
 **Analytics**
 Vercel Analytics is injected in the root layout.
@@ -749,14 +802,21 @@ producing the flat shape.
 Email in `/api/submit` is best-effort and never blocks the DB write or fails the
 request.
 
+**Single source of truth for the session cookie**
+`ADMIN_COOKIE_NAME` and `ADMIN_SESSION_MAX_AGE` live in `lib/admin-auth.ts`.
+Every call site — `proxy.ts`, `login/route.ts`, `logout/route.ts`,
+`resume/[id]/route.ts`, `vibe-search/route.ts` — imports them. Don't inline the
+string or the literal `60 * 60 * 24 * 7` again.
+
+**Formatting**
+Prettier `3.9.6` is pinned with `--save-exact`. Run `npm run format` before
+committing. `.prettierignore` skips `.next`, `node_modules`, `package-lock.json`,
+and `public`.
+
 ---
 
 ## 13. Known Gaps / Follow-Ups
 
-- `next.config.ts` is empty; there is no `middleware.ts` in `app/`, but the repo
-  root has a `proxy.ts` file. If `/admin` is expected to be gated by middleware,
-  that's the likely place — the current auth model still assumes every admin API
-  route verifies the cookie itself.
 - `components/Landing.tsx` defines a `Banner` component that is not currently
   rendered by the default export.
 - `components/Nav.tsx` has the "Team" link commented out even though the
