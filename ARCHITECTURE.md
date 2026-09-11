@@ -640,8 +640,6 @@ Rendered in order:
 Hero → Stats → Split → Process → Statement → Roles → Founders → Faq → Cta
 ```
 
-> A `Banner` component exists in the file but is not currently rendered.
-
 **Hero**
 Typewriter cycling between two phrases:
 
@@ -817,8 +815,6 @@ and `public`.
 
 ## 13. Known Gaps / Follow-Ups
 
-- `components/Landing.tsx` defines a `Banner` component that is not currently
-  rendered by the default export.
 - `components/Nav.tsx` has the "Team" link commented out even though the
   Founders section exists on the homepage.
 - `OPENAI_API_KEY` / `@google/generative-ai` are in `package.json` but not
