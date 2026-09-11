@@ -136,7 +136,7 @@ export async function POST(req: Request) {
   }) {
     const attachmentsList: any[] = [
       {
-        path: "https://twinlanterns.com",
+        path: "https://twinlanterns.co",
         filename: "mark.svg",
         contentId: "mark",
       }
