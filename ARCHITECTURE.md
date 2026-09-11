@@ -25,7 +25,6 @@
 10. [Scripts](#10-scripts)
 11. [Deployment](#11-deployment)
 12. [Cross-Cutting Conventions](#12-cross-cutting-conventions)
-13. [Known Gaps / Follow-Ups](#13-known-gaps--follow-ups)
 
 ---
 
@@ -120,7 +119,8 @@ of them run.
 │   │                               honors ?from= with /admin allowlist)
 │   │
 │   └── api/
-│       ├── submit/route.ts         POST — student + company submissions
+│       ├── submit/route.ts         POST — thin orchestrator:
+│       │                           parse → save → notify
 │       └── admin/
 │           ├── login/route.ts      POST — verify creds, set cookie
 │           ├── logout/route.ts     POST — clear cookie
@@ -142,7 +142,20 @@ of them run.
 │   ├── supabase-server.ts          Service-role Supabase client factory
 │   ├── admin-auth.ts               HMAC-signed cookie sessions (Web Crypto)
 │   │                               + ADMIN_COOKIE_NAME / ADMIN_SESSION_MAX_AGE
-│   └── deepseek.ts                 Streaming DeepSeek proxy client (SSE)
+│   ├── deepseek.ts                 Streaming DeepSeek proxy client (SSE)
+│   ├── submissions/
+│   │   ├── types.ts                StudentPayload / CompanyPayload /
+│   │   │                           Submission discriminated union
+│   │   ├── parse.ts                Request JSON → Submission
+│   │   │                           (400 on bad shape)
+│   │   └── persistence.ts          Supabase inserts; throws
+│   │                               SubmissionConfigError (500) /
+│   │                               SubmissionSaveError (502)
+│   └── email/
+│       ├── resend.ts               Transport: sendResendEmail,
+│       │                           getEmailConfig, ResendAttachment
+│       ├── templates.ts            HTML renderers + escapeHtml
+│       └── submission-emails.ts    Internal notify + submitter confirmation
 │
 ├── scripts/
 │   ├── migrate-lovable.ts          Lovable students → student_applications
@@ -183,15 +196,25 @@ ApplyFlow.tsx
 POST /api/submit
 │  body: { kind, payload, attachment?: { name, data } }
 ▼
-Supabase (student_applications)
-│  - named columns for every field
-│  - interests[], priorities[] as arrays
-│  - resume_data (base64) + resume_name
-│  - raw_payload (jsonb, verbatim)
+lib/submissions/parse.ts
+│  parseSubmissionRequest(req)
+│  → Submission | { ok: false, status: 400, error }
 ▼
-(optional, non-blocking)
-├── Resend → internal notification to founders (with attachment)
-└── Resend → confirmation to the student
+lib/submissions/persistence.ts
+│  saveSubmission(submission)
+│  - Supabase: student_applications
+│    · named columns for every field
+│    · interests[], priorities[] as arrays
+│    · resume_name / resume_data (base64)
+│    · raw_payload (jsonb, verbatim)
+│  - throws SubmissionConfigError | SubmissionSaveError
+▼
+lib/email/submission-emails.ts (non-blocking)
+│  sendSubmissionEmails(submission)
+│  ├── lib/email/templates.ts → HTML + escapeHtml
+│  ├── lib/email/resend.ts    → POST api.resend.com
+│  ├── Resend → internal notification to founders (with attachment)
+│  └── Resend → confirmation to the student (mark only)
 ▼
 { ok: true }
 ```
@@ -200,14 +223,14 @@ Supabase (student_applications)
 
 | Condition | Response |
 | --- | --- |
-| Invalid JSON / missing `kind` / wrong `kind` | `400` |
+| Invalid JSON / missing `kind` / wrong `kind` / non-object `payload` | `400` |
 | Supabase misconfigured (missing env) | `500 Server misconfigured` |
 | Insert error | `502 Save failed` |
 | Email failure | logged, never fails |
 
 ### 4.2 Company Brief — `POST /api/submit` with `kind: "company"`
 
-Same endpoint. Writes to `company_briefs`. No attachment; no resume columns.
+Same endpoint. `parseSubmissionRequest` yields a `Submission` with `kind: "company"`; `saveSubmission` writes to `company_briefs`. Attachments are still normalized by `parse.ts`, but the company branch doesn't persist `resume_name` / `resume_data`.
 
 ### 4.3 Admin Login
 
@@ -501,7 +524,15 @@ Used **only** by `scripts/tag-resumes.ts`, not by any runtime API route.
 
 ### 6.4 Resend (Email)
 
-Used **only** by `app/api/submit/route.ts`, and entirely non-blocking.
+Used **only** by the submission flow, and entirely non-blocking. The route
+handler delegates to `lib/email/submission-emails.ts`; the transport and
+templating are separate modules so the route stays an orchestrator.
+
+| File | Responsibility |
+| --- | --- |
+| `lib/email/resend.ts` | `getEmailConfig()` reads env; `sendResendEmail()` POSTs to Resend and logs non-2xx without throwing |
+| `lib/email/templates.ts` | `renderInternalNotification()` / `renderConfirmation()`; `escapeHtml()` applied to every interpolated value |
+| `lib/email/submission-emails.ts` | Orchestrates the two sends; attaches `icon.png` as `cid:mark`; adds the resume to the founder email only |
 
 | Env | Notes |
 | --- | --- |
@@ -519,9 +550,9 @@ attachment that Resend fetches from `https://twinlanterns.co/icon.png`. The
 logo attachment is unconditional; the student's resume is added only to the
 founder notification when they included one.
 
-Note: `icon.png` is currently the favicon — small and possibly padded. If it
-looks off at 32px, generate a dedicated `mark.png` from `mark.svg` and swap
-the URL.
+If `RESEND_API_KEY` or `TL_NOTIFY_EMAIL` is missing, the flow logs
+`[twin-lanterns] <kind> submission saved to Supabase (no email configured)`
+and returns.
 
 > Any failure is logged, never returned to the client.
 
@@ -545,9 +576,9 @@ the URL.
 | `ADMIN_SESSION_SECRET` | `lib/admin-auth`, `proxy.ts`, `api/admin/*` |
 | `DEEPSEEK_PROXY_URL` | `lib/deepseek`, `vibe-search` |
 | `DEEPSEEK_API_KEY_REVERSE_PROXY` | `lib/deepseek`, `vibe-search` |
-| `RESEND_API_KEY` | `api/submit` (optional) |
-| `TL_NOTIFY_EMAIL` | `api/submit` |
-| `TL_FROM_EMAIL` | `api/submit` (optional) |
+| `RESEND_API_KEY` | `lib/email/resend` (optional) |
+| `TL_NOTIFY_EMAIL` | `lib/email/resend` |
+| `TL_FROM_EMAIL` | `lib/email/resend` (optional) |
 | `GROQ_API_KEY` | `scripts/tag-resumes` |
 | `OLD_DATABASE_URL` | `scripts/migrate-lovable` |
 | `RESUME_DIR` | `scripts/migrate-resumes` |
@@ -799,8 +830,7 @@ Lovable legacy wrapper and renders a matching badge. New code should keep
 producing the flat shape.
 
 **Non-blocking side effects**
-Email in `/api/submit` is best-effort and never blocks the DB write or fails the
-request.
+Email is best-effort. `lib/email/submission-emails.ts` swallows all failures and never blocks the DB write or fails the request.
 
 **Single source of truth for the session cookie**
 `ADMIN_COOKIE_NAME` and `ADMIN_SESSION_MAX_AGE` live in `lib/admin-auth.ts`.
@@ -813,4 +843,13 @@ Prettier `3.9.6` is pinned with `--save-exact`. Run `npm run format` before
 committing. `.prettierignore` skips `.next`, `node_modules`, `package-lock.json`,
 and `public`.
 
----
+**Submit route is an orchestrator**
+`app/api/submit/route.ts` does exactly four things: parse, persist, notify,
+respond. Column mapping, payload validation, email transport, and email HTML
+live under `lib/submissions/*` and `lib/email/*`. New fields go into
+`lib/submissions/types.ts` + `persistence.ts`, not the route.
+
+**HTML escaping in emails**
+`lib/email/templates.ts` runs every interpolated payload value through
+`escapeHtml()` before it hits the email body. Don't interpolate raw payload
+values into HTML anywhere else.
