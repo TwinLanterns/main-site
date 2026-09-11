@@ -11,7 +11,8 @@
   --color-lilac: #c3a6f7;
   --color-lime: #b6e75c;
   --color-blush: #f7b6dd;
-  --font-sans: var(--font-dm), "Google Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    var(--font-dm), "Google Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -136,9 +137,17 @@ body {
 
 /* typing caret in the hero */
 @keyframes tl-caret {
-  0%, 45% { opacity: 1; }
-  50%, 95% { opacity: 0; }
-  100% { opacity: 1; }
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 .caret {
   animation: tl-caret 1.05s steps(1) infinite;
@@ -146,11 +155,21 @@ body {
 
 /* founder photo blobs: slow rotation with a gentle breathe */
 @keyframes tl-blob {
-  0%   { transform: rotate(0deg) scale(0.97); }
-  25%  { transform: rotate(90deg) scale(1.02); }
-  50%  { transform: rotate(180deg) scale(0.98); }
-  75%  { transform: rotate(270deg) scale(1.03); }
-  100% { transform: rotate(360deg) scale(0.97); }
+  0% {
+    transform: rotate(0deg) scale(0.97);
+  }
+  25% {
+    transform: rotate(90deg) scale(1.02);
+  }
+  50% {
+    transform: rotate(180deg) scale(0.98);
+  }
+  75% {
+    transform: rotate(270deg) scale(1.03);
+  }
+  100% {
+    transform: rotate(360deg) scale(0.97);
+  }
 }
 .blob-morph {
   transform-box: fill-box;

@@ -38,8 +38,18 @@ const functions = [
   "Customer support",
 ] as const;
 const setups = ["Remote", "Hybrid", "In person"] as const;
-const commitments = ["10 hrs / wk", "20 hrs / wk", "30 hrs / wk", "Full time"] as const;
-const timelines = ["This week", "Within 2 weeks", "Within a month", "Just exploring"] as const;
+const commitments = [
+  "10 hrs / wk",
+  "20 hrs / wk",
+  "30 hrs / wk",
+  "Full time",
+] as const;
+const timelines = [
+  "This week",
+  "Within 2 weeks",
+  "Within a month",
+  "Just exploring",
+] as const;
 
 type Draft = {
   company: string;
@@ -111,7 +121,11 @@ export default function HireFlow() {
           !!data.stage
         );
       case 1:
-        return !!data.fn && data.title.trim().length > 1 && data.outcome.trim().length > 19;
+        return (
+          !!data.fn &&
+          data.title.trim().length > 1 &&
+          data.outcome.trim().length > 19
+        );
       case 2:
         return !!data.setup && !!data.commitment && !!data.timeline;
       default:
@@ -165,8 +179,8 @@ export default function HireFlow() {
             <StepRail steps={steps} current={step} onJump={setStep} />
           </div>
           <p className="mt-8 hidden max-w-[220px] text-[12.5px] leading-relaxed text-muted lg:block">
-            This replaces the first half of the intake call. we follow up
-            the same day to fill the gaps.
+            This replaces the first half of the intake call. we follow up the
+            same day to fill the gaps.
           </p>
         </aside>
 
@@ -229,7 +243,10 @@ export default function HireFlow() {
                         onChange={(v) => set("stage", v as string)}
                       />
                     </Field>
-                    <Field label="Team size" className="sm:col-span-2 sm:max-w-[220px]">
+                    <Field
+                      label="Team size"
+                      className="sm:col-span-2 sm:max-w-[220px]"
+                    >
                       <Select
                         value={data.team}
                         onChange={(e) => set("team", e.target.value)}
@@ -346,12 +363,21 @@ export default function HireFlow() {
                   />
                   <dl className="mt-8 divide-y divide-line border-y border-line">
                     {[
-                      ["Company", `${data.company}${data.website ? ` · ${data.website}` : ""}`],
+                      [
+                        "Company",
+                        `${data.company}${data.website ? ` · ${data.website}` : ""}`,
+                      ],
                       ["Contact", `${data.name} · ${data.email}`],
-                      ["Stage", `${data.stage}${data.team ? ` · ${data.team} people` : ""}`],
+                      [
+                        "Stage",
+                        `${data.stage}${data.team ? ` · ${data.team} people` : ""}`,
+                      ],
                       ["Role", `${data.fn} · ${data.title}`],
                       ["Outcome", data.outcome],
-                      ["Setup", `${data.setup}${data.city ? ` · ${data.city}` : ""}`],
+                      [
+                        "Setup",
+                        `${data.setup}${data.city ? ` · ${data.city}` : ""}`,
+                      ],
                       ["Commitment", data.commitment],
                       ["Pay", data.pay || "—"],
                       ["Timeline", data.timeline],
@@ -384,7 +410,9 @@ export default function HireFlow() {
             backDisabled={step === 0}
             nextDisabled={!valid}
             loading={loading}
-            nextLabel={step === steps.length - 1 ? "Send the brief" : "Continue"}
+            nextLabel={
+              step === steps.length - 1 ? "Send the brief" : "Continue"
+            }
           />
         </form>
       </div>
@@ -394,7 +422,9 @@ export default function HireFlow() {
 
 function Success({ company }: { company: string }) {
   return (
-    <div className="relative grid min-h-[80vh] place-items-center px-4 py-32">      <motion.div
+    <div className="relative grid min-h-[80vh] place-items-center px-4 py-32">
+      {" "}
+      <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease }}
@@ -405,8 +435,8 @@ function Success({ company }: { company: string }) {
           Brief received{company ? `, ${company}` : ""}.
         </h1>
         <p className="mx-auto mt-5 max-w-md text-[16px] leading-relaxed text-ink">
-          We'll confirm by email today and put a 30-minute intake call on
-          the calendar. First shortlist lands 48 hours after that call.
+          We'll confirm by email today and put a 30-minute intake call on the
+          calendar. First shortlist lands 48 hours after that call.
         </p>
         <div className="mt-9 flex flex-wrap justify-center gap-3">
           <Link

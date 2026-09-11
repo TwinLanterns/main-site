@@ -23,32 +23,29 @@ function guessMimeType(filename: string) {
 async function isAdmin() {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
-  
+
   if (!sessionToken) return false;
-  
+
   const secret = process.env.ADMIN_SESSION_SECRET;
   if (!secret) return false;
-  
+
   // ✅ Use the proper verification function
   return await verifySessionToken(sessionToken, secret);
 }
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   // 🔒 Check authentication first
   const isAuthenticated = await isAdmin();
-  
+
   if (!isAuthenticated) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
-  
+
   const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase
@@ -62,7 +59,10 @@ export async function GET(
   }
 
   if (!data.resume_data || !data.resume_name) {
-    return NextResponse.json({ error: "No resume on file for this application" }, { status: 404 });
+    return NextResponse.json(
+      { error: "No resume on file for this application" },
+      { status: 404 },
+    );
   }
 
   let buffer: Buffer;
@@ -71,7 +71,10 @@ export async function GET(
     const base64 = raw.includes(",") ? raw.split(",").pop()! : raw;
     buffer = Buffer.from(base64, "base64");
   } catch {
-    return NextResponse.json({ error: "Could not decode stored resume data" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Could not decode stored resume data" },
+      { status: 500 },
+    );
   }
 
   const filename = String(data.resume_name).replace(/"/g, "");

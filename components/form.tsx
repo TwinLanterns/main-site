@@ -137,7 +137,9 @@ export function ChoiceCards({
             onClick={() => toggle(o.label)}
             aria-pressed={on}
             className={`group flex flex-col items-start gap-6 rounded-[22px] border p-5 text-left transition-colors ${
-              on ? "border-ink bg-ink text-white" : "border-line hover:border-ink"
+              on
+                ? "border-ink bg-ink text-white"
+                : "border-line hover:border-ink"
             }`}
           >
             <Shape
@@ -344,7 +346,9 @@ export function StepHeader({
       <p className="label">
         Step {index + 1} of {total}
       </p>
-      <h2 className="display mt-3 text-[clamp(1.8rem,3.4vw,2.5rem)]">{title}</h2>
+      <h2 className="display mt-3 text-[clamp(1.8rem,3.4vw,2.5rem)]">
+        {title}
+      </h2>
       <p className="mt-3 max-w-md text-[15.5px] leading-relaxed text-muted">
         {blurb}
       </p>
@@ -373,7 +377,11 @@ export function StepRail({
               onClick={() => (i <= current ? onJump(i) : undefined)}
               disabled={i > current}
               className={`flex w-full items-center gap-3 py-2 text-left text-[14.5px] transition-colors ${
-                active ? "text-ink" : done ? "text-muted hover:text-ink" : "text-muted/50"
+                active
+                  ? "text-ink"
+                  : done
+                    ? "text-muted hover:text-ink"
+                    : "text-muted/50"
               }`}
             >
               <span

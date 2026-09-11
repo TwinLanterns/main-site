@@ -1,7 +1,7 @@
 /**
  * One-time backfill: reads resume files from a local folder (downloaded
  * manually from the old Lovable project's Storage bucket, renamed by
- * Lovable to UUIDs) and writes them into `resume_data` (base64) on the 
+ * Lovable to UUIDs) and writes them into `resume_data` (base64) on the
  * matching rows already migrated into student_applications.
  *
  * Matches files to rows by UUID filename: it takes the filename (without extension),
@@ -33,7 +33,8 @@ import path from "path";
 import { getSupabaseServerClient } from "../lib/supabase-server";
 
 const COMMIT = process.argv.includes("--commit");
-const RESUME_DIR = process.env.RESUME_DIR || path.join(process.cwd(), "lovable-resumes");
+const RESUME_DIR =
+  process.env.RESUME_DIR || path.join(process.cwd(), "lovable-resumes");
 
 function normalize(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -49,8 +50,10 @@ async function main() {
     process.exit(1);
   }
 
-  const files = fs.readdirSync(RESUME_DIR).filter((f) => fs.statSync(path.join(RESUME_DIR, f)).isFile());
-  
+  const files = fs
+    .readdirSync(RESUME_DIR)
+    .filter((f) => fs.statSync(path.join(RESUME_DIR, f)).isFile());
+
   // Build a map of normalized filename (without extension) -> actual filename
   const fileMap = new Map();
   for (const file of files) {
@@ -70,26 +73,33 @@ async function main() {
   if (error) throw error;
 
   if (!rows || rows.length === 0) {
-    console.log("No rows need a resume backfill — all done, or none have resume_name set.");
+    console.log(
+      "No rows need a resume backfill — all done, or none have resume_name set.",
+    );
     return;
   }
 
   console.log(`Folder: ${RESUME_DIR} (${files.length} files found on disk)`);
-  console.log(`${rows.length} rows need resume_data, matching by UUID filename.\n`);
+  console.log(
+    `${rows.length} rows need resume_data, matching by UUID filename.\n`,
+  );
 
   let matched = 0;
   let missing = 0;
 
   for (const row of rows) {
-    const label = `${row.first_name ?? ""} ${row.last_name ?? ""} <${row.email ?? "no email"}> (${row.id})`.trim();
+    const label =
+      `${row.first_name ?? ""} ${row.last_name ?? ""} <${row.email ?? "no email"}> (${row.id})`.trim();
     const resumeName = (row.resume_name as string) || "";
-    
+
     // Get the filename without extension and normalize it
     const nameWithoutExt = path.parse(resumeName).name;
     const normResumeName = normalize(nameWithoutExt);
 
     if (!normResumeName) {
-      console.warn(`  ? ${label} — no usable resume_name to match against, skipping`);
+      console.warn(
+        `  ? ${label} — no usable resume_name to match against, skipping`,
+      );
       missing++;
       continue;
     }
@@ -105,7 +115,9 @@ async function main() {
 
     const buffer = fs.readFileSync(path.join(RESUME_DIR, matchedFile));
     const base64 = buffer.toString("base64");
-    console.log(`  ✓ ${label} — "${matchedFile}" (${(base64.length / 1024).toFixed(0)} KB base64)`);
+    console.log(
+      `  ✓ ${label} — "${matchedFile}" (${(base64.length / 1024).toFixed(0)} KB base64)`,
+    );
     matched++;
 
     if (COMMIT) {
@@ -115,7 +127,9 @@ async function main() {
         .eq("id", row.id);
 
       if (updateError) {
-        console.warn(`    ! failed to save resume_data for ${label}: ${updateError.message}`);
+        console.warn(
+          `    ! failed to save resume_data for ${label}: ${updateError.message}`,
+        );
       }
     }
   }
@@ -123,7 +137,9 @@ async function main() {
   console.log(`\n${matched} matched, ${missing} missing.`);
 
   if (!COMMIT) {
-    console.log("Dry run only — nothing written. Re-run with --commit once this looks right.");
+    console.log(
+      "Dry run only — nothing written. Re-run with --commit once this looks right.",
+    );
   } else {
     console.log("resume_data written for all matched files.");
   }

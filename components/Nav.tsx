@@ -66,7 +66,9 @@ export default function Nav() {
             <Mark className="h-5 w-auto text-ink" />
             <span
               className={`overflow-hidden whitespace-nowrap font-medium tracking-[-0.02em] transition-all duration-500 ${
-                small ? "max-w-0 text-[0px] opacity-0" : "max-w-[180px] text-[17px] opacity-100"
+                small
+                  ? "max-w-0 text-[0px] opacity-0"
+                  : "max-w-[180px] text-[17px] opacity-100"
               }`}
             >
               Twin Lanterns
@@ -79,7 +81,9 @@ export default function Nav() {
                 key={l.href}
                 href={l.href}
                 className={`rounded-full text-muted transition-all duration-500 hover:bg-shell hover:text-ink ${
-                  small ? "px-3 py-1.5 text-[13.5px]" : "px-3.5 py-2 text-[14.5px]"
+                  small
+                    ? "px-3 py-1.5 text-[13.5px]"
+                    : "px-3.5 py-2 text-[14.5px]"
                 }`}
               >
                 {l.label}
@@ -143,15 +147,17 @@ export default function Nav() {
 
         {open && (
           <div className="pointer-events-auto mt-2 overflow-hidden rounded-[28px] border border-line bg-white md:hidden">
-            {[...links, { href: "/companies", label: "I'm hiring" }].map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="block border-b border-line px-5 py-4 text-[16px] last:border-0"
-              >
-                {l.label}
-              </Link>
-            ))}
+            {[...links, { href: "/companies", label: "I'm hiring" }].map(
+              (l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="block border-b border-line px-5 py-4 text-[16px] last:border-0"
+                >
+                  {l.label}
+                </Link>
+              ),
+            )}
           </div>
         )}
       </div>

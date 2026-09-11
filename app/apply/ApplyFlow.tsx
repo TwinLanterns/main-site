@@ -22,7 +22,13 @@ import {
 } from "@/components/form";
 import Shape from "@/components/Shapes";
 
-const steps = ["Interests", "Availability", "Priorities", "About you", "Finish"] as const;
+const steps = [
+  "Interests",
+  "Availability",
+  "Priorities",
+  "About you",
+  "Finish",
+] as const;
 
 const interests = [
   { label: "Software engineering", kind: "clover", color: "text-flame" },
@@ -33,7 +39,12 @@ const interests = [
   { label: "Research", kind: "arch", color: "text-lime" },
 ] as const;
 
-const levels = ["High school", "Undergraduate", "Graduate", "Gap year"] as const;
+const levels = [
+  "High school",
+  "Undergraduate",
+  "Graduate",
+  "Gap year",
+] as const;
 const setups = ["Remote", "Hybrid", "In person", "No preference"] as const;
 const defaultPriorities = [
   "Getting paid well",
@@ -239,12 +250,16 @@ export default function ApplyFlow() {
                         min={5}
                         max={40}
                         step={5}
-                        format={(v) => (v >= 40 ? "Full time" : `${v} hrs / week`)}
+                        format={(v) =>
+                          v >= 40 ? "Full time" : `${v} hrs / week`
+                        }
                         ticks={["5", "15", "25", "40"]}
                       />
                     </div>
                     <div>
-                      <p className="mb-3 text-[14px]">How soon could you start?</p>
+                      <p className="mb-3 text-[14px]">
+                        How soon could you start?
+                      </p>
                       <Slider
                         value={data.startWeeks}
                         onChange={(v) => set("startWeeks", v)}
@@ -252,7 +267,9 @@ export default function ApplyFlow() {
                         max={12}
                         step={1}
                         format={(v) =>
-                          v === 0 ? "Right now" : `In ${v} week${v > 1 ? "s" : ""}`
+                          v === 0
+                            ? "Right now"
+                            : `In ${v} week${v > 1 ? "s" : ""}`
                         }
                         ticks={["Now", "4 weeks", "8 weeks", "12 weeks"]}
                       />
@@ -319,7 +336,10 @@ export default function ApplyFlow() {
                         autoComplete="email"
                       />
                     </Field>
-                    <Field label="Phone" hint="Optional, but it speeds things up.">
+                    <Field
+                      label="Phone"
+                      hint="Optional, but it speeds things up."
+                    >
                       <Input
                         type="tel"
                         value={data.phone}
@@ -349,11 +369,13 @@ export default function ApplyFlow() {
                           onChange={(e) => set("gradYear", e.target.value)}
                         >
                           <option value="">Year</option>
-                          {Array.from({ length: 8 }, (_, i) => 2026 + i).map((y) => (
-                            <option key={y} value={y}>
-                              {y}
-                            </option>
-                          ))}
+                          {Array.from({ length: 8 }, (_, i) => 2026 + i).map(
+                            (y) => (
+                              <option key={y} value={y}>
+                                {y}
+                              </option>
+                            ),
+                          )}
                         </Select>
                       </Field>
                       <Field label="City">
@@ -408,7 +430,9 @@ export default function ApplyFlow() {
                         {[
                           `${data.firstName || "You"}${data.school ? ` · ${data.school}` : ""}`,
                           ...data.interests,
-                          data.hours >= 40 ? "Full time" : `${data.hours} hrs / wk`,
+                          data.hours >= 40
+                            ? "Full time"
+                            : `${data.hours} hrs / wk`,
                           data.setup,
                           `Top priority: ${data.priorities[0]}`,
                         ]
@@ -440,7 +464,9 @@ export default function ApplyFlow() {
             backDisabled={step === 0}
             nextDisabled={!valid}
             loading={loading}
-            nextLabel={step === steps.length - 1 ? "Submit application" : "Continue"}
+            nextLabel={
+              step === steps.length - 1 ? "Submit application" : "Continue"
+            }
           />
         </form>
       </div>
@@ -451,10 +477,29 @@ export default function ApplyFlow() {
 function Success({ name }: { name: string }) {
   return (
     <div className="relative grid min-h-[78vh] place-items-center overflow-hidden px-4 py-32 text-center">
-      <Shape kind="clover" className="pointer-events-none absolute left-[6%] top-[18%] w-28 text-flame" float />
-      <Shape kind="scallop" className="pointer-events-none absolute right-[8%] top-[24%] w-24 text-sky" float delay={1} />
-      <Shape kind="burst" className="pointer-events-none absolute bottom-[14%] left-[16%] w-24 text-lime" float delay={1.6} />
-      <Shape kind="squircle" className="pointer-events-none absolute bottom-[18%] right-[12%] w-24 text-blush" float delay={0.5} />
+      <Shape
+        kind="clover"
+        className="pointer-events-none absolute left-[6%] top-[18%] w-28 text-flame"
+        float
+      />
+      <Shape
+        kind="scallop"
+        className="pointer-events-none absolute right-[8%] top-[24%] w-24 text-sky"
+        float
+        delay={1}
+      />
+      <Shape
+        kind="burst"
+        className="pointer-events-none absolute bottom-[14%] left-[16%] w-24 text-lime"
+        float
+        delay={1.6}
+      />
+      <Shape
+        kind="squircle"
+        className="pointer-events-none absolute bottom-[18%] right-[12%] w-24 text-blush"
+        float
+        delay={0.5}
+      />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -466,8 +511,8 @@ function Success({ name }: { name: string }) {
         </h1>
         <p className="mx-auto mt-6 max-w-md text-[17px] leading-relaxed text-muted">
           We review every application ourselves. If there&apos;s a role that
-          fits, you&apos;ll hear from us — and if there isn&apos;t one today, you
-          stay in the pool for the next one.
+          fits, you&apos;ll hear from us — and if there isn&apos;t one today,
+          you stay in the pool for the next one.
         </p>
         <div className="mt-9 flex flex-wrap justify-center gap-3">
           <Link

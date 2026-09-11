@@ -50,12 +50,17 @@ function LoginForm() {
         className="w-full max-w-sm space-y-4 rounded-xl border border-neutral-200 bg-white p-8 shadow-sm"
       >
         <div className="space-y-1 text-center">
-          <h1 className="text-lg font-semibold text-neutral-900">Admin sign in</h1>
+          <h1 className="text-lg font-semibold text-neutral-900">
+            Admin sign in
+          </h1>
           <p className="text-sm text-neutral-500">Twin Lanterns dashboard</p>
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-neutral-700" htmlFor="username">
+          <label
+            className="block text-sm font-medium text-neutral-700"
+            htmlFor="username"
+          >
             Username
           </label>
           <input
@@ -71,7 +76,10 @@ function LoginForm() {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-neutral-700" htmlFor="password">
+          <label
+            className="block text-sm font-medium text-neutral-700"
+            htmlFor="password"
+          >
             Password
           </label>
           <input
@@ -103,13 +111,15 @@ function LoginForm() {
 // Main page component with Suspense boundary
 export default function AdminLoginPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4">
-        <div className="w-full max-w-sm space-y-4 rounded-xl border border-neutral-200 bg-white p-8 shadow-sm text-center">
-          <p className="text-neutral-500">Loading...</p>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4">
+          <div className="w-full max-w-sm space-y-4 rounded-xl border border-neutral-200 bg-white p-8 shadow-sm text-center">
+            <p className="text-neutral-500">Loading...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

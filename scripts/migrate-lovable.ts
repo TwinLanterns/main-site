@@ -38,7 +38,10 @@ const COMMIT = process.argv.includes("--commit");
 type OldStudent = Record<string, any>;
 
 function studentToApplication(s: OldStudent) {
-  const links = [s.linkedin_url, s.portfolio_url, s.website_url].filter(Boolean).join("\n") || null;
+  const links =
+    [s.linkedin_url, s.portfolio_url, s.website_url]
+      .filter(Boolean)
+      .join("\n") || null;
 
   return {
     id: s.id, // preserve original id -> re-running is idempotent
@@ -53,7 +56,9 @@ function studentToApplication(s: OldStudent) {
     hours_per_week: s.hours_available,
     start_timing: s.start_date,
     work_setup: s.work_preference,
-    priorities: [s.industry_interests, s.startup_stage_preference].filter(Boolean),
+    priorities: [s.industry_interests, s.startup_stage_preference].filter(
+      Boolean,
+    ),
     built: s.experience_summary ?? null,
     links,
     resume_name: s.resume_url ? String(s.resume_url).split("/").pop() : null,
@@ -75,25 +80,33 @@ async function main() {
   const oldDb = new Client({ connectionString: oldDbUrl });
   await oldDb.connect();
 
-  const { rows: students } = await oldDb.query<OldStudent>("select * from public.students");
+  const { rows: students } = await oldDb.query<OldStudent>(
+    "select * from public.students",
+  );
 
   await oldDb.end();
 
   const applications = students.map(studentToApplication);
 
-  console.log(`students: ${students.length} -> student_applications: ${applications.length}`);
+  console.log(
+    `students: ${students.length} -> student_applications: ${applications.length}`,
+  );
   console.log("\nSample student_applications row:");
   console.log(JSON.stringify(applications[0], null, 2));
 
   if (!COMMIT) {
-    console.log("\nDry run only — nothing written. Re-run with --commit once this looks right.");
+    console.log(
+      "\nDry run only — nothing written. Re-run with --commit once this looks right.",
+    );
     return;
   }
 
   const supabase = getSupabaseServerClient();
 
   if (applications.length > 0) {
-    const { error } = await supabase.from("student_applications").upsert(applications, { onConflict: "id" });
+    const { error } = await supabase
+      .from("student_applications")
+      .upsert(applications, { onConflict: "id" });
     if (error) throw error;
   }
 

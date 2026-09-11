@@ -36,11 +36,7 @@ type SearchCandidate = {
 };
 
 type SearchStage =
-  | "initializing"
-  | "filtering"
-  | "analyzing"
-  | "ranking"
-  | "complete";
+  "initializing" | "filtering" | "analyzing" | "ranking" | "complete";
 
 /* ------------------------------------------------------------------ */
 /* Constants                                                           */
@@ -267,8 +263,7 @@ function ShortAnswerCell({ value }: { value: unknown }) {
   }
 
   if (Array.isArray(value)) {
-    if (value.length === 0)
-      return <span className="text-neutral-300">—</span>;
+    if (value.length === 0) return <span className="text-neutral-300">—</span>;
     return (
       <div className="flex max-w-[220px] flex-wrap gap-1">
         {value.map((v, i) => (
@@ -476,10 +471,10 @@ function ScoreRing({ score, size = 56 }: { score: number; size?: number }) {
     clamped >= 80
       ? "#16a34a"
       : clamped >= 60
-      ? "#65a30d"
-      : clamped >= 40
-      ? "#ca8a04"
-      : "#dc2626";
+        ? "#65a30d"
+        : clamped >= 40
+          ? "#ca8a04"
+          : "#dc2626";
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -536,10 +531,10 @@ function CandidateCard({
     isFinal && index === 0
       ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-sm"
       : isFinal && index === 1
-      ? "bg-gradient-to-br from-neutral-300 to-neutral-500 text-white shadow-sm"
-      : isFinal && index === 2
-      ? "bg-gradient-to-br from-orange-400 to-orange-700 text-white shadow-sm"
-      : "bg-ink text-white";
+        ? "bg-gradient-to-br from-neutral-300 to-neutral-500 text-white shadow-sm"
+        : isFinal && index === 2
+          ? "bg-gradient-to-br from-orange-400 to-orange-700 text-white shadow-sm"
+          : "bg-ink text-white";
 
   return (
     <article className="group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md animate-slide-in">
@@ -657,8 +652,8 @@ function Stepper({ stage }: { stage: SearchStage }) {
                   done
                     ? "bg-emerald-500 text-white"
                     : active
-                    ? "bg-blue-500 text-white animate-pulse"
-                    : "bg-neutral-200 text-neutral-500"
+                      ? "bg-blue-500 text-white animate-pulse"
+                      : "bg-neutral-200 text-neutral-500"
                 }`}
               >
                 {done ? "✓" : i + 1}
@@ -668,8 +663,8 @@ function Stepper({ stage }: { stage: SearchStage }) {
                   active
                     ? "text-neutral-900 font-medium"
                     : done
-                    ? "text-neutral-600"
-                    : "text-neutral-400"
+                      ? "text-neutral-600"
+                      : "text-neutral-400"
                 }`}
               >
                 {s.label}
@@ -725,8 +720,7 @@ function humanizeKey(key: string): string {
     .join(" ");
 }
 
-const URL_TLDS =
-  "(com|org|io|net|edu|dev|co|app|ai|gov|me|info|biz|xyz|so)";
+const URL_TLDS = "(com|org|io|net|edu|dev|co|app|ai|gov|me|info|biz|xyz|so)";
 
 function isLikelyUrl(s: string): boolean {
   if (/\s/.test(s)) return false;
@@ -1323,22 +1317,20 @@ function VibeSearch() {
   };
 
   const displayedCandidates: SearchCandidate[] =
-    viewMode === "shortlist"
-      ? shortlist || results || []
-      : results || [];
+    viewMode === "shortlist" ? shortlist || results || [] : results || [];
 
   const progressPct =
     stage === "complete"
       ? 100
       : stage === "initializing"
-      ? 10
-      : stage === "filtering"
-      ? 35
-      : stage === "analyzing"
-      ? 65
-      : stage === "ranking"
-      ? 90
-      : 0;
+        ? 10
+        : stage === "filtering"
+          ? 35
+          : stage === "analyzing"
+            ? 65
+            : stage === "ranking"
+              ? 90
+              : 0;
 
   const hasSearched = !!results || !!shortlist;
 
@@ -1422,19 +1414,22 @@ function VibeSearch() {
         </div>
       )}
 
-      {!isSearching && !error && hasSearched && displayedCandidates.length === 0 && (
-        <div className="rounded-2xl border border-neutral-200 bg-white p-10 text-center">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-lg">
-            🕳️
+      {!isSearching &&
+        !error &&
+        hasSearched &&
+        displayedCandidates.length === 0 && (
+          <div className="rounded-2xl border border-neutral-200 bg-white p-10 text-center">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-lg">
+              🕳️
+            </div>
+            <p className="mt-3 text-sm font-medium text-neutral-700">
+              No matching candidates
+            </p>
+            <p className="mt-1 text-xs text-neutral-500">
+              Try broader keywords or a different vibe.
+            </p>
           </div>
-          <p className="mt-3 text-sm font-medium text-neutral-700">
-            No matching candidates
-          </p>
-          <p className="mt-1 text-xs text-neutral-500">
-            Try broader keywords or a different vibe.
-          </p>
-        </div>
-      )}
+        )}
 
       {displayedCandidates.length > 0 && (
         <div className="space-y-3">

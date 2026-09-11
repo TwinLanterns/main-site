@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
-import { ADMIN_COOKIE_NAME, ADMIN_SESSION_MAX_AGE, createSessionToken } from "@/lib/admin-auth";
+import {
+  ADMIN_COOKIE_NAME,
+  ADMIN_SESSION_MAX_AGE,
+  createSessionToken,
+} from "@/lib/admin-auth";
 
 function safeCompare(a: string, b: string) {
   const bufA = Buffer.from(a);
@@ -24,8 +28,13 @@ export async function POST(req: NextRequest) {
   const secret = process.env.ADMIN_SESSION_SECRET;
 
   if (!expectedUsername || !expectedPassword || !secret) {
-    console.error("ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_SESSION_SECRET not fully configured.");
-    return NextResponse.json({ error: "Admin auth is not configured on the server." }, { status: 500 });
+    console.error(
+      "ADMIN_USERNAME / ADMIN_PASSWORD / ADMIN_SESSION_SECRET not fully configured.",
+    );
+    return NextResponse.json(
+      { error: "Admin auth is not configured on the server." },
+      { status: 500 },
+    );
   }
 
   const ok =
@@ -35,7 +44,10 @@ export async function POST(req: NextRequest) {
     safeCompare(password, expectedPassword);
 
   if (!ok) {
-    return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Invalid credentials." },
+      { status: 401 },
+    );
   }
 
   const token = await createSessionToken(secret, ADMIN_SESSION_MAX_AGE);

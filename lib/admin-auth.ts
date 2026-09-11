@@ -47,9 +47,14 @@ async function getHmacKey(secret: string) {
 }
 
 /** Creates a `<prefix>.<expiresAtMs>.<signature>` token good for `maxAgeSeconds`. */
-export async function createSessionToken(secret: string, maxAgeSeconds: number) {
+export async function createSessionToken(
+  secret: string,
+  maxAgeSeconds: number,
+) {
   if (!Number.isFinite(maxAgeSeconds) || maxAgeSeconds <= 0) {
-    throw new Error("createSessionToken: maxAgeSeconds must be a positive number");
+    throw new Error(
+      "createSessionToken: maxAgeSeconds must be a positive number",
+    );
   }
   const expiresAt = Date.now() + maxAgeSeconds * 1000;
   const payload = `${TOKEN_PREFIX}.${expiresAt}`;

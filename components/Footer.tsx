@@ -64,7 +64,9 @@ export default function Footer() {
         </div>
 
         <div className="mt-14 flex flex-col gap-3 border-t border-line py-6 text-[13px] text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Twin Lanterns. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} Twin Lanterns. All rights reserved.
+          </p>
           <p>Los Angeles, California</p>
         </div>
       </div>

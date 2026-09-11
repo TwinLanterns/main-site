@@ -7,8 +7,7 @@ const HEX = "M100 6 174 48v104l-74 42-74-42V48L100 6Z";
 
 const ARCH = "M14 194V96a86 86 0 0 1 172 0v98H14Z";
 
-const SQUIRCLE =
-  "M100 6c62 0 94 32 94 94s-32 94-94 94S6 162 6 100 38 6 100 6Z";
+const SQUIRCLE = "M100 6c62 0 94 32 94 94s-32 94-94 94S6 162 6 100 38 6 100 6Z";
 
 /** Petal/notch rings are generated so the geometry stays exact at any count. */
 function ring(points: number, rOuter: number, rInner: number, sharp: boolean) {

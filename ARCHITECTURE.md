@@ -71,22 +71,22 @@ to the browser.
 
 ## 2. Tech Stack
 
-| Layer | Choice |
-| --- | --- |
-| **Framework** | Next.js 16 (App Router, React 19) |
-| **Language** | TypeScript (strict) |
-| **Styling** | Tailwind CSS v4 + custom CSS vars (`ink`, `line`, `flame`, `sky`, `lemon`, `lilac`, `lime`, `blush`, `shell`, `muted`) |
-| **Fonts** | DM Sans via `next/font/google` → CSS var `--font-dm` |
-| **Animations** | Motion (`motion/react`, Framer Motion v11+) |
-| **Database** | Supabase (Postgres, service-role client) |
-| **AI (tagging)** | Groq SDK — `openai/gpt-oss-120b` for resume tagging |
-| **AI (search)** | DeepSeek via a self-hosted Playwright reverse proxy |
-| **Parsing** | `pdfjs-dist`, `mammoth` (docx), `pdf-parse` |
-| **Email** | Resend (optional — non-blocking) |
-| **Analytics** | Vercel Analytics |
-| **Deployment** | Vercel |
-| **Scripts runner** | `tsx` |
-| **Legacy DB bridge** | `pg` (Lovable backup restore) |
+| Layer                | Choice                                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Framework**        | Next.js 16 (App Router, React 19)                                                                                      |
+| **Language**         | TypeScript (strict)                                                                                                    |
+| **Styling**          | Tailwind CSS v4 + custom CSS vars (`ink`, `line`, `flame`, `sky`, `lemon`, `lilac`, `lime`, `blush`, `shell`, `muted`) |
+| **Fonts**            | DM Sans via `next/font/google` → CSS var `--font-dm`                                                                   |
+| **Animations**       | Motion (`motion/react`, Framer Motion v11+)                                                                            |
+| **Database**         | Supabase (Postgres, service-role client)                                                                               |
+| **AI (tagging)**     | Groq SDK — `openai/gpt-oss-120b` for resume tagging                                                                    |
+| **AI (search)**      | DeepSeek via a self-hosted Playwright reverse proxy                                                                    |
+| **Parsing**          | `pdfjs-dist`, `mammoth` (docx), `pdf-parse`                                                                            |
+| **Email**            | Resend (optional — non-blocking)                                                                                       |
+| **Analytics**        | Vercel Analytics                                                                                                       |
+| **Deployment**       | Vercel                                                                                                                 |
+| **Scripts runner**   | `tsx`                                                                                                                  |
+| **Legacy DB bridge** | `pg` (Lovable backup restore)                                                                                          |
 
 ---
 
@@ -183,12 +183,12 @@ Supabase (student_applications)
 
 **Failure modes**
 
-| Condition | Response |
-| --- | --- |
-| Invalid JSON / missing `kind` / wrong `kind` | `400` |
-| Supabase misconfigured (missing env) | `500 Server misconfigured` |
-| Insert error | `502 Save failed` |
-| Email failure | logged, never fails |
+| Condition                                    | Response                   |
+| -------------------------------------------- | -------------------------- |
+| Invalid JSON / missing `kind` / wrong `kind` | `400`                      |
+| Supabase misconfigured (missing env)         | `500 Server misconfigured` |
+| Insert error                                 | `502 Save failed`          |
+| Email failure                                | logged, never fails        |
 
 ### 4.2 Company Brief — `POST /api/submit` with `kind: "company"`
 
@@ -296,23 +296,23 @@ admin.<expiresAtMs>.<hmac_sha256_hex>
 
 **Code:** `lib/admin-auth.ts`
 
-| Function | Behaviour |
-| --- | --- |
-| `createSessionToken(secret, maxAgeSeconds)` | Signs `"admin.<expiry>"` with HMAC-SHA256 |
-| `verifySessionToken(token, secret)` | Checks structure, numeric expiry, and constant-time signature comparison (`timingSafeEqualHex`) |
+| Function                                    | Behaviour                                                                                       |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `createSessionToken(secret, maxAgeSeconds)` | Signs `"admin.<expiry>"` with HMAC-SHA256                                                       |
+| `verifySessionToken(token, secret)`         | Checks structure, numeric expiry, and constant-time signature comparison (`timingSafeEqualHex`) |
 
 Uses **Web Crypto** (`crypto.subtle`) so the same code runs in both the Edge
 runtime (middleware) and Node runtime (API routes).
 
 **Cookie: `admin_session`**
 
-| Attribute | Value |
-| --- | --- |
-| `httpOnly` | yes |
-| `sameSite` | `lax` |
-| `secure` | in production |
-| `path` | `/` |
-| `maxAge` | 7 days |
+| Attribute  | Value         |
+| ---------- | ------------- |
+| `httpOnly` | yes           |
+| `sameSite` | `lax`         |
+| `secure`   | in production |
+| `path`     | `/`           |
+| `maxAge`   | 7 days        |
 
 **Login comparison** (`app/api/admin/login/route.ts`): uses Node
 `crypto.timingSafeEqual` behind a helper that still compares buffers of unequal
@@ -320,13 +320,13 @@ length (prevents leaking length via timing).
 
 **Where auth is enforced**
 
-| Route | Enforcement |
-| --- | --- |
-| `/api/admin/login` | issues the cookie |
-| `/api/admin/logout` | clears the cookie (no auth check needed) |
-| `/api/admin/resume/[id]` | `isAdmin()` before file lookup |
-| `/api/admin/vibe-search` | `verifySessionToken` before streaming |
-| `/admin` page | assumed server-side (needs `middleware.ts` or per-page check; the repo tree includes `proxy.ts` at root, likely a middleware equivalent) |
+| Route                    | Enforcement                                                                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/admin/login`       | issues the cookie                                                                                                                        |
+| `/api/admin/logout`      | clears the cookie (no auth check needed)                                                                                                 |
+| `/api/admin/resume/[id]` | `isAdmin()` before file lookup                                                                                                           |
+| `/api/admin/vibe-search` | `verifySessionToken` before streaming                                                                                                    |
+| `/admin` page            | assumed server-side (needs `middleware.ts` or per-page check; the repo tree includes `proxy.ts` at root, likely a middleware equivalent) |
 
 ---
 
@@ -340,75 +340,75 @@ length (prevents leaking length via timing).
 > ⚠️ Never import from a `"use client"` component.
 > Never expose `SUPABASE_SERVICE_ROLE_KEY` with a `NEXT_PUBLIC_` prefix.
 
-| Env | Value |
-| --- | --- |
+| Env | Value                                                     |
+| --- | --------------------------------------------------------- |
 | URL | `SUPABASE_URL` (falls back to `NEXT_PUBLIC_SUPABASE_URL`) |
-| Key | `SUPABASE_SERVICE_ROLE_KEY` |
+| Key | `SUPABASE_SERVICE_ROLE_KEY`                               |
 
 #### Tables
 
 **`student_applications`**
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | uuid | PK |
-| `first_name` | text | |
-| `last_name` | text | nullable |
-| `email` | text | |
-| `phone` | text | nullable |
-| `level` | text | High school / Undergraduate / Graduate / Gap year |
-| `school` | text | |
-| `grad_year` | text | |
-| `location` | text | |
-| `interests` | text[] | |
-| `hours_per_week` | text | e.g. `"10 hrs / week"` or `"Full time"` |
-| `start_timing` | text | e.g. `"In about 2 weeks"` |
-| `work_setup` | text | Remote / Hybrid / In person / No preference |
-| `priorities` | text[] | rank-prefixed (`"1. ..."`) |
-| `built` | text | free-form "something you built" |
-| `links` | text | newline-joined URLs |
-| `resume_name` | text | nullable |
-| `resume_data` | text | base64 (nullable) |
-| `raw_payload` | jsonb | verbatim original submission |
-| `created_at` | timestamptz | |
+| Column           | Type        | Notes                                             |
+| ---------------- | ----------- | ------------------------------------------------- |
+| `id`             | uuid        | PK                                                |
+| `first_name`     | text        |                                                   |
+| `last_name`      | text        | nullable                                          |
+| `email`          | text        |                                                   |
+| `phone`          | text        | nullable                                          |
+| `level`          | text        | High school / Undergraduate / Graduate / Gap year |
+| `school`         | text        |                                                   |
+| `grad_year`      | text        |                                                   |
+| `location`       | text        |                                                   |
+| `interests`      | text[]      |                                                   |
+| `hours_per_week` | text        | e.g. `"10 hrs / week"` or `"Full time"`           |
+| `start_timing`   | text        | e.g. `"In about 2 weeks"`                         |
+| `work_setup`     | text        | Remote / Hybrid / In person / No preference       |
+| `priorities`     | text[]      | rank-prefixed (`"1. ..."`)                        |
+| `built`          | text        | free-form "something you built"                   |
+| `links`          | text        | newline-joined URLs                               |
+| `resume_name`    | text        | nullable                                          |
+| `resume_data`    | text        | base64 (nullable)                                 |
+| `raw_payload`    | jsonb       | verbatim original submission                      |
+| `created_at`     | timestamptz |                                                   |
 
 **`company_briefs`**
 
-| Column | Type |
-| --- | --- |
-| `id` | uuid PK |
-| `company` | text |
-| `website` | text nullable |
-| `contact_name` | text |
-| `contact_email` | text |
-| `stage` | text |
-| `team_size` | text |
-| `function` | text |
-| `title` | text |
-| `outcome` | text |
-| `work_setup` | text |
-| `city` | text |
-| `commitment` | text |
-| `pay` | text |
-| `timeline` | text |
-| `raw_payload` | jsonb |
-| `created_at` | timestamptz |
+| Column          | Type          |
+| --------------- | ------------- |
+| `id`            | uuid PK       |
+| `company`       | text          |
+| `website`       | text nullable |
+| `contact_name`  | text          |
+| `contact_email` | text          |
+| `stage`         | text          |
+| `team_size`     | text          |
+| `function`      | text          |
+| `title`         | text          |
+| `outcome`       | text          |
+| `work_setup`    | text          |
+| `city`          | text          |
+| `commitment`    | text          |
+| `pay`           | text          |
+| `timeline`      | text          |
+| `raw_payload`   | jsonb         |
+| `created_at`    | timestamptz   |
 
 **`candidate_ai_tags`**
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | uuid | PK |
-| `student_id` | uuid | FK → `student_applications.id` |
-| `vibe_tags` | text[] | |
-| `soft_skills` | text[] | |
-| `hard_skills` | text[] | |
-| `ai_summary` | text | one-line summary |
-| `model_used` | text | e.g. `"llama-3.3-70b-versatile"` |
-| `prompt_version` | text | e.g. `"v2"` |
-| `source_file_name` | text | |
-| `ai_processed_at` | timestamptz | |
-| `raw_ai_response` | jsonb | |
+| Column             | Type        | Notes                            |
+| ------------------ | ----------- | -------------------------------- |
+| `id`               | uuid        | PK                               |
+| `student_id`       | uuid        | FK → `student_applications.id`   |
+| `vibe_tags`        | text[]      |                                  |
+| `soft_skills`      | text[]      |                                  |
+| `hard_skills`      | text[]      |                                  |
+| `ai_summary`       | text        | one-line summary                 |
+| `model_used`       | text        | e.g. `"llama-3.3-70b-versatile"` |
+| `prompt_version`   | text        | e.g. `"v2"`                      |
+| `source_file_name` | text        |                                  |
+| `ai_processed_at`  | timestamptz |                                  |
+| `raw_ai_response`  | jsonb       |                                  |
 
 > **Unique constraint:** `(student_id, prompt_version)` — the tagging script
 > upserts on this pair.
@@ -419,17 +419,17 @@ Self-hosted Playwright proxy that drives the DeepSeek web UI and returns either 
 streamed SSE response (`stream: true`) or a single JSON object (`stream: false`)
 shaped like OpenAI's `/v1/chat/completions`.
 
-| Item | Value |
-| --- | --- |
-| Env | `DEEPSEEK_PROXY_URL`, `DEEPSEEK_API_KEY_REVERSE_PROXY` |
-| Model requested | `deepseek-chat` |
+| Item            | Value                                                  |
+| --------------- | ------------------------------------------------------ |
+| Env             | `DEEPSEEK_PROXY_URL`, `DEEPSEEK_API_KEY_REVERSE_PROXY` |
+| Model requested | `deepseek-chat`                                        |
 
 **Two client paths**
 
-| Path | Behaviour |
-| --- | --- |
-| `lib/deepseek.ts` | streaming (`stream: true`), yields `"append"` / `"replace"` events. `"replace"` exists because DeepSeek's DOM can re-render mid-response (e.g. table separators becoming real content), which append-only streaming can't represent. |
-| `app/api/admin/vibe-search/route.ts` | non-streaming (`stream: false`) with per-call timeouts. |
+| Path                                 | Behaviour                                                                                                                                                                                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lib/deepseek.ts`                    | streaming (`stream: true`), yields `"append"` / `"replace"` events. `"replace"` exists because DeepSeek's DOM can re-render mid-response (e.g. table separators becoming real content), which append-only streaming can't represent. |
+| `app/api/admin/vibe-search/route.ts` | non-streaming (`stream: false`) with per-call timeouts.                                                                                                                                                                              |
 
 - **Timeout:** 200s client-side via `AbortController` (server hard cap is 180s).
 - **Reasoning tokens:** `<think>...</think>` blocks are stripped before use.
@@ -438,11 +438,11 @@ shaped like OpenAI's `/v1/chat/completions`.
 
 Used **only** by `scripts/tag-resumes.ts`, not by any runtime API route.
 
-| Item | Value |
-| --- | --- |
-| Env | `GROQ_API_KEY` |
-| Model | `openai/gpt-oss-120b` (older runs used `llama-3.3-70b-versatile`; the `model_used` column records what was actually used) |
-| Response format | `{ type: "json_object" }` |
+| Item            | Value                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Env             | `GROQ_API_KEY`                                                                                                            |
+| Model           | `openai/gpt-oss-120b` (older runs used `llama-3.3-70b-versatile`; the `model_used` column records what was actually used) |
+| Response format | `{ type: "json_object" }`                                                                                                 |
 
 **Produces:** `hard_skills`, `soft_skills`, `vibe_tags`, `one_line_summary`
 
@@ -450,11 +450,11 @@ Used **only** by `scripts/tag-resumes.ts`, not by any runtime API route.
 
 Used **only** by `app/api/submit/route.ts`, and entirely non-blocking.
 
-| Env | Notes |
-| --- | --- |
-| `RESEND_API_KEY` | |
-| `TL_NOTIFY_EMAIL` | |
-| `TL_FROM_EMAIL` | defaults to `"Twin Lanterns onboarding@resend.dev"` |
+| Env               | Notes                                               |
+| ----------------- | --------------------------------------------------- |
+| `RESEND_API_KEY`  |                                                     |
+| `TL_NOTIFY_EMAIL` |                                                     |
+| `TL_FROM_EMAIL`   | defaults to `"Twin Lanterns onboarding@resend.dev"` |
 
 Sends two emails per submission:
 
@@ -473,23 +473,23 @@ Sends two emails per submission:
 
 **Server-only** (never `NEXT_PUBLIC_`):
 
-| Variable | Used by |
-| --- | --- |
-| `SUPABASE_URL` | `lib/supabase-server` |
-| `NEXT_PUBLIC_SUPABASE_URL` | fallback URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | RLS-bypassing key |
-| `ADMIN_USERNAME` | `api/admin/login` |
-| `ADMIN_PASSWORD` | `api/admin/login` |
-| `ADMIN_SESSION_SECRET` | `lib/admin-auth`, `api/admin/*` |
-| `DEEPSEEK_PROXY_URL` | `lib/deepseek`, `vibe-search` |
-| `DEEPSEEK_API_KEY_REVERSE_PROXY` | `lib/deepseek`, `vibe-search` |
-| `RESEND_API_KEY` | `api/submit` (optional) |
-| `TL_NOTIFY_EMAIL` | `api/submit` |
-| `TL_FROM_EMAIL` | `api/submit` (optional) |
-| `GROQ_API_KEY` | `scripts/tag-resumes` |
-| `OLD_DATABASE_URL` | `scripts/migrate-lovable` |
-| `RESUME_DIR` | `scripts/migrate-resumes` |
-| `DEBUG` | `lib/deepseek`, `scripts/test-deepseek-api` |
+| Variable                         | Used by                                     |
+| -------------------------------- | ------------------------------------------- |
+| `SUPABASE_URL`                   | `lib/supabase-server`                       |
+| `NEXT_PUBLIC_SUPABASE_URL`       | fallback URL                                |
+| `SUPABASE_SERVICE_ROLE_KEY`      | RLS-bypassing key                           |
+| `ADMIN_USERNAME`                 | `api/admin/login`                           |
+| `ADMIN_PASSWORD`                 | `api/admin/login`                           |
+| `ADMIN_SESSION_SECRET`           | `lib/admin-auth`, `api/admin/*`             |
+| `DEEPSEEK_PROXY_URL`             | `lib/deepseek`, `vibe-search`               |
+| `DEEPSEEK_API_KEY_REVERSE_PROXY` | `lib/deepseek`, `vibe-search`               |
+| `RESEND_API_KEY`                 | `api/submit` (optional)                     |
+| `TL_NOTIFY_EMAIL`                | `api/submit`                                |
+| `TL_FROM_EMAIL`                  | `api/submit` (optional)                     |
+| `GROQ_API_KEY`                   | `scripts/tag-resumes`                       |
+| `OLD_DATABASE_URL`               | `scripts/migrate-lovable`                   |
+| `RESUME_DIR`                     | `scripts/migrate-resumes`                   |
+| `DEBUG`                          | `lib/deepseek`, `scripts/test-deepseek-api` |
 
 ---
 
@@ -501,11 +501,11 @@ Sends two emails per submission:
 
 **Three tabs**
 
-| Tab | Contents |
-| --- | --- |
+| Tab                      | Contents                                                                                                               |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | **Student applications** | Table with fixed columns + AI columns (`vibe_tags`, `soft_skills`, `hard_skills`, `ai_summary`) + resume download link |
-| **Company briefs** | Table with `BRIEF_COLUMNS` |
-| **Search** | `<VibeSearch />` |
+| **Company briefs**       | Table with `BRIEF_COLUMNS`                                                                                             |
+| **Search**               | `<VibeSearch />`                                                                                                       |
 
 **Table features** (internal to `AdminDashboard.tsx`)
 
@@ -552,29 +552,29 @@ Sends two emails per submission:
 
 All exported from one file. Used by both `ApplyFlow.tsx` and `HireFlow.tsx`.
 
-| Export | Description |
-| --- | --- |
-| `ease` | `[0.22, 1, 0.36, 1]` — site-wide cubic bezier |
-| `Field` | Label + hint wrapper around any control |
-| `Input`, `Textarea`, `Select` | Styled HTML controls sharing a base class |
-| `Pills` | Single- or multi-select pill group; `aria-pressed` set |
-| `ChoiceCards` | Grid of tappable cards with a rotating Shape icon |
-| `Slider` | Range input with `format(value)` display + optional ticks |
-| `RankList` / `RankItem` | Drag-to-reorder list (Motion `Reorder`) with drag controls |
-| `DropZone` / `Upload` | File drop zone; reads to base64; 4 MB cap; accepts `.pdf,.doc,.docx,.png,.jpg,.jpeg,.txt` |
-| `StepHeader` | "Step X of Y", title, blurb |
-| `StepRail` | Vertical step navigation; completed steps clickable |
-| `Progress` | 0.5px top bar; `width = value * 100%` |
-| `NavButtons` | Back (button) + Next (submit); loading state "Sending..." |
+| Export                        | Description                                                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------------- |
+| `ease`                        | `[0.22, 1, 0.36, 1]` — site-wide cubic bezier                                             |
+| `Field`                       | Label + hint wrapper around any control                                                   |
+| `Input`, `Textarea`, `Select` | Styled HTML controls sharing a base class                                                 |
+| `Pills`                       | Single- or multi-select pill group; `aria-pressed` set                                    |
+| `ChoiceCards`                 | Grid of tappable cards with a rotating Shape icon                                         |
+| `Slider`                      | Range input with `format(value)` display + optional ticks                                 |
+| `RankList` / `RankItem`       | Drag-to-reorder list (Motion `Reorder`) with drag controls                                |
+| `DropZone` / `Upload`         | File drop zone; reads to base64; 4 MB cap; accepts `.pdf,.doc,.docx,.png,.jpg,.jpeg,.txt` |
+| `StepHeader`                  | "Step X of Y", title, blurb                                                               |
+| `StepRail`                    | Vertical step navigation; completed steps clickable                                       |
+| `Progress`                    | 0.5px top bar; `width = value * 100%`                                                     |
+| `NavButtons`                  | Back (button) + Next (submit); loading state "Sending..."                                 |
 
 ### 9.2 Visual System
 
-| Module | Notes |
-| --- | --- |
+| Module                               | Notes                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Shapes** (`components/Shapes.tsx`) | Six SVG shapes: `clover`, `hex`, `arch`, `squircle`, `scallop` (14-point smooth ring), `burst` (12-point sharp star). `scallop` and `burst` are generated procedurally by `ring(points, rOuter, rInner, sharp)`. The exported `shapePaths` record is also used by `Landing.tsx` to clip founder photos into morphing blobs. |
-| **Mark** (`components/Mark.tsx`) | The Twin Lanterns logo: two angled panels plus a flickering spark in `--color-flame`. |
-| **Reveal** (`components/Reveal.tsx`) | Single motion primitive. Every section entrance on the site uses it: fade up 12px, once, `amount: 0.25`. |
-| **Nav** (`components/Nav.tsx`) | Fixed floating pill, centered. After 40px of scroll it collapses to `w-max`, hides the brand text, and moves the CTAs to a corner cluster. Mobile menu slides down from the pill. |
+| **Mark** (`components/Mark.tsx`)     | The Twin Lanterns logo: two angled panels plus a flickering spark in `--color-flame`.                                                                                                                                                                                                                                       |
+| **Reveal** (`components/Reveal.tsx`) | Single motion primitive. Every section entrance on the site uses it: fade up 12px, once, `amount: 0.25`.                                                                                                                                                                                                                    |
+| **Nav** (`components/Nav.tsx`)       | Fixed floating pill, centered. After 40px of scroll it collapses to `w-max`, hides the brand text, and moves the CTAs to a corner cluster. Mobile menu slides down from the pill.                                                                                                                                           |
 
 - **Typography utilities:** `display`, `label`, `eyebrow`
 - **Motion:** all animations import from `motion/react`. `AnimatePresence` is
@@ -626,14 +626,14 @@ OLD_DATABASE_URL="postgres://..." npx tsx scripts/migrate-lovable.ts --commit
 
 **Field mapping**
 
-| Old | New |
-| --- | --- |
-| `university` | `school` |
-| `graduation_year` | `grad_year` |
-| `hours_available` | `hours_per_week` |
-| `start_date` | `start_timing` |
-| `work_preference` | `work_setup` |
-| `experience_summary` | `built` |
+| Old                                            | New              |
+| ---------------------------------------------- | ---------------- |
+| `university`                                   | `school`         |
+| `graduation_year`                              | `grad_year`      |
+| `hours_available`                              | `hours_per_week` |
+| `start_date`                                   | `start_timing`   |
+| `work_preference`                              | `work_setup`     |
+| `experience_summary`                           | `built`          |
 | `linkedin_url`, `portfolio_url`, `website_url` | `links` (joined) |
 
 Preserves `id` and upserts on conflict `id` — re-running after a partial commit
@@ -697,9 +697,9 @@ Type `exit`, `quit`, or `q` to end the session.
 
 ## 11. Deployment
 
-| Item | Value |
-| --- | --- |
-| **Platform** | Vercel |
+| Item               | Value                                                                 |
+| ------------------ | --------------------------------------------------------------------- |
+| **Platform**       | Vercel                                                                |
 | **Production URL** | https://twin-lanterns.vercel.app (`metadataBase` in `app/layout.tsx`) |
 
 **Runtime**

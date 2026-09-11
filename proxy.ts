@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
+import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
 
 export const config = {
   matcher: [
@@ -20,10 +20,7 @@ export async function proxy(req: NextRequest) {
   if (!secret) {
     console.error("ADMIN_SESSION_SECRET is not set — blocking access.");
     return isApi
-      ? NextResponse.json(
-          { error: "Server misconfigured" },
-          { status: 500 },
-        )
+      ? NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
       : NextResponse.redirect(new URL(LOGIN_PATH, req.url));
   }
 

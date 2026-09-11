@@ -71,26 +71,28 @@ export async function POST(req: Request) {
 
     if (kind === "student") {
       const p = payload as StudentPayload;
-      const { error: dbError } = await supabase.from("student_applications").insert({
-        first_name: p.firstName ?? "",
-        last_name: p.lastName ?? null,
-        email: p.email ?? "",
-        phone: p.phone ?? null,
-        level: p.level ?? null,
-        school: p.school ?? null,
-        grad_year: p.gradYear ?? null,
-        location: p.location ?? null,
-        interests: p.interests ?? [],
-        hours_per_week: p.hours ?? null,
-        start_timing: p.startWeeks ?? null,
-        work_setup: p.setup ?? null,
-        priorities: p.priorities ?? [],
-        built: p.built ?? null,
-        links: p.links ?? null,
-        resume_name: attachment?.name ?? null,
-        resume_data: attachment?.data ?? null,
-        raw_payload: payload,
-      });
+      const { error: dbError } = await supabase
+        .from("student_applications")
+        .insert({
+          first_name: p.firstName ?? "",
+          last_name: p.lastName ?? null,
+          email: p.email ?? "",
+          phone: p.phone ?? null,
+          level: p.level ?? null,
+          school: p.school ?? null,
+          grad_year: p.gradYear ?? null,
+          location: p.location ?? null,
+          interests: p.interests ?? [],
+          hours_per_week: p.hours ?? null,
+          start_timing: p.startWeeks ?? null,
+          work_setup: p.setup ?? null,
+          priorities: p.priorities ?? [],
+          built: p.built ?? null,
+          links: p.links ?? null,
+          resume_name: attachment?.name ?? null,
+          resume_data: attachment?.data ?? null,
+          raw_payload: payload,
+        });
       if (dbError) {
         console.error("supabase insert error (student_applications)", dbError);
         return NextResponse.json({ error: "Save failed" }, { status: 502 });
@@ -121,12 +123,16 @@ export async function POST(req: Request) {
     }
   } catch (err) {
     console.error("supabase config error", err);
-    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Server misconfigured" },
+      { status: 500 },
+    );
   }
 
   const key = process.env.RESEND_API_KEY;
   const to = process.env.TL_NOTIFY_EMAIL;
-  const from = process.env.TL_FROM_EMAIL ?? "Twin Lanterns <onboarding@resend.dev>";
+  const from =
+    process.env.TL_FROM_EMAIL ?? "Twin Lanterns <onboarding@resend.dev>";
 
   async function sendEmail(args: {
     to: string[];
@@ -139,8 +145,8 @@ export async function POST(req: Request) {
         path: "https://twinlanterns.co",
         filename: "mark.svg",
         contentId: "mark",
-      }
-    ]
+      },
+    ];
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -153,7 +159,11 @@ export async function POST(req: Request) {
         subject: args.subject,
         html: args.html,
         ...(args.withAttachment && attachment?.data
-          ? { attachments: [{ filename: attachment.name, content: attachment.data }] }
+          ? {
+              attachments: [
+                { filename: attachment.name, content: attachment.data },
+              ],
+            }
           : {}),
       }),
     });
@@ -190,9 +200,13 @@ export async function POST(req: Request) {
     }
 
     // Confirmation back to whoever submitted the form.
-    const submitterEmail = typeof payload.email === "string" ? payload.email.trim() : "";
+    const submitterEmail =
+      typeof payload.email === "string" ? payload.email.trim() : "";
     if (submitterEmail) {
-      const firstName = kind === "student" ? String(payload.firstName ?? "") : String(payload.name ?? "");
+      const firstName =
+        kind === "student"
+          ? String(payload.firstName ?? "")
+          : String(payload.name ?? "");
       const greeting = firstName ? `Hi ${firstName},` : "Hi there,";
       const bodyText =
         kind === "student"
@@ -213,7 +227,9 @@ export async function POST(req: Request) {
       }
     }
   } else {
-    console.log(`[twin-lanterns] ${kind} submission saved to Supabase (no email configured)`);
+    console.log(
+      `[twin-lanterns] ${kind} submission saved to Supabase (no email configured)`,
+    );
   }
 
   return NextResponse.json({ ok: true });

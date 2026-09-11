@@ -13,7 +13,12 @@ const btn =
 /* ----------------------------------- hero ---------------------------------- */
 
 const phrases = [
-  { pre: "Stop hiring ", accent: "sh*tty", post: " interns.", tone: "text-flame" },
+  {
+    pre: "Stop hiring ",
+    accent: "sh*tty",
+    post: " interns.",
+    tone: "text-flame",
+  },
   {
     pre: "Stop working for ",
     accent: "sh*tty",
@@ -24,7 +29,9 @@ const phrases = [
 
 function Hero() {
   const [phase, setPhase] = useState(0);
-  const [n, setN] = useState(phrases[0].pre.length + phrases[0].accent.length + phrases[0].post.length);
+  const [n, setN] = useState(
+    phrases[0].pre.length + phrases[0].accent.length + phrases[0].post.length,
+  );
   const [erasing, setErasing] = useState(false);
 
   const p = phrases[phase];
@@ -65,12 +72,47 @@ function Hero() {
     <section className="relative overflow-hidden pb-16 pt-36 sm:pb-24 sm:pt-44">
       {/* shape cluster, left */}
       <div className="pointer-events-none absolute inset-0 hidden lg:block">
-        <Shape kind="clover" className="absolute left-[2%] top-[14%] w-[130px] text-flame transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]" rotate={spin(0)} float />
-        <Shape kind="arch" className="absolute left-[9%] top-[52%] w-[104px] text-lilac transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]" rotate={spin(1)} float delay={1.2} />
-        <Shape kind="hex" className="absolute left-[1%] bottom-[6%] w-[86px] text-lemon transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]" rotate={spin(2)} float delay={0.6} />
-        <Shape kind="scallop" className="absolute right-[3%] top-[16%] w-[124px] text-sky transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]" rotate={spin(3)} float delay={0.9} />
-        <Shape kind="burst" className="absolute right-[10%] top-[54%] w-[96px] text-lime transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]" rotate={spin(4)} float delay={1.6} />
-        <Shape kind="squircle" className="absolute bottom-[7%] right-[2%] w-[88px] text-blush transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]" rotate={spin(5)} float delay={2.1} />
+        <Shape
+          kind="clover"
+          className="absolute left-[2%] top-[14%] w-[130px] text-flame transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          rotate={spin(0)}
+          float
+        />
+        <Shape
+          kind="arch"
+          className="absolute left-[9%] top-[52%] w-[104px] text-lilac transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          rotate={spin(1)}
+          float
+          delay={1.2}
+        />
+        <Shape
+          kind="hex"
+          className="absolute left-[1%] bottom-[6%] w-[86px] text-lemon transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          rotate={spin(2)}
+          float
+          delay={0.6}
+        />
+        <Shape
+          kind="scallop"
+          className="absolute right-[3%] top-[16%] w-[124px] text-sky transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          rotate={spin(3)}
+          float
+          delay={0.9}
+        />
+        <Shape
+          kind="burst"
+          className="absolute right-[10%] top-[54%] w-[96px] text-lime transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          rotate={spin(4)}
+          float
+          delay={1.6}
+        />
+        <Shape
+          kind="squircle"
+          className="absolute bottom-[7%] right-[2%] w-[88px] text-blush transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          rotate={spin(5)}
+          float
+          delay={2.1}
+        />
       </div>
 
       <div className={`${wrap} relative text-center`}>
@@ -78,7 +120,10 @@ function Hero() {
           <span>{full.slice(0, Math.min(n, p.pre.length))}</span>
           <span className={p.tone}>
             {n > p.pre.length
-              ? full.slice(p.pre.length, Math.min(n, p.pre.length + p.accent.length))
+              ? full.slice(
+                  p.pre.length,
+                  Math.min(n, p.pre.length + p.accent.length),
+                )
               : ""}
           </span>
           <span>
@@ -94,12 +139,15 @@ function Hero() {
 
         <p className="mx-auto mt-9 max-w-[52ch] text-[17px] leading-relaxed text-muted sm:text-[19px]">
           We screen ambitious high school and college students, scope the role
-          with the founder, and put the right two people in the same room. No job
-          board. No résumé pile.
+          with the founder, and put the right two people in the same room. No
+          job board. No résumé pile.
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-3">
-          <Link href="/apply" className={`${btn} bg-ink text-white hover:bg-flame`}>
+          <Link
+            href="/apply"
+            className={`${btn} bg-ink text-white hover:bg-flame`}
+          >
             Apply as a student
           </Link>
           <Link
@@ -139,7 +187,9 @@ const stats = [
 function Stats() {
   return (
     <section className="border-y border-line">
-      <div className={`${wrap} grid divide-y divide-line sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-3`}>
+      <div
+        className={`${wrap} grid divide-y divide-line sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-3`}
+      >
         {stats.map(([k, v], i) => (
           <Reveal
             key={v}
@@ -192,10 +242,15 @@ const panels = [
 
 function Split() {
   return (
-    <section id="two-sides" className={`${wrap} grid gap-5 py-20 sm:py-28 lg:grid-cols-2`}>
+    <section
+      id="two-sides"
+      className={`${wrap} grid gap-5 py-20 sm:py-28 lg:grid-cols-2`}
+    >
       {panels.map((p, i) => (
         <Reveal key={p.label} delay={i * 0.08}>
-          <div className={`relative flex h-full flex-col overflow-hidden rounded-[32px] p-8 sm:p-12 ${p.tone}`}>
+          <div
+            className={`relative flex h-full flex-col overflow-hidden rounded-[32px] p-8 sm:p-12 ${p.tone}`}
+          >
             <Shape
               kind={p.shape}
               className="pointer-events-none absolute -right-10 -top-10 w-40 text-white/15"
@@ -207,7 +262,10 @@ function Split() {
             </h2>
             <ul className="mt-9 space-y-4 border-t border-current/20 pt-8">
               {p.points.map((pt) => (
-                <li key={pt} className="flex gap-3.5 text-[15.5px] leading-relaxed opacity-90">
+                <li
+                  key={pt}
+                  className="flex gap-3.5 text-[15.5px] leading-relaxed opacity-90"
+                >
                   <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
                   {pt}
                 </li>
@@ -277,8 +335,8 @@ function Process() {
             From vague need to first day.
           </h2>
           <p className="max-w-md text-[16px] leading-relaxed text-muted lg:pb-2">
-            Five steps, run by two people who both stay on the file the whole way
-            through.
+            Five steps, run by two people who both stay on the file the whole
+            way through.
           </p>
         </Reveal>
 
@@ -291,7 +349,9 @@ function Process() {
                     kind={s.kind}
                     className={`h-8 w-8 shrink-0 transition-transform duration-500 group-hover:rotate-90 ${s.color}`}
                   />
-                  <span className="text-[14px] text-muted sm:hidden">{s.meta}</span>
+                  <span className="text-[14px] text-muted sm:hidden">
+                    {s.meta}
+                  </span>
                 </div>
                 <h3 className="display text-[clamp(1.6rem,2.6vw,2.1rem)]">
                   {s.title}
@@ -318,8 +378,19 @@ function Statement() {
     <section className={`${wrap} py-6 sm:py-10`}>
       <Reveal>
         <div className="relative overflow-hidden rounded-[32px] bg-shell px-7 py-16 sm:px-14 sm:py-24">
-          <Shape kind="hex" className="absolute -left-8 -top-6 w-28 text-lemon" rotate={-12} float />
-          <Shape kind="clover" className="absolute -bottom-8 -right-6 w-32 text-flame" rotate={12} float delay={1.1} />
+          <Shape
+            kind="hex"
+            className="absolute -left-8 -top-6 w-28 text-lemon"
+            rotate={-12}
+            float
+          />
+          <Shape
+            kind="clover"
+            className="absolute -bottom-8 -right-6 w-32 text-flame"
+            rotate={12}
+            float
+            delay={1.1}
+          />
           <p className="display mx-auto max-w-[20ch] text-center text-[clamp(2rem,5.4vw,4rem)]">
             A résumé pile tells you who can write a résumé.
           </p>
@@ -340,25 +411,50 @@ const roleGroups = [
     group: "Engineering",
     color: "text-flame",
     kind: "clover" as const,
-    roles: ["Junior software engineer", "Frontend intern", "Data & automation", "QA and release testing", "Technical support"],
+    roles: [
+      "Junior software engineer",
+      "Frontend intern",
+      "Data & automation",
+      "QA and release testing",
+      "Technical support",
+    ],
   },
   {
     group: "Growth & marketing",
     color: "text-sky",
     kind: "scallop" as const,
-    roles: ["Content & social", "Growth analyst", "Email & lifecycle", "Community manager", "Paid ads assistant", "Brand & design"],
+    roles: [
+      "Content & social",
+      "Growth analyst",
+      "Email & lifecycle",
+      "Community manager",
+      "Paid ads assistant",
+      "Brand & design",
+    ],
   },
   {
     group: "Operations",
     color: "text-lemon",
     kind: "hex" as const,
-    roles: ["Ops assistant", "Executive assistant", "Customer success", "Recruiting coordinator", "Inventory & logistics"],
+    roles: [
+      "Ops assistant",
+      "Executive assistant",
+      "Customer success",
+      "Recruiting coordinator",
+      "Inventory & logistics",
+    ],
   },
   {
     group: "Finance & research",
     color: "text-lilac",
     kind: "burst" as const,
-    roles: ["Financial analyst", "Market research", "Grant research", "Bookkeeping support", "Diligence support"],
+    roles: [
+      "Financial analyst",
+      "Market research",
+      "Grant research",
+      "Bookkeeping support",
+      "Diligence support",
+    ],
   },
 ];
 
@@ -410,7 +506,11 @@ const founders = [
     school: "Political Science & Global Studies, UCLA",
     photo: "/team/carlos.png",
     bio: "Carlos leads the talent side of Twin Lanterns: sourcing, screening and the conversations that decide whether a candidate goes forward. His background in political science and global studies is built on research, interviewing and reading people accurately — the same skills that make a shortlist trustworthy. He owns our campus partnerships and speaks with every student we put in front of a founder.",
-    skills: ["Candidate screening & interviews", "Campus and club partnerships", "Shortlist quality control"],
+    skills: [
+      "Candidate screening & interviews",
+      "Campus and club partnerships",
+      "Shortlist quality control",
+    ],
   },
   {
     name: "Cameron Negahban",
@@ -456,7 +556,10 @@ function BlobPhoto({
 }
 function Founders() {
   return (
-    <section id="team" className="overflow-hidden border-t border-line py-20 sm:py-28">
+    <section
+      id="team"
+      className="overflow-hidden border-t border-line py-20 sm:py-28"
+    >
       <div className={wrap}>
         <Reveal>
           <h2 className="display max-w-[14ch] text-[clamp(2.2rem,5vw,3.8rem)]">
@@ -477,7 +580,10 @@ function Founders() {
               <p key="s" className="mt-1 text-[14.5px] text-muted">
                 {f.school}
               </p>,
-              <p key="b" className="mt-6 max-w-[52ch] text-[15.5px] leading-relaxed text-muted">
+              <p
+                key="b"
+                className="mt-6 max-w-[52ch] text-[15.5px] leading-relaxed text-muted"
+              >
                 {f.bio}
               </p>,
               <ul key="k" className="mt-7 flex flex-wrap gap-2">
@@ -529,19 +635,39 @@ function Founders() {
 /* ------------------------------------ faq ----------------------------------- */
 
 const faqs = [
-  ["Does it cost students anything?", "Nothing upfront, ever. Applying, being screened and interviewing are all free — you're only charged once you've been accepted into a role, never before that."],
-  ["I'm in high school. Am I too young?", "No. A meaningful share of our placements are high schoolers in part-time, remote roles. What matters is that you can be relied on for a set number of hours a week."],
-  ["How long does a search take?", "First shortlist within 48 hours of the intake call. Most roles have someone starting inside two weeks."],
-  ["What does it cost a company?", "Nothing. You don't pay for a single student we place — no placement fee, no hourly cost, no invoice at the end of the month."],
-  ["What if the placement doesn't work out?", "We stay on the file for the first month. If it isn't working, we re-run the search at no additional cost."],
-  ["Remote or in person?", "Both. Most student roles are remote or hybrid; we filter for location on the intake call so nobody's time gets wasted."],
+  [
+    "Does it cost students anything?",
+    "Nothing upfront, ever. Applying, being screened and interviewing are all free — you're only charged once you've been accepted into a role, never before that.",
+  ],
+  [
+    "I'm in high school. Am I too young?",
+    "No. A meaningful share of our placements are high schoolers in part-time, remote roles. What matters is that you can be relied on for a set number of hours a week.",
+  ],
+  [
+    "How long does a search take?",
+    "First shortlist within 48 hours of the intake call. Most roles have someone starting inside two weeks.",
+  ],
+  [
+    "What does it cost a company?",
+    "Nothing. You don't pay for a single student we place — no placement fee, no hourly cost, no invoice at the end of the month.",
+  ],
+  [
+    "What if the placement doesn't work out?",
+    "We stay on the file for the first month. If it isn't working, we re-run the search at no additional cost.",
+  ],
+  [
+    "Remote or in person?",
+    "Both. Most student roles are remote or hybrid; we filter for location on the intake call so nobody's time gets wasted.",
+  ],
 ];
 
 function Faq() {
   const [open, setOpen] = useState<number | null>(0);
   return (
     <section id="faq" className="border-t border-line py-20 sm:py-28">
-      <div className={`${wrap} grid gap-12 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)]`}>
+      <div
+        className={`${wrap} grid gap-12 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)]`}
+      >
         <Reveal>
           <h2 className="display max-w-[10ch] text-[clamp(2.2rem,5vw,3.8rem)]">
             The things everyone asks.
@@ -588,15 +714,28 @@ function Faq() {
 function Cta() {
   return (
     <section className="relative overflow-hidden border-t border-line py-24 sm:py-32">
-      <Shape kind="squircle" className="pointer-events-none absolute -left-10 top-16 w-32 text-blush" float />
-      <Shape kind="burst" className="pointer-events-none absolute -right-8 bottom-10 w-32 text-lime" float delay={1.4} rotate={12} />
+      <Shape
+        kind="squircle"
+        className="pointer-events-none absolute -left-10 top-16 w-32 text-blush"
+        float
+      />
+      <Shape
+        kind="burst"
+        className="pointer-events-none absolute -right-8 bottom-10 w-32 text-lime"
+        float
+        delay={1.4}
+        rotate={12}
+      />
       <div className={`${wrap} relative text-center`}>
         <Reveal>
           <h2 className="display mx-auto max-w-[16ch] text-[clamp(2.4rem,6.4vw,5rem)]">
             Two lanterns. One bridge.
           </h2>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link href="/apply" className={`${btn} bg-ink text-white hover:bg-flame`}>
+            <Link
+              href="/apply"
+              className={`${btn} bg-ink text-white hover:bg-flame`}
+            >
               Apply as a student
             </Link>
             <Link
@@ -666,14 +805,17 @@ function Banner() {
     }
   }, [displayText, done, fullText, fullLine1, fullLine2, line1Complete]);
 
-  const line1Text = displayText.length <= fullLine1.length 
-    ? displayText 
-    : fullLine1;
-  const line2Text = displayText.length > fullLine1.length 
-    ? displayText.slice(fullLine1.length + 1) 
-    : "";
+  const line1Text =
+    displayText.length <= fullLine1.length ? displayText : fullLine1;
+  const line2Text =
+    displayText.length > fullLine1.length
+      ? displayText.slice(fullLine1.length + 1)
+      : "";
 
-  const showCaretOnLine1 = !done && displayText.length > 0 && displayText.length <= fullLine1.length + 1;
+  const showCaretOnLine1 =
+    !done &&
+    displayText.length > 0 &&
+    displayText.length <= fullLine1.length + 1;
   const showCaretOnLine2 = displayText.length > fullLine1.length + 1;
 
   return (
