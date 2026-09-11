@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
-import { createSessionToken } from "@/lib/admin-auth";
-
-const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
+import { ADMIN_COOKIE_NAME, ADMIN_SESSION_MAX_AGE, createSessionToken } from "@/lib/admin-auth";
 
 function safeCompare(a: string, b: string) {
   const bufA = Buffer.from(a);
@@ -40,15 +38,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
   }
 
-  const token = await createSessionToken(secret, SESSION_MAX_AGE_SECONDS);
+  const token = await createSessionToken(secret, ADMIN_SESSION_MAX_AGE);
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set("admin_session", token, {
+  res.cookies.set(ADMIN_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_MAX_AGE_SECONDS,
+    maxAge: ADMIN_SESSION_MAX_AGE,
   });
   return res;
 }

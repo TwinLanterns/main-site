@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { cookies } from "next/headers";
-import { verifySessionToken } from "@/lib/admin-auth";
+import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
 
 // ============================================
 // CONFIGURATION
@@ -645,7 +645,7 @@ function formatCandidateForResponse(
 // ============================================
 export async function POST(req: NextRequest) {
     const secret = process.env.ADMIN_SESSION_SECRET;
-    const token = (await cookies()).get("admin_session")?.value;
+    const token = (await cookies()).get(ADMIN_COOKIE_NAME)?.value;
     if (!secret || !(await verifySessionToken(token, secret))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

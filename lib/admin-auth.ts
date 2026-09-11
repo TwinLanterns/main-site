@@ -4,8 +4,20 @@
  * No user table, no bcrypt, no sessions table — just an HMAC-signed token
  * so the cookie can't be forged without knowing ADMIN_SESSION_SECRET.
  * Uses Web Crypto (`crypto.subtle`) so the same code works in both the
- * Edge runtime (middleware.ts) and the Node runtime (API routes).
+ * Edge runtime (proxy.ts) and the Node runtime (API routes).
  */
+
+/** Name of the httpOnly cookie holding the signed admin session. */
+export const ADMIN_COOKIE_NAME = "admin_session";
+
+/** Default cookie lifetime, in seconds (7 days). */
+export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 24 * 7;
+
+/** Payload prefix — lets verifySessionToken reject unrelated cookies. */
+const TOKEN_PREFIX = "admin";
+
+/** Defensive upper bound on incoming token length. */
+const MAX_TOKEN_LENGTH = 512;
 
 const encoder = new TextEncoder();
 
@@ -34,12 +46,17 @@ async function getHmacKey(secret: string) {
   );
 }
 
-/** Creates a `payload.expiresAtMs.signature` token good for `maxAgeSeconds`. */
+/** Creates a `<prefix>.<expiresAtMs>.<signature>` token good for `maxAgeSeconds`. */
 export async function createSessionToken(secret: string, maxAgeSeconds: number) {
+  if (!Number.isFinite(maxAgeSeconds) || maxAgeSeconds <= 0) {
+    throw new Error("createSessionToken: maxAgeSeconds must be a positive number");
+  }
   const expiresAt = Date.now() + maxAgeSeconds * 1000;
-  const payload = `admin.${expiresAt}`;
+  const payload = `${TOKEN_PREFIX}.${expiresAt}`;
   const key = await getHmacKey(secret);
-  const signature = bufferToHex(await crypto.subtle.sign("HMAC", key, encoder.encode(payload)));
+  const signature = bufferToHex(
+    await crypto.subtle.sign("HMAC", key, encoder.encode(payload)),
+  );
   return `${payload}.${signature}`;
 }
 
@@ -48,7 +65,7 @@ export async function verifySessionToken(
   token: string | undefined | null,
   secret: string,
 ): Promise<boolean> {
-  if (!token) return false;
+  if (!token || token.length > MAX_TOKEN_LENGTH) return false;
 
   const lastDot = token.lastIndexOf(".");
   if (lastDot === -1) return false;
@@ -57,13 +74,15 @@ export async function verifySessionToken(
   const signature = token.slice(lastDot + 1);
 
   const parts = payload.split(".");
-  if (parts.length !== 2 || parts[0] !== "admin") return false;
+  if (parts.length !== 2 || parts[0] !== TOKEN_PREFIX) return false;
 
   const expiresAt = Number(parts[1]);
   if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return false;
 
   const key = await getHmacKey(secret);
-  const expectedSignature = bufferToHex(await crypto.subtle.sign("HMAC", key, encoder.encode(payload)));
+  const expectedSignature = bufferToHex(
+    await crypto.subtle.sign("HMAC", key, encoder.encode(payload)),
+  );
 
   return timingSafeEqualHex(signature, expectedSignature);
 }

@@ -7,8 +7,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 // Separate component that uses useSearchParams
 function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const from = searchParams.get("from") || "/admin";
+  const params = useSearchParams();
+  const rawFrom = params.get("from") ?? "";
+  const from = rawFrom.startsWith("/admin") ? rawFrom : "/admin";
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

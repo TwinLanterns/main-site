@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { cookies } from "next/headers";
-import { verifySessionToken } from "@/lib/admin-auth"; // 👈 Import this
+import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth"; // 👈 Import this
 
 const MIME_BY_EXT: Record<string, string> = {
   pdf: "application/pdf",
@@ -22,7 +22,7 @@ function guessMimeType(filename: string) {
 // Helper function to check if user is admin
 async function isAdmin() {
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("admin_session")?.value;
+  const sessionToken = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
   
   if (!sessionToken) return false;
   
