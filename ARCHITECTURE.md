@@ -637,7 +637,7 @@ All exported from one file. Used by both `ApplyFlow.tsx` and `HireFlow.tsx`.
 Rendered in order:
 
 ```
-Hero → Stats → Split → Process → Statement → Roles → Founders → Faq → Cta
+Hero → Stats → Split → Process → Statement → Roles → Faq → Cta
 ```
 
 **Hero**
@@ -648,13 +648,6 @@ Typewriter cycling between two phrases:
 
 Honors `prefers-reduced-motion`. Six floating Shapes rotate opposite directions
 per phase.
-
-**Founders**
-
-- Carlos Castaneda (Talent & Partnerships, UCLA poli-sci)
-- Cameron Negahban (Client & Operations, UCLA econ/bio)
-
-Photos clipped into morphing SVG blobs via `shapePaths`.
 
 ---
 
