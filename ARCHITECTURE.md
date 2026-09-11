@@ -814,21 +814,3 @@ committing. `.prettierignore` skips `.next`, `node_modules`, `package-lock.json`
 and `public`.
 
 ---
-
-## 13. Known Gaps / Follow-Ups
-
-- `public/` contains five Next.js boilerplate SVGs (`file.svg`, `globe.svg`,
-  `next.svg`, `vercel.svg`, `window.svg`) and the `team/` folder with two
-  orphaned founder photos. All safe to delete.
-- `OPENAI_API_KEY` / `@google/generative-ai` are in `package.json` but not
-  referenced by any runtime code in this repo — likely leftovers or intended for
-  future use.
-- `scripts/tag-resumes.ts` records `model_used: "llama-3.3-70b-versatile"` even
-  though the current call uses `openai/gpt-oss-120b` — the field is hardcoded and
-  should probably be derived from the request.
-- `app/apply/page.tsx` and `app/companies/page.tsx` wrappers were not included
-  in the batches reviewed, but their client components (`ApplyFlow.tsx` and
-  `HireFlow.tsx`) were fully covered.
-- `lib/deepseek.ts` and `app/api/admin/vibe-search/route.ts` share a lot of
-  DeepSeek call logic (URL, auth, timeout, thinking-tag strip). Worth extracting
-  into a single shared client if it starts to drift.
