@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState, useEffect } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 /* ------------------------------------------------------------------ */
@@ -97,6 +97,49 @@ const SOURCE_META: Record<
   },
 };
 
+/**
+ * Keys that should NOT be surfaced as extra "short answer" columns in the
+ * main table. These are either system/meta fields, or fields already shown
+ * in the fixed `APPLICATION_COLUMNS` (in either schema's naming style).
+ */
+const SHORT_ANSWER_EXCLUDE = new Set([
+  // System / meta
+  "id",
+  "created_at",
+  "updated_at",
+  "verification_token",
+  "consent_given",
+  "email_verified",
+  "application_status",
+  "source",
+  "migrated_from",
+  "original",
+  // Already in fixed columns (both naming conventions)
+  "first_name",
+  "firstName",
+  "last_name",
+  "lastName",
+  "email",
+  "school",
+  "university",
+  "location",
+  "grad_year",
+  "gradYear",
+  "graduation_year",
+  "hours_per_week",
+  "hours_available",
+  "hours",
+  "start_timing",
+  "startWeeks",
+  "start_date",
+  "resume",
+  "resume_name",
+  "resume_url",
+  "phone",
+  "candidate_ai_tags",
+  "raw_payload",
+]);
+
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
@@ -104,22 +147,18 @@ const SOURCE_META: Record<
 function formatCell(value: unknown) {
   if (value === null || value === undefined) return "—";
   if (Array.isArray(value)) return value.join(", ") || "—";
+  if (typeof value === "object") {
+    try {
+      const s = JSON.stringify(value);
+      return s.length > 120 ? s.slice(0, 120) + "…" : s;
+    } catch {
+      return String(value);
+    }
+  }
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
     return new Date(value).toLocaleString();
   }
   return String(value);
-}
-
-function redactLongStrings(row: Row): Row {
-  const out: Row = {};
-  for (const [key, value] of Object.entries(row)) {
-    if (typeof value === "string" && value.length > 300) {
-      out[key] = `${value.slice(0, 120)}… [truncated, ${value.length} chars total]`;
-    } else {
-      out[key] = value;
-    }
-  }
-  return out;
 }
 
 function getAITags(row: Row): {
@@ -148,6 +187,128 @@ function stripThinking(text?: string): string {
   return cleaned;
 }
 
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+/* ------------------------------------------------------------------ */
+/* Short answers                                                       */
+/* ------------------------------------------------------------------ */
+
+type SchemaKind = "current" | "legacy";
+
+type ShortAnswer = {
+  value: unknown;
+  schema: SchemaKind;
+};
+
+/**
+ * Extract "short answer" fields from a row's raw_payload.
+ *
+ * Two shapes are supported:
+ *   - Current schema: `raw_payload` is a flat object of fields.
+ *   - Legacy schema:  `raw_payload` = { original: {...}, migrated_from: "…" }
+ *
+ * Values that are null/undefined/empty are skipped so we don't render
+ * columns that are effectively empty everywhere.
+ */
+function extractShortAnswers(row: Row): Map<string, ShortAnswer> {
+  const out = new Map<string, ShortAnswer>();
+  const raw = row.raw_payload;
+  if (!isPlainObject(raw)) return out;
+
+  // Legacy wrapper: dig into `.original`
+  if (isPlainObject(raw.original)) {
+    for (const [k, v] of Object.entries(raw.original)) {
+      if (SHORT_ANSWER_EXCLUDE.has(k)) continue;
+      if (v === null || v === undefined || v === "") continue;
+      out.set(k, { value: v, schema: "legacy" });
+    }
+    return out;
+  }
+
+  // Current schema: raw_payload is flat
+  for (const [k, v] of Object.entries(raw)) {
+    if (SHORT_ANSWER_EXCLUDE.has(k)) continue;
+    if (v === null || v === undefined || v === "") continue;
+    out.set(k, { value: v, schema: "current" });
+  }
+  return out;
+}
+
+function SchemaBadge({ schemas }: { schemas: SchemaKind[] }) {
+  const hasCurrent = schemas.includes("current");
+  const hasLegacy = schemas.includes("legacy");
+
+  if (hasCurrent && hasLegacy) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-neutral-100 px-1.5 py-0 text-[9px] font-semibold uppercase tracking-wider text-neutral-600 ring-1 ring-neutral-200">
+        both
+      </span>
+    );
+  }
+  if (hasLegacy) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0 text-[9px] font-semibold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200">
+        legacy
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0 text-[9px] font-semibold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200">
+      new
+    </span>
+  );
+}
+
+function ShortAnswerCell({ value }: { value: unknown }) {
+  if (value === null || value === undefined || value === "") {
+    return <span className="text-neutral-300">—</span>;
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0)
+      return <span className="text-neutral-300">—</span>;
+    return (
+      <div className="flex max-w-[220px] flex-wrap gap-1">
+        {value.map((v, i) => (
+          <span
+            key={i}
+            className="inline-flex items-center rounded-full bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-700 ring-1 ring-neutral-200"
+          >
+            {typeof v === "object" ? JSON.stringify(v) : String(v)}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  if (typeof value === "object") {
+    try {
+      const s = JSON.stringify(value);
+      const display = s.length > 80 ? s.slice(0, 80) + "…" : s;
+      return (
+        <span className="font-mono text-[10px] text-neutral-600" title={s}>
+          {display}
+        </span>
+      );
+    } catch {
+      return <span className="text-[11px]">{String(value)}</span>;
+    }
+  }
+
+  const s = String(value);
+  const display = s.length > 120 ? s.slice(0, 120) + "…" : s;
+  return (
+    <span
+      className="block max-w-[220px] break-words text-[11px] leading-snug text-neutral-700"
+      title={s}
+    >
+      {display}
+    </span>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Visual primitives                                                   */
 /* ------------------------------------------------------------------ */
@@ -162,7 +323,9 @@ function HighlightedSnippet({
   if (!snippet) return null;
   const valid = (keywords || []).filter((k) => k && k.length >= 2);
   if (valid.length === 0) {
-    return <p className="mt-2 text-sm text-neutral-700 leading-relaxed">{snippet}</p>;
+    return (
+      <p className="mt-2 text-sm text-neutral-700 leading-relaxed">{snippet}</p>
+    );
   }
 
   const pattern = valid.map(escapeRegExp).join("|");
@@ -227,7 +390,6 @@ function MatchedKeywords({
 }) {
   if (!keywords || keywords.length === 0) return null;
 
-  // Map each keyword to the set of sources it was found in.
   const sourcesByWord = new Map<string, Set<MatchDetail["source"]>>();
   (matchDetails || []).forEach((m) => {
     if (!m || !m.word) return;
@@ -249,8 +411,9 @@ function MatchedKeywords({
           Matched
         </span>
         {keywords.map((kw) => {
-          const sources: MatchDetail["source"][] =
-  Array.from(sourcesByWord.get(kw) || (["tags"] as MatchDetail["source"][]));
+          const sources: MatchDetail["source"][] = Array.from(
+            sourcesByWord.get(kw) || (["tags"] as MatchDetail["source"][]),
+          );
           const primary = sources[0] as MatchDetail["source"];
           const meta = SOURCE_META[primary];
           return (
@@ -389,14 +552,12 @@ function CandidateCard({
       />
 
       <div className="flex items-start gap-4">
-        {/* Rank badge */}
         <div
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${rankBadgeClass}`}
         >
           {index + 1}
         </div>
 
-        {/* Main content */}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <h3 className="text-base font-semibold text-ink truncate">
@@ -415,26 +576,22 @@ function CandidateCard({
             {candidate.location ? <> · {candidate.location}</> : null}
           </p>
 
-          {/* Vibe tags */}
           {candidate.vibe_tags && candidate.vibe_tags.length > 0 && (
             <div className="mt-2.5">
               <VibeTags tags={candidate.vibe_tags} />
             </div>
           )}
 
-          {/* Summary with highlighted keywords */}
           <HighlightedSnippet
             snippet={candidate.snippet || ""}
             keywords={matchedKeywords}
           />
 
-          {/* Matched keywords + evidence */}
           <MatchedKeywords
             keywords={matchedKeywords}
             matchDetails={matchDetails}
           />
 
-          {/* AI reasoning (final only) */}
           {reason && (
             <div className="mt-3 rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2">
               <p className="text-[11px] uppercase tracking-wider text-emerald-700 font-medium">
@@ -453,7 +610,6 @@ function CandidateCard({
           )}
         </div>
 
-        {/* Right column: score ring + resume link */}
         <div className="flex shrink-0 flex-col items-end gap-2">
           {isFinal && typeof candidate.match_score === "number" && (
             <ScoreRing score={candidate.match_score} />
@@ -534,7 +690,295 @@ function Stepper({ stage }: { stage: SearchStage }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Table (unchanged behaviour, light restyle)                          */
+/* Raw payload viewer                                                  */
+/* ------------------------------------------------------------------ */
+
+const KEY_ACRONYMS = new Set([
+  "id",
+  "ai",
+  "url",
+  "api",
+  "sql",
+  "crm",
+  "irr",
+  "apr",
+  "ui",
+  "ux",
+  "pdf",
+  "csv",
+  "ip",
+  "os",
+  "hr",
+]);
+
+function humanizeKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) =>
+      KEY_ACRONYMS.has(word.toLowerCase())
+        ? word.toUpperCase()
+        : word.charAt(0).toUpperCase() + word.slice(1),
+    )
+    .join(" ");
+}
+
+const URL_TLDS =
+  "(com|org|io|net|edu|dev|co|app|ai|gov|me|info|biz|xyz|so)";
+
+function isLikelyUrl(s: string): boolean {
+  if (/\s/.test(s)) return false;
+  if (/^https?:\/\//i.test(s)) return true;
+  if (/^www\./i.test(s)) return true;
+  return new RegExp(
+    `^[\\w-]+(\\.[\\w-]+)*\\.${URL_TLDS}(\\/|$|\\?|#)`,
+    "i",
+  ).test(s);
+}
+
+function normalizeUrl(s: string): string {
+  return /^https?:\/\//i.test(s) ? s : `https://${s}`;
+}
+
+function isIsoTimestamp(s: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s);
+}
+
+function isIsoDateOnly(s: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+function ValueView({ value }: { value: unknown }) {
+  if (value === null || value === undefined) {
+    return <span className="text-neutral-400 italic">—</span>;
+  }
+
+  if (typeof value === "boolean") {
+    return value ? (
+      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+        Yes
+      </span>
+    ) : (
+      <span className="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-medium text-neutral-600 ring-1 ring-neutral-200">
+        No
+      </span>
+    );
+  }
+
+  if (typeof value === "number") {
+    return <span className="tabular-nums text-neutral-800">{value}</span>;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return <span className="text-neutral-400 italic">—</span>;
+    }
+    if (isIsoTimestamp(trimmed)) {
+      return (
+        <span className="text-neutral-800">
+          {new Date(trimmed).toLocaleString()}
+          <span className="ml-2 text-[11px] text-neutral-400">{trimmed}</span>
+        </span>
+      );
+    }
+    if (isIsoDateOnly(trimmed)) {
+      return <span className="text-neutral-800">{trimmed}</span>;
+    }
+    if (isLikelyUrl(trimmed)) {
+      return (
+        <a
+          href={normalizeUrl(trimmed)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="break-all text-blue-600 hover:text-blue-800 hover:underline"
+        >
+          {trimmed}
+        </a>
+      );
+    }
+    if (trimmed.length > 120 || trimmed.includes("\n")) {
+      return (
+        <p className="whitespace-pre-wrap break-words text-neutral-800">
+          {trimmed}
+        </p>
+      );
+    }
+    return <span className="break-words text-neutral-800">{trimmed}</span>;
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return <span className="text-neutral-400 italic">—</span>;
+    }
+    const allPrimitive = value.every(
+      (v) =>
+        v === null ||
+        typeof v === "string" ||
+        typeof v === "number" ||
+        typeof v === "boolean",
+    );
+    if (allPrimitive) {
+      return (
+        <div className="flex flex-wrap gap-1">
+          {value.map((v, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700 ring-1 ring-neutral-200"
+            >
+              {v === null ? "—" : String(v)}
+            </span>
+          ))}
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-2">
+        {value.map((v, i) => (
+          <div
+            key={i}
+            className="rounded-lg border border-neutral-200 bg-white p-3"
+          >
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-neutral-400">
+              Item {i + 1}
+            </p>
+            <ValueView value={v} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (isPlainObject(value)) {
+    return <ObjectView obj={value} />;
+  }
+
+  return <span className="text-neutral-800">{String(value)}</span>;
+}
+
+function ObjectView({ obj }: { obj: Record<string, unknown> }) {
+  const entries = Object.entries(obj);
+  if (entries.length === 0) {
+    return <span className="text-neutral-400 italic">empty</span>;
+  }
+  return (
+    <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-[minmax(140px,200px)_1fr]">
+      {entries.map(([k, v]) => (
+        <Fragment key={k}>
+          <dt className="text-xs font-medium text-neutral-500 sm:pt-0.5">
+            {humanizeKey(k)}
+          </dt>
+          <dd className="min-w-0 text-sm">
+            <ValueView value={v} />
+          </dd>
+        </Fragment>
+      ))}
+    </dl>
+  );
+}
+
+function RawPayloadView({ row }: { row: Row }) {
+  const [showJson, setShowJson] = useState(false);
+
+  const payload = row.raw_payload;
+
+  let body: unknown = payload;
+  let legacySource: string | null = null;
+  let wrapperMeta: Record<string, unknown> | null = null;
+
+  if (isPlainObject(payload) && isPlainObject(payload.original)) {
+    body = payload.original;
+    if (typeof payload.migrated_from === "string") {
+      legacySource = payload.migrated_from;
+    }
+    const extras = Object.fromEntries(
+      Object.entries(payload).filter(
+        ([k]) => k !== "original" && k !== "migrated_from",
+      ),
+    );
+    if (Object.keys(extras).length > 0) wrapperMeta = extras;
+  }
+
+  const json = useMemo(() => {
+    try {
+      return JSON.stringify(row, null, 2);
+    } catch {
+      return String(row);
+    }
+  }, [row]);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {legacySource ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            Legacy payload
+            <span className="text-amber-500">·</span>
+            migrated from {legacySource}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Current schema
+          </span>
+        )}
+
+        <button
+          onClick={() => setShowJson((s) => !s)}
+          className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1 text-[11px] font-medium text-neutral-600 transition-colors hover:border-neutral-300 hover:text-neutral-900"
+        >
+          {showJson ? "Pretty view" : "Raw JSON"}
+        </button>
+      </div>
+
+      {showJson ? (
+        <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap break-all rounded-lg border border-neutral-200 bg-white p-3 text-xs leading-relaxed text-neutral-700">
+          {json}
+        </pre>
+      ) : (
+        <>
+          <section className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+            <header className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50/60 px-4 py-2">
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                Raw payload
+              </h4>
+            </header>
+            <div className="p-4">
+              {body === null || body === undefined ? (
+                <p className="text-sm italic text-neutral-400">
+                  No raw payload recorded.
+                </p>
+              ) : isPlainObject(body) ? (
+                <ObjectView obj={body} />
+              ) : (
+                <ValueView value={body} />
+              )}
+            </div>
+          </section>
+
+          {wrapperMeta && (
+            <section className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+              <header className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50/60 px-4 py-2">
+                <h4 className="text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+                  Migration metadata
+                </h4>
+              </header>
+              <div className="p-4">
+                <ObjectView obj={wrapperMeta} />
+              </div>
+            </section>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Table                                                               */
 /* ------------------------------------------------------------------ */
 
 function Table({
@@ -550,6 +994,7 @@ function Table({
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [showShortAnswers, setShowShortAnswers] = useState(false);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return rows;
@@ -557,15 +1002,59 @@ function Table({
     return rows.filter((row) => JSON.stringify(row).toLowerCase().includes(q));
   }, [rows, query]);
 
+  /**
+   * Discover every short-answer key that appears across all rows, and which
+   * schema(s) it came from. Sorted alphabetically for stability.
+   */
+  const shortAnswerKeys = useMemo(() => {
+    const schemas = new Map<string, Set<SchemaKind>>();
+    for (const row of rows) {
+      const answers = extractShortAnswers(row);
+      for (const [k, v] of answers) {
+        if (!schemas.has(k)) schemas.set(k, new Set());
+        schemas.get(k)!.add(v.schema);
+      }
+    }
+    return Array.from(schemas.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, schemaSet]) => ({
+        key,
+        schemas: Array.from(schemaSet) as SchemaKind[],
+      }));
+  }, [rows]);
+
+  const totalCols =
+    columns.length +
+    (showAIColumns ? 4 : 0) +
+    (showResumeColumn ? 1 : 0) +
+    (showShortAnswers ? shortAnswerKeys.length : 0) +
+    1;
+
   return (
     <div className="space-y-3">
-      <input
-        type="text"
-        placeholder="Search…"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="w-full max-w-xs rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none"
-      />
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="text"
+          placeholder="Search…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full max-w-xs rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none"
+        />
+        {shortAnswerKeys.length > 0 && (
+          <button
+            onClick={() => setShowShortAnswers((s) => !s)}
+            className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+              showShortAnswers
+                ? "border-neutral-900 bg-neutral-900 text-white"
+                : "border-neutral-300 bg-white text-neutral-600 hover:border-neutral-400 hover:text-neutral-900"
+            }`}
+          >
+            {showShortAnswers ? "Hide" : "Show"} short answers (
+            {shortAnswerKeys.length})
+          </button>
+        )}
+      </div>
+
       <div className="overflow-x-auto rounded-lg border border-neutral-200">
         <table className="min-w-full divide-y divide-neutral-200 text-sm">
           <thead className="bg-neutral-50">
@@ -599,6 +1088,20 @@ function Table({
                   resume
                 </th>
               )}
+              {showShortAnswers &&
+                shortAnswerKeys.map(({ key, schemas }) => (
+                  <th
+                    key={`sa-${key}`}
+                    className="border-l border-neutral-100 bg-neutral-50/40 px-3 py-2 text-left align-bottom"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[11px] font-medium text-neutral-700">
+                        {key}
+                      </span>
+                      <SchemaBadge schemas={schemas} />
+                    </div>
+                  </th>
+                ))}
               <th className="px-3 py-2" />
             </tr>
           </thead>
@@ -607,6 +1110,10 @@ function Table({
               const id = String(row.id);
               const isExpanded = expandedId === id;
               const aiTags = getAITags(row);
+              const shortAnswers = showShortAnswers
+                ? extractShortAnswers(row)
+                : null;
+
               return (
                 <Fragment key={id}>
                   <tr className="hover:bg-neutral-50">
@@ -656,7 +1163,19 @@ function Table({
                         )}
                       </td>
                     )}
-                    <td className="px-3 py-2 text-right">
+                    {showShortAnswers &&
+                      shortAnswerKeys.map(({ key }) => {
+                        const sa = shortAnswers?.get(key);
+                        return (
+                          <td
+                            key={`sa-${key}`}
+                            className="border-l border-neutral-100 align-top px-3 py-2"
+                          >
+                            <ShortAnswerCell value={sa?.value} />
+                          </td>
+                        );
+                      })}
+                    <td className="px-3 py-2 text-right align-top">
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : id)}
                         className="text-xs font-medium text-neutral-500 hover:text-neutral-900"
@@ -668,16 +1187,10 @@ function Table({
                   {isExpanded && (
                     <tr>
                       <td
-                        colSpan={
-                          columns.length +
-                          (showResumeColumn ? 2 : 1) +
-                          (showAIColumns ? 2 : 0)
-                        }
-                        className="bg-neutral-50 px-3 py-3"
+                        colSpan={totalCols}
+                        className="bg-neutral-50 px-4 py-4"
                       >
-                        <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-all text-xs text-neutral-700">
-                          {JSON.stringify(redactLongStrings(row), null, 2)}
-                        </pre>
+                        <RawPayloadView row={row} />
                       </td>
                     </tr>
                   )}
@@ -687,11 +1200,7 @@ function Table({
             {filtered.length === 0 && (
               <tr>
                 <td
-                  colSpan={
-                    columns.length +
-                    (showResumeColumn ? 2 : 1) +
-                    (showAIColumns ? 2 : 0)
-                  }
+                  colSpan={totalCols}
                   className="px-3 py-6 text-center text-neutral-400"
                 >
                   No rows.
@@ -777,7 +1286,6 @@ function VibeSearch() {
             if (data.type === "stage") {
               setStage(data.stage);
               if (data.message) setCurrentMessage(data.message);
-              // Backend emits the shortlist alongside the "filtering" stage.
               if (data.shortlist) setShortlist(data.shortlist);
             } else if (data.type === "result") {
               setResults(data.results || []);
@@ -836,7 +1344,6 @@ function VibeSearch() {
 
   return (
     <div className="space-y-5">
-      {/* ---------------- Search bar ---------------- */}
       <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row">
           <div className="relative flex-1">
@@ -887,7 +1394,6 @@ function VibeSearch() {
         )}
       </div>
 
-      {/* ---------------- Live progress ---------------- */}
       {isSearching && (
         <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
           <Stepper stage={stage} />
@@ -903,12 +1409,9 @@ function VibeSearch() {
         </div>
       )}
 
-      {/* ---------------- Error ---------------- */}
       {error && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
-          <p className="text-sm font-medium text-red-800">
-            Search failed
-          </p>
+          <p className="text-sm font-medium text-red-800">Search failed</p>
           <p className="mt-0.5 text-sm text-red-700">{error}</p>
           <button
             onClick={handleVibeSearch}
@@ -919,7 +1422,6 @@ function VibeSearch() {
         </div>
       )}
 
-      {/* ---------------- Empty state ---------------- */}
       {!isSearching && !error && hasSearched && displayedCandidates.length === 0 && (
         <div className="rounded-2xl border border-neutral-200 bg-white p-10 text-center">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-lg">
@@ -934,7 +1436,6 @@ function VibeSearch() {
         </div>
       )}
 
-      {/* ---------------- Results / Shortlist ---------------- */}
       {displayedCandidates.length > 0 && (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -947,8 +1448,7 @@ function VibeSearch() {
                   : `Final ranking · top ${displayedCandidates.length}`}
               </p>
               <p className="text-xs text-neutral-500">
-                for{" "}
-                <span className="text-neutral-700">“{vibePrompt}”</span>
+                for <span className="text-neutral-700">“{vibePrompt}”</span>
               </p>
             </div>
 
