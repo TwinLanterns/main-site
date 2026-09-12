@@ -133,7 +133,7 @@ function Hero() {
           </span>
           <span
             aria-hidden
-            className="caret ml-[0.06em] inline-block h-[0.72em] w-[0.045em] translate-y-[0.02em] bg-current align-middle"
+            className="caret ml-[0.06em] inline-block h-[0.72em] w-[0.045em] translate-y-[-0.02em] bg-current align-middle"
           />
         </h1>
 
