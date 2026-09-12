@@ -11,7 +11,7 @@ const dm = DM_Sans({
   display: "swap",
 });
 
-const site = "https://twin-lanterns.vercel.app";
+const site = "https://twinlanterns.co";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site),
