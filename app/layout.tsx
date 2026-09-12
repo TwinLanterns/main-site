@@ -38,8 +38,12 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
     apple: "/icon.png",
   },
+  verification: {
+    other: {
+      "msvalidate.01": "3A7AB2190FA3F842A117CD34926BD1F1",
+    },
+  },
 };
-
 // Structured data: tells Google explicitly what your site/organization is
 const jsonLd = {
   "@context": "https://schema.org",
