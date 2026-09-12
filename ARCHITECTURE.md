@@ -794,7 +794,7 @@ Type `exit`, `quit`, or `q` to end the session.
 | Item | Value |
 | --- | --- |
 | **Platform** | Vercel |
-| **Production URL** | https://twin-lanterns.vercel.app (`metadataBase` in `app/layout.tsx`) |
+| **Production URL** | https://twinlanterns.co(`metadataBase` in `app/layout.tsx`) |
 
 **Runtime**
 `proxy.ts` runs on Vercel's Edge runtime. The SSE route
