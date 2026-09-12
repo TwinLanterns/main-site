@@ -1,8 +1,21 @@
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import AdminDashboard from "./AdminDashboard";
+import type { Metadata } from 'next'
 
 // Always hit the database fresh — this is an admin tool, not a public page.
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  // This adds the <meta name="robots" content="noindex, nofollow"> tag
+  // to every page inside the /admin directory
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+}
 
 export default async function AdminPage() {
   const supabase = getSupabaseServerClient();

@@ -40,6 +40,31 @@ export const metadata: Metadata = {
   },
 };
 
+// Structured data: tells Google explicitly what your site/organization is
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${site}/#organization`,
+      name: "Twin Lanterns",
+      url: site,
+      logo: `${site}/icon.png`,
+      description:
+        "The bridge between ambitious high school and college students and the companies that need them.",
+      // add your social profiles if you have them:
+      // sameAs: ["https://www.linkedin.com/company/...", "https://twitter.com/..."],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${site}/#website`,
+      name: "Twin Lanterns",
+      url: site,
+      publisher: { "@id": `${site}/#organization` },
+    },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -56,6 +81,10 @@ export default function RootLayout({
         <main id="main">{children}</main>
         <Footer />
         <Analytics />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </body>
     </html>
   );
