@@ -146,8 +146,8 @@ of them run.
 │   ├── submissions/
 │   │   ├── types.ts                StudentPayload / CompanyPayload /
 │   │   │                           Submission discriminated union
-│   │   ├── parse.ts                Request JSON → Submission
-│   │   │                           (400 on bad shape)
+│   │   ├── parse.ts                Request JSON → ParseSubmissionResult
+│   │   │                           { ok: true; data } | { ok: false; status: 400; error }
 │   │   └── persistence.ts          Supabase inserts; throws
 │   │                               SubmissionConfigError (500) /
 │   │                               SubmissionSaveError (502)
@@ -198,7 +198,8 @@ POST /api/submit
 ▼
 lib/submissions/parse.ts
 │  parseSubmissionRequest(req)
-│  → Submission | { ok: false, status: 400, error }
+│  → { ok: true; data: Submission }
+│    | { ok: false; status: 400; error: string }
 ▼
 lib/submissions/persistence.ts
 │  saveSubmission(submission)
@@ -251,9 +252,10 @@ Three-stage pipeline, streamed via SSE:
 
 **Stage 1 — Fetch & filter**
 
-- Fetch all tagged students from `student_applications` (filter out test accounts)
+- Fetch all students from `student_applications` (joined with `candidate_ai_tags`), then filter client-side to those with at least one `vibe_tags` entry and not matching `isTestAccount()` (name/email heuristics — `"test"`, `example.com`, a few known junk addresses)
 - `classifyQueryWithAI(query)` via DeepSeek proxy →
   `{ keywords, tag_matches{ vibe_tags, soft_skills, hard_skills }, search_phrase }`
+- On proxy error or invalid JSON, `classifyQueryWithAI` falls back to naive whitespace tokenization of the query (words > 2 chars), with empty `tag_matches`. Search still runs; only tag-overlap scoring goes dark.
 - `matchCandidatesWithTags(...)`
   - tag overlap **+8 / hit**
   - summary hit **+2 / term**
@@ -261,12 +263,12 @@ Three-stage pipeline, streamed via SSE:
   - token pipeline: lowercase → strip unicode dashes → strip non-alnum →
     tokenize (len > 1) → light stem (`ing` / `ers` / `ies` / `es` / `s`)
   - prefix match for tokens ≥ 4 chars
-  - relax-if-too-few: if `< min(5, limit)` matches, fill by score
+  - relax-if-too-few: if `topMatches.length < min(5, limit)`, rebuild as `[...score > 0 sorted desc, ...score === 0 in input order].slice(0, limit)` — a "keep the scorers, then pad" fill, not a global re-sort
 
 **Stage 2 — `stage2BatchAnalysis`**
 
 - DeepSeek, per shortlist, `max_tokens 1500`, `temperature 0.3`
-- Fallback: `"Analysis unavailable (API limits)."`
+- Two fallback strings: per-candidate `"Analysis unavailable."` (call succeeded, index missing) and whole-call `"Analysis unavailable (API limits)."` (call threw)
 
 **Stage 3 — `stage3Rank`**
 
@@ -288,6 +290,8 @@ Three-stage pipeline, streamed via SSE:
 
 { type: "error",  error: string }
 ```
+
+The route never emits `stage: "complete"`. The stepper's "complete" state in `AdminDashboard.tsx` is derived from receiving `{ type: "result" }`. `filtering`, `analyzing`, and `ranking` each fire twice (start + done).
 
 **Response headers**
 
@@ -480,7 +484,7 @@ that path after a successful login.
 | `soft_skills` | text[] | |
 | `hard_skills` | text[] | |
 | `ai_summary` | text | one-line summary |
-| `model_used` | text | e.g. `"llama-3.3-70b-versatile"` |
+| `model_used` | text | e.g. "openai/gpt-oss-120b" (older runs: "llama-3.3-70b-versatile") |
 | `prompt_version` | text | e.g. `"v2"` |
 | `source_file_name` | text | |
 | `ai_processed_at` | timestamptz | |
@@ -507,7 +511,10 @@ shaped like OpenAI's `/v1/chat/completions`.
 | `lib/deepseek.ts` | streaming (`stream: true`), yields `"append"` / `"replace"` events. `"replace"` exists because DeepSeek's DOM can re-render mid-response (e.g. table separators becoming real content), which append-only streaming can't represent. |
 | `app/api/admin/vibe-search/route.ts` | non-streaming (`stream: false`) with per-call timeouts. |
 
-- **Timeout:** 200s client-side via `AbortController` (server hard cap is 180s).
+- **Timeout:** 200s client-side via `AbortController`. The code comment claims a
+  180s server-side hard cap, but nothing in the route or `lib/deepseek.ts`
+  enforces it — treat 200s as the only enforced bound and confirm the proxy's
+  own timeout before relying on 180s.
 - **Reasoning tokens:** `<think>...</think>` blocks are stripped before use.
 
 ### 6.3 Groq (Tagging)
@@ -564,7 +571,11 @@ and returns.
 
 ## 7. Environment Variables
 
-**Server-only** (never `NEXT_PUBLIC_`):
+**Server-only**, with one deliberate exception:
+
+`NEXT_PUBLIC_SUPABASE_URL` is a public fallback URL and is intentionally
+client-visible. Everything else in this table must never carry a
+`NEXT_PUBLIC_` prefix.
 
 | Variable | Used by |
 | --- | --- |
@@ -821,8 +832,11 @@ reasoning never reaches the UI.
 
 **Idempotency**
 Migration scripts preserve IDs and upsert on the natural key. The tagging script
-skips already-tagged rows. The vibe-search prompt cache is per
-`(student_id, prompt_version)`.
+skips already-tagged rows, upserting on `(student_id, prompt_version)`.
+
+Vibe search *reads* `candidate_ai_tags`; it never writes or caches. The
+`(student_id, prompt_version)` unique constraint belongs to the tagging
+script's upsert, not to the search path.
 
 **Two-schema awareness**
 The admin dashboard treats `raw_payload` as either the current flat shape or the
