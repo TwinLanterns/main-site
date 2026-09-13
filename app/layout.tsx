@@ -38,6 +38,9 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
     apple: "/icon.png",
   },
+  alternates: {
+    canonical: "/",
+  },
   verification: {
     other: {
       "msvalidate.01": "3A7AB2190FA3F842A117CD34926BD1F1",
@@ -56,13 +59,12 @@ const jsonLd = {
       logo: `${site}/icon.png`,
       description:
         "The bridge between ambitious high school and college students and the companies that need them.",
-      // add your social profiles if you have them:
-      // sameAs: ["https://www.linkedin.com/company/...", "https://twitter.com/..."],
     },
     {
       "@type": "WebSite",
       "@id": `${site}/#website`,
       name: "Twin Lanterns",
+      alternateName: ["TwinLanterns", "Twin Lanterns Co"],
       url: site,
       publisher: { "@id": `${site}/#organization` },
     },
