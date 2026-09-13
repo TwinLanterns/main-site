@@ -62,10 +62,6 @@ export default async function AdminPage() {
       .select("*")
       .order("created_at", { ascending: false }),
   ]);
-  console.log(
-    "First application with AI tags:",
-    JSON.stringify(applications?.[0], null, 2),
-  );
   if (applicationsError || briefsError) {
     return (
       <div className="p-8 text-sm text-red-600">
