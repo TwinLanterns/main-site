@@ -20,7 +20,7 @@ const columns = [
   {
     title: "Company",
     links: [
-      { href: "/#team", label: "Team" },
+      //{ href: "/#team", label: "Team" },
       { href: "mailto:hello@twinlanterns.co", label: "hello@twinlanterns.co" },
     ],
   },
