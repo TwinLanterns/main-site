@@ -47,7 +47,6 @@ export const metadata: Metadata = {
     },
   },
 };
-// Structured data: tells Google explicitly what your site/organization is
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
@@ -55,10 +54,38 @@ const jsonLd = {
       "@type": "Organization",
       "@id": `${site}/#organization`,
       name: "Twin Lanterns",
+      alternateName: ["TwinLanterns", "Twin Lanterns Co"],
+      legalName: "Twin Lanterns",
       url: site,
-      logo: `${site}/icon.png`,
+      logo: {
+        "@type": "ImageObject",
+        "@id": `${site}/#logo`,
+        url: `${site}/icon.png`,
+        contentUrl: `${site}/icon.png`,
+        width: 192,
+        height: 192,
+        caption: "Twin Lanterns"
+      },
       description:
         "The bridge between ambitious high school and college students and the companies that need them.",
+      foundingDate: "2026", 
+      sameAs: [
+        "https://www.linkedin.com/company/twinlanterns",
+        "https://www.instagram.com/choosetwinlanterns"
+      ],
+      contactPoint: {
+        "@type": "ContactPoint",
+        email: "hello@twinlanterns.co",
+        contactType: "customer service",
+        availableLanguage: ["English"]
+      },
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Los Angeles",
+        addressRegion: "CA",
+        addressCountry: "US"
+      },
+       numberOfEmployees: { "@type": "QuantitativeValue", "value": 11 },
     },
     {
       "@type": "WebSite",
@@ -67,7 +94,15 @@ const jsonLd = {
       alternateName: ["TwinLanterns", "Twin Lanterns Co"],
       url: site,
       publisher: { "@id": `${site}/#organization` },
-    },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${site}/search?q={search_term_string}`
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
   ],
 };
 
