@@ -522,32 +522,57 @@ function matchCandidatesWithTags(
 // ============================================
 // STAGE 2: Deep analysis — DeepSeek proxy only.
 //
-// Sends the model the full set of AI tags (vibe + soft + hard) plus enough
-// raw application context to reason about fit. `built` is kept to 400 chars
-// so most "something you built" answers fit without truncation mid-sentence.
+// Re-analyzes each shortlisted candidate's ENTIRE profile against the query
+// before ranking: full AI tags (untruncated) plus the full raw_payload as
+// submitted, not just the truncated preview used for the stage-1 keyword
+// shortlist. Stage 1's score/matched-keywords are only used to build the
+// shortlist — they are intentionally NOT passed in here, so this stage is a
+// fresh read of the whole person against the query rather than a
+// rationalization of the earlier keyword hits.
 // ============================================
+function buildFullCandidateProfile(c: Candidate) {
+  const tags = getAITags(c);
+  // Drop any raw_payload keys that are clearly file blobs (base64 resumes,
+  // etc.) rather than applicant-authored text — everything else goes in
+  // untruncated so the model is reasoning over the whole application.
+  const raw = c.raw_payload || {};
+  const cleanedRaw: Record<string, any> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (/resume_data|base64|_blob$/i.test(k)) continue;
+    cleanedRaw[k] = v;
+  }
+
+  return {
+    name: `${c.first_name} ${c.last_name || ""}`.trim(),
+    school: c.school || null,
+    location: c.location || null,
+    vibe_tags: tags?.vibe_tags || [],
+    soft_skills: tags?.soft_skills || [],
+    hard_skills: tags?.hard_skills || [],
+    ai_summary: tags?.ai_summary || "",
+    application: cleanedRaw,
+  };
+}
+
 async function stage2BatchAnalysis(
   query: string,
   candidates: Candidate[],
 ): Promise<string[]> {
-  const candidatePayload = candidates.map((c, i) => {
-    const tags = getAITags(c);
-    return {
-      index: i,
-      name: `${c.first_name} ${c.last_name || ""}`.trim(),
-      vibe: tags?.vibe_tags?.slice(0, 6) || [],
-      soft_skills: tags?.soft_skills?.slice(0, 6) || [],
-      hard_skills: tags?.hard_skills?.slice(0, 8) || [],
-      summary: tags?.ai_summary?.slice(0, 200) || "",
-      interests: (c.raw_payload?.interests || []).slice(0, 4),
-      priorities: (c.raw_payload?.priorities || []).slice(0, 4),
-      built: c.raw_payload?.built?.slice(0, 400) || "",
-    };
-  });
+  const candidatePayload = candidates.map((c, i) => ({
+    index: i,
+    ...buildFullCandidateProfile(c),
+  }));
 
   const prompt = `
 Recruiting search: "${query}"
-For each candidate below, write a 2-sentence explanation of why they match (or don't).
+
+For each candidate below, re-read their ENTIRE profile — all AI tags and the
+full application data, not just a summary — and evaluate it fresh against
+the search query above. Do not assume a candidate is a good fit just because
+they appear in this list; some were included as a relaxed fallback and may
+not actually match. Write a 2-sentence explanation of why they do or don't
+match, grounded in specific details from their profile.
+
 <candidate_data>
 ${JSON.stringify(candidatePayload)}
 </candidate_data>
