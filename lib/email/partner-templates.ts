@@ -34,7 +34,7 @@ function rows(items: [string, string][]): string {
     .join("")}</table>`;
 }
 
-const PARTNER_FOOTER = `Partner · A Twin Lanterns vertical · Real-world task data.<br />
+const PARTNER_FOOTER = `Partner · Twin Lanterns  · Real-world task data.<br />
 <a href="https://twinlanterns.co/partner" style="color:${COLOR.muted};text-decoration:underline">twinlanterns.co/partner</a>`;
 
 function deviceLabel(os: PartnerApplicantPayload["deviceOs"]): string {
@@ -109,7 +109,7 @@ export function renderPartnerApplicantConfirmation(
     <p style="margin:0;font-size:15px;line-height:1.6;color:${COLOR.ink}">${escapeHtml(
       body,
     )}</p>
-    <p style="margin:26px 0 0;font-size:15px;line-height:1.6;color:${COLOR.muted}">— Partner, by Twin Lanterns</p>
+    <p style="margin:26px 0 0;font-size:15px;line-height:1.6;color:${COLOR.muted}">— Partner AI x Twin Lanterns</p>
   `;
 
   return shell(inner, {
@@ -169,7 +169,7 @@ export function renderPartnerAmbassadorConfirmation(
     <p style="margin:18px 0 0;font-size:14px;line-height:1.6;color:${COLOR.muted}">Or share the code directly: <strong style="color:${COLOR.ink}">${escapeHtml(
       meta.code,
     )}</strong></p>
-    <p style="margin:26px 0 0;font-size:15px;line-height:1.6;color:${COLOR.muted}">— Partner, by Twin Lanterns</p>
+    <p style="margin:26px 0 0;font-size:15px;line-height:1.6;color:${COLOR.muted}">— Partner AI x Twin Lanterns</p>
   `;
 
   return shell(inner, {
