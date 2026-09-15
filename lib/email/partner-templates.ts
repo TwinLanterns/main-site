@@ -100,8 +100,8 @@ export function renderPartnerApplicantConfirmation(
     : `Thanks for applying, ${firstName}.`;
 
   const body = status.qualified
-    ? "We've reviewed your application and you're a fit for Partner. We'll email you the next steps for recording your first task within a couple of days."
-    : "Thanks for applying to Partner. Your device or setup doesn't match what we need for this round — but we keep every application on file and will reach out if that changes.";
+    ? "We've reviewed your application and you're a fit for Twin Lanterns. We'll email you the next steps for recording your first task within a couple of days."
+    : "Thanks for applying to Twin Lanterns. Your device or setup doesn't match what we need for this round — but we keep every application on file and will reach out if that changes.";
 
   const inner = `
     ${brandHeader()}
@@ -109,7 +109,7 @@ export function renderPartnerApplicantConfirmation(
     <p style="margin:0;font-size:15px;line-height:1.6;color:${COLOR.ink}">${escapeHtml(
       body,
     )}</p>
-    <p style="margin:26px 0 0;font-size:15px;line-height:1.6;color:${COLOR.muted}">— Partner AI x Twin Lanterns</p>
+    <p style="margin:26px 0 0;font-size:15px;line-height:1.6;color:${COLOR.muted}">— Twin Lanterns</p>
   `;
 
   return shell(inner, {
@@ -140,7 +140,7 @@ export function renderPartnerAmbassadorInternal(
   `;
 
   return shell(inner, {
-    preheader: `${payload.name} just signed up as a Partner ambassador.`,
+    preheader: `${payload.name} just signed up as a ambassador.`,
     footer: PARTNER_FOOTER,
   });
 }
@@ -153,7 +153,7 @@ export function renderPartnerAmbassadorConfirmation(
 
   const inner = `
     ${brandHeader()}
-    ${pill("Partner ambassadors")}
+    ${pill("Twin Lantern ambassadors")}
     ${title(`You're an ambassador, ${escapeHtml(firstName)}.`)}
     <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:${COLOR.ink}">
       Share this link with anyone you think would be a good fit. Every qualified applicant who completes their first task is credited to you.
@@ -169,7 +169,7 @@ export function renderPartnerAmbassadorConfirmation(
     <p style="margin:18px 0 0;font-size:14px;line-height:1.6;color:${COLOR.muted}">Or share the code directly: <strong style="color:${COLOR.ink}">${escapeHtml(
       meta.code,
     )}</strong></p>
-    <p style="margin:26px 0 0;font-size:15px;line-height:1.6;color:${COLOR.muted}">— Partner AI x Twin Lanterns</p>
+    <p style="margin:26px 0 0;font-size:15px;line-height:1.6;color:${COLOR.muted}">— Twin Lanterns</p>
   `;
 
   return shell(inner, {
