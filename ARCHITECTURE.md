@@ -222,11 +222,11 @@ ApplyFlow.tsx
 │  5 steps: Interests → Availability → Priorities → About you → Finish
 ▼
 POST /api/submit
-  │  body: { kind, payload, attachment?: { name, data } }
-  │  attachment.data is base64, produced client-side by DropZone
-  │  payload additionally carries a `resume` field (uploaded filename, or
-  │  "—" when none) — it lands in raw_payload but not in resume_name/
-  │  resume_data; those come from attachment
+│  body: { kind, payload, attachment?: { name, data } }
+│  attachment.data is base64, produced client-side by DropZone
+│  payload additionally carries a `resume` field (uploaded filename, or
+│  "—" when none) — it lands in raw_payload but not in resume_name/
+│  resume_data; those come from attachment
 ▼
 lib/submissions/parse.ts
 │  parseSubmissionRequest(req)
