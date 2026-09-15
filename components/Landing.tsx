@@ -630,7 +630,7 @@ function Partner() {
         <Reveal>
           <span className="label inline-flex items-center gap-2.5 rounded-full border border-white/20 px-4 py-2 !text-white/70">
             <span className="h-1.5 w-1.5 rounded-full bg-lime" />
-            A second program — Partner
+            Part Time Internship Program — Now Available
           </span>
 
           <h2 className="display mt-7 max-w-[16ch] text-[clamp(2.4rem,5.6vw,4.2rem)]">
@@ -638,10 +638,9 @@ function Partner() {
           </h2>
 
           <p className="mt-6 max-w-[50ch] text-[17px] leading-relaxed text-white/65">
-            Partner runs separately from the internship work. You film everyday
-            tasks — cleaning, repair, warehouse, the physical stuff — to help
-            train robotics AI. No résumé, no interview panel, no experience
-            required.
+            You film everyday tasks — cleaning, repair, warehouse, the 
+            physical stuff — to help train robotics AI. No résumé, 
+            no interview panel, no experience required.
           </p>
 
           <div className="mt-9 flex flex-wrap gap-3">

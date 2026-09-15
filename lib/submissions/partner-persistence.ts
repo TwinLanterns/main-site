@@ -55,6 +55,8 @@ export async function savePartnerApplicant(
     phone: payload.phone ?? null,
     location: payload.location ?? null,
     device_os: payload.deviceOs || null,
+    referred_by: payload.referredBy ?? null,
+    referrer_college: payload.referrerCollege ?? null,
     device_model: payload.deviceModel || null,
     task_interests: payload.taskInterests,
     filming_ack: payload.filmingAck,

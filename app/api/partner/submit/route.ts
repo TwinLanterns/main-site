@@ -61,20 +61,22 @@ export async function POST(req: Request) {
   const taskInterests = Array.isArray(p.taskInterests)
     ? p.taskInterests.filter((x): x is string => typeof x === "string")
     : [];
-
-  const normalized: PartnerApplicantPayload = {
-    firstName,
-    lastName: str(p.lastName)?.trim() || undefined,
-    email,
-    phone: str(p.phone)?.trim() || undefined,
-    location: str(p.location)?.trim() || undefined,
-    deviceOs,
-    deviceModel: str(p.deviceModel)?.trim() || "",
-    taskInterests,
-    filmingAck: bool(p.filmingAck),
-    consent: bool(p.consent),
-    referredByCode: str(p.referredByCode)?.trim() || null,
-  };
+    
+const normalized: PartnerApplicantPayload = {
+  firstName,
+  lastName: str(p.lastName)?.trim() || undefined,
+  email,
+  phone: str(p.phone)?.trim() || undefined,
+  location: str(p.location)?.trim() || undefined,
+  referredBy: str(p.referredBy)?.trim() || undefined,
+  referrerCollege: str(p.referrerCollege)?.trim() || undefined,
+  deviceOs,
+  deviceModel: str(p.deviceModel)?.trim() || "",
+  taskInterests,
+  filmingAck: bool(p.filmingAck),
+  consent: bool(p.consent),
+  referredByCode: str(p.referredByCode)?.trim() || null,
+};
 
     try {
     const result = await savePartnerApplicant(normalized);

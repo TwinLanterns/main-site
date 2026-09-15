@@ -60,6 +60,8 @@ interface Draft {
   email: string;
   phone: string;
   location: string;
+  referredBy: string;
+  referrerCollege: string;
   deviceOsLabel: "" | "iOS" | "Android" | "Neither";
   deviceModel: string;
   filmingAck: YesNo;
@@ -73,6 +75,8 @@ const EMPTY: Draft = {
   email: "",
   phone: "",
   location: "",
+  referredBy: "",
+  referrerCollege: "",
   deviceOsLabel: "",
   deviceModel: "",
   filmingAck: "",
@@ -164,19 +168,21 @@ export default function PartnerApplyFlow() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          payload: {
+        payload: {
             firstName: draft.firstName,
             lastName: draft.lastName || undefined,
             email: draft.email,
             phone: draft.phone || undefined,
             location: draft.location || undefined,
+            referredBy: draft.referredBy || undefined,
+            referrerCollege: draft.referrerCollege || undefined,
             deviceOs: toDeviceOs(draft.deviceOsLabel),
             deviceModel: draft.deviceModel,
             taskInterests: draft.taskInterests,
             filmingAck: draft.filmingAck === "Yes",
             consent: draft.consent === "Yes",
             referredByCode: refCode,
-          },
+        },
         }),
       });
       const data = await res.json();
@@ -294,6 +300,19 @@ export default function PartnerApplyFlow() {
                         onChange={(e) => update("location", e.target.value)}
                       />
                     </Field>
+                    <Field label="Who referred you" hint="Optional" className="sm:col-span-2">
+                        <Input
+                            value={draft.referredBy}
+                            onChange={(e) => update("referredBy", e.target.value)}
+                        />
+                        </Field>
+
+                        <Field label="Their college" hint="Optional" className="sm:col-span-2">
+                        <Input
+                            value={draft.referrerCollege}
+                            onChange={(e) => update("referrerCollege", e.target.value)}
+                        />
+                    </Field>
                   </div>
                 </>
               )}
@@ -397,6 +416,10 @@ export default function PartnerApplyFlow() {
                     </p>
                     <p>{draft.deviceModel || "No device selected"}</p>
                     <p>{draft.taskInterests.join(", ") || "No tasks selected"}</p>
+                    <p>
+                    Referred by: {draft.referredBy || "—"} · College:{" "}
+                    {draft.referrerCollege || "—"}
+                    </p>
                   </div>
                   {error && (
                     <p className="mt-6 text-[13.5px] text-flame">{error}</p>

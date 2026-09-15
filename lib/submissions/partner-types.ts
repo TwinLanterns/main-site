@@ -8,14 +8,15 @@ export interface PartnerApplicantPayload {
   email: string;
   phone?: string;
   location?: string;
+  referredBy?: string;        // NEW
+  referrerCollege?: string;   // NEW
   deviceOs: DeviceOs | "";
   deviceModel: string;
   taskInterests: string[];
   filmingAck: boolean;
   consent: boolean;
-  referredByCode?: string | null;
+  referredByCode: string | null;
 }
-
 export interface PartnerAmbassadorPayload {
   name: string;
   email: string;
