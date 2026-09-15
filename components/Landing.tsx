@@ -555,6 +555,161 @@ function BlobPhoto({
   );
 }
 
+/* ----------------------------------- partner ---------------------------------- */
+
+const partnerStats = [
+  ["Paid per clip", "not by the hour — you set the pace"],
+  ["Any modern phone", "iPhone 12 or later, recent Galaxy S / Pixel"],
+  ["No experience", "a ten-minute setup is the whole bar"],
+];
+
+const partnerSteps = [
+  {
+    n: "01",
+    t: "Apply",
+    b: "Two minutes. Tell us what you can film and roughly where you are.",
+  },
+  {
+    n: "02",
+    t: "Get set up",
+    b: "We send the head mount and a shot list. You film on your own schedule.",
+  },
+  {
+    n: "03",
+    t: "Get paid",
+    b: "Upload clips, get paid per approved clip. No invoices, no chasing hours.",
+  },
+];
+
+const partnerPoints = [
+  "Film everyday tasks with a head-mounted phone — no experience required",
+  "Shoot whenever it suits you; there are no shifts to sign up for",
+  "Refer someone you trust and earn when they qualify",
+];
+
+function Partner() {
+  return (
+    <section
+      id="partner"
+      className="relative overflow-hidden bg-ink py-20 text-white sm:py-28"
+    >
+      {/* shape cluster */}
+      <div className="pointer-events-none absolute inset-0 hidden lg:block">
+        <Shape
+          kind="arch"
+          className="absolute -left-12 top-[16%] w-44 text-sky/25"
+          rotate={-12}
+          float
+        />
+        <Shape
+          kind="burst"
+          className="absolute -right-10 bottom-[10%] w-40 text-lilac/25"
+          rotate={14}
+          float
+          delay={1.3}
+        />
+        <Shape
+          kind="hex"
+          className="absolute right-[7%] top-[8%] w-20 text-lemon/20"
+          rotate={18}
+          float
+          delay={0.6}
+        />
+        <Shape
+          kind="clover"
+          className="absolute bottom-[6%] left-[8%] w-24 text-flame/20"
+          rotate={-8}
+          float
+          delay={1.9}
+        />
+      </div>
+
+      <div
+        className={`${wrap} relative grid gap-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center`}
+      >
+        <Reveal>
+          <span className="label inline-flex items-center gap-2.5 rounded-full border border-white/20 px-4 py-2 !text-white/70">
+            <span className="h-1.5 w-1.5 rounded-full bg-lime" />
+            A second program — Partner
+          </span>
+
+          <h2 className="display mt-7 max-w-[16ch] text-[clamp(2.4rem,5.6vw,4.2rem)]">
+            Get paid to film how real work actually gets done.
+          </h2>
+
+          <p className="mt-6 max-w-[50ch] text-[17px] leading-relaxed text-white/65">
+            Partner runs separately from the internship work. You film everyday
+            tasks — cleaning, repair, warehouse, the physical stuff — to help
+            train robotics AI. No résumé, no interview panel, no experience
+            required.
+          </p>
+
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Link
+              href="/partner/apply"
+              className={`${btn} bg-white text-ink hover:bg-flame hover:text-white`}
+            >
+              Apply to film
+            </Link>
+            <Link
+              href="/partner/refer"
+              className={`${btn} border border-white/25 text-white hover:border-white`}
+            >
+              Become an ambassador
+            </Link>
+          </div>
+
+          <dl className="mt-12 grid gap-7 border-t border-white/15 pt-8 sm:grid-cols-3">
+            {partnerStats.map(([k, v]) => (
+              <div key={v}>
+                <dt className="display text-[clamp(1.4rem,2.4vw,1.9rem)]">
+                  {k}
+                </dt>
+                <dd className="mt-2 text-[14px] leading-relaxed text-white/55">
+                  {v}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Reveal>
+
+        <Reveal delay={0.08}>
+          <div className="rounded-[32px] border border-white/15 bg-white/[0.04] p-7 sm:p-10">
+            <p className="label !text-white/50">How it works</p>
+            <ol className="mt-8 space-y-7">
+              {partnerSteps.map((s) => (
+                <li key={s.n} className="flex gap-5">
+                  <span className="display pt-0.5 text-[15px] text-white/40">
+                    {s.n}
+                  </span>
+                  <div className="border-l border-white/15 pl-5">
+                    <h3 className="text-[17px] font-medium">{s.t}</h3>
+                    <p className="mt-2 text-[15px] leading-relaxed text-white/60">
+                      {s.b}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            <ul className="mt-10 space-y-4 border-t border-white/15 pt-8">
+              {partnerPoints.map((pt) => (
+                <li
+                  key={pt}
+                  className="flex gap-3.5 text-[14.5px] leading-relaxed text-white/70"
+                >
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-lime" />
+                  {pt}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
 /* ------------------------------------ faq ----------------------------------- */
 
 const faqs = [
@@ -679,6 +834,7 @@ export default function Landing() {
     <>
       <Hero />
       <Stats />
+      <Partner />
       <Split />
       <Process />
       <Statement />

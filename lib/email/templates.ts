@@ -1,7 +1,7 @@
 import type { SubmissionKind, SubmissionPayload } from "@/lib/submissions/types";
 
 // Brand palette — keep in sync with app/globals.css
-const COLOR = {
+export const COLOR = {
   ink: "#12110f",
   muted: "#6b665c",
   line: "#e8e3d9",
@@ -40,12 +40,20 @@ function formatValue(value: unknown): string {
 
 // ---------- Shared shell ----------
 
-function shell(inner: string, opts: { preheader?: string } = {}): string {
+export function shell(
+  inner: string,
+  opts: { preheader?: string; footer?: string } = {},
+): string {
   const preheader = opts.preheader
     ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${COLOR.shell}">${escapeHtml(
         opts.preheader,
       )}</div>`
     : "";
+
+  const footer =
+    opts.footer ??
+    `Twin Lanterns · Student talent, matched by hand.<br />
+     <a href="https://twinlanterns.co" style="color:${COLOR.muted};text-decoration:underline">twinlanterns.co</a>`;
 
   return `<!DOCTYPE html>
 <html>
@@ -66,8 +74,7 @@ function shell(inner: string, opts: { preheader?: string } = {}): string {
           </tr>
           <tr>
             <td style="padding:18px 36px 24px;border-top:1px solid ${COLOR.line};font-size:12px;line-height:1.5;color:${COLOR.muted}">
-              Twin Lanterns · Student talent, matched by hand.<br />
-              <a href="https://twinlanterns.co" style="color:${COLOR.muted};text-decoration:underline">twinlanterns.co</a>
+              ${footer}
             </td>
           </tr>
         </table>
@@ -78,7 +85,7 @@ function shell(inner: string, opts: { preheader?: string } = {}): string {
 </html>`;
 }
 
-function brandHeader(): string {
+export function brandHeader(): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px">
     <tr>
       <td style="vertical-align:middle;padding-right:10px">
@@ -94,7 +101,7 @@ function kindPill(kind: SubmissionKind): string {
   return `<span style="display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${COLOR.flame};background:${COLOR.shell};border:1px solid ${COLOR.line};border-radius:999px;padding:4px 10px">${label}</span>`;
 }
 
-function title(text: string): string {
+export function title(text: string): string {
   return `<h1 style="margin:14px 0 22px;font-size:24px;line-height:1.25;font-weight:500;letter-spacing:-0.01em;color:${COLOR.ink}">${text}</h1>`;
 }
 
