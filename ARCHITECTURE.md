@@ -394,6 +394,25 @@ initializing  →  filtering (start)  →  filtering (done, with shortlist)
 **Stage 2 — `stage2BatchAnalysis`**
 
 - DeepSeek, per shortlist, `max_tokens 2000`, `temperature 0.3`
+- `buildFullCandidateProfile()` sends the model a **fresh, full re-read of
+  each candidate**, not the stage-1 preview: untruncated `vibe_tags` /
+  `soft_skills` / `hard_skills`, the full `ai_summary`, and the entire
+  `raw_payload` as submitted (every key survives except ones matching
+  `/resume_data|base64|_blob$/i`, which are dropped as file blobs, not
+  applicant-authored text). Stage 1's `score` / `matchedKeywords` are
+  deliberately **not** included in this payload — the prompt instructs the
+  model to evaluate each candidate against the query from scratch and not
+  assume relevance just because they made the shortlist, since
+  `matchCandidatesWithTags`'s relax-if-too-few path can backfill the
+  shortlist with `score === 0` candidates.
+- Still **one batched DeepSeek call for the whole shortlist** (not one call
+  per candidate) — the proxy serializes all requests through a single
+  Playwright browser (§9 of `DEEPSEEK-PROXY.md`), so up to 20 sequential
+  per-candidate calls at a 180s hard timeout each would be far too slow and
+  would block every other proxy consumer. The tradeoff of sending full
+  profiles instead of truncated ones is a larger prompt; if the shortlist
+  `limit` (currently 20, set in `matchCandidatesWithTags`) is raised, watch
+  for the 180s proxy timeout rather than re-introducing per-field truncation.
 - Two fallback strings:
   - per-candidate `"Analysis unavailable."` — call succeeded, index missing
   - whole-call `"Analysis unavailable (API limits)."` — call threw, returned
