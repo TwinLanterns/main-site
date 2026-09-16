@@ -23,6 +23,9 @@ export default async function AdminPage() {
   const [
     { data: applications, error: applicationsError },
     { data: briefs, error: briefsError },
+    { data: partnerAmbassadors, error: partnerAmbassadorsError },
+    { data: partnerQualified, error: partnerQualifiedError },
+    { data: partnerUnqualified, error: partnerUnqualifiedError },
   ] = await Promise.all([
     supabase
       .from("student_applications")
@@ -61,17 +64,46 @@ export default async function AdminPage() {
       .from("company_briefs")
       .select("*")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("partner_ambassadors")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("partner_applicants_qualified")
+      .select("*")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("partner_applicants_unqualified")
+      .select("*")
+      .order("created_at", { ascending: false }),
   ]);
-  if (applicationsError || briefsError) {
+
+  if (
+    applicationsError ||
+    briefsError ||
+    partnerAmbassadorsError ||
+    partnerQualifiedError ||
+    partnerUnqualifiedError
+  ) {
     return (
       <div className="p-8 text-sm text-red-600">
         Failed to load data:{" "}
-        {applicationsError?.message || briefsError?.message}
+        {applicationsError?.message ||
+          briefsError?.message ||
+          partnerAmbassadorsError?.message ||
+          partnerQualifiedError?.message ||
+          partnerUnqualifiedError?.message}
       </div>
     );
   }
 
   return (
-    <AdminDashboard applications={applications ?? []} briefs={briefs ?? []} />
+    <AdminDashboard
+      applications={applications ?? []}
+      briefs={briefs ?? []}
+      partnerAmbassadors={partnerAmbassadors ?? []}
+      partnerQualified={partnerQualified ?? []}
+      partnerUnqualified={partnerUnqualified ?? []}
+    />
   );
 }

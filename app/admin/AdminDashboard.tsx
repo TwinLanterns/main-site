@@ -65,6 +65,34 @@ const BRIEF_COLUMNS = [
   "created_at",
 ];
 
+const PARTNER_APPLICANT_COLUMNS = [
+  "first_name",
+  "last_name",
+  "email",
+  "phone",
+  "location",
+  "device_os",
+  "device_model",
+  "task_interests",
+  "referred_by_display",
+  "created_at",
+];
+
+const PARTNER_UNQUALIFIED_COLUMNS = [
+  ...PARTNER_APPLICANT_COLUMNS.slice(0, -1),
+  "disqualified_reasons",
+  "created_at",
+];
+
+const PARTNER_AMBASSADOR_COLUMNS = [
+  "name",
+  "email",
+  "code",
+  "qualified_referrals",
+  "unqualified_referrals",
+  "created_at",
+];
+
 const EXAMPLE_PROMPTS = [
   "Scrappy self-starter who's shipped side projects",
   "Data-driven analyst with Python and SQL",
@@ -1499,19 +1527,196 @@ function VibeSearch() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Partner — ambassadors + qualified/unqualified applicants             */
+/* ------------------------------------------------------------------ */
+
+/** code -> ambassador row, for quick lookups when annotating applicants. */
+function buildAmbassadorMap(ambassadors: Row[]): Map<string, Row> {
+  const map = new Map<string, Row>();
+  for (const a of ambassadors) {
+    const code = a.code;
+    if (typeof code === "string") map.set(code, a);
+  }
+  return map;
+}
+
+/** Adds a human-readable `referred_by_display` column, e.g. "Jane Doe (AB12CD)". */
+function withReferrerDisplay(rows: Row[], ambassadorMap: Map<string, Row>): Row[] {
+  return rows.map((row) => {
+    const code = row.referred_by_code;
+    if (typeof code !== "string" || !code) {
+      return { ...row, referred_by_display: "—" };
+    }
+    const ambassador = ambassadorMap.get(code);
+    const name = ambassador?.name;
+    return {
+      ...row,
+      referred_by_display:
+        typeof name === "string" ? `${name} (${code})` : code,
+    };
+  });
+}
+
+/** Adds referral-count columns to the ambassador rows, e.g. for a leaderboard. */
+function withReferralCounts(
+  ambassadors: Row[],
+  qualified: Row[],
+  unqualified: Row[],
+): Row[] {
+  return ambassadors.map((a) => {
+    const code = a.code;
+    const qualified_referrals =
+      typeof code === "string"
+        ? qualified.filter((r) => r.referred_by_code === code).length
+        : 0;
+    const unqualified_referrals =
+      typeof code === "string"
+        ? unqualified.filter((r) => r.referred_by_code === code).length
+        : 0;
+    return { ...a, qualified_referrals, unqualified_referrals };
+  });
+}
+
+type PartnerSubTab = "qualified" | "unqualified" | "ambassadors";
+
+function PartnerSection({
+  ambassadors,
+  qualified,
+  unqualified,
+}: {
+  ambassadors: Row[];
+  qualified: Row[];
+  unqualified: Row[];
+}) {
+  const [subTab, setSubTab] = useState<PartnerSubTab>("qualified");
+  const [referrerFilter, setReferrerFilter] = useState<string>("");
+
+  const ambassadorMap = useMemo(() => buildAmbassadorMap(ambassadors), [ambassadors]);
+
+  const qualifiedWithReferrer = useMemo(
+    () => withReferrerDisplay(qualified, ambassadorMap),
+    [qualified, ambassadorMap],
+  );
+  const unqualifiedWithReferrer = useMemo(
+    () => withReferrerDisplay(unqualified, ambassadorMap),
+    [unqualified, ambassadorMap],
+  );
+  const ambassadorsWithCounts = useMemo(
+    () => withReferralCounts(ambassadors, qualified, unqualified),
+    [ambassadors, qualified, unqualified],
+  );
+
+  const filteredQualified = referrerFilter
+    ? qualifiedWithReferrer.filter((r) => r.referred_by_code === referrerFilter)
+    : qualifiedWithReferrer;
+  const filteredUnqualified = referrerFilter
+    ? unqualifiedWithReferrer.filter((r) => r.referred_by_code === referrerFilter)
+    : unqualifiedWithReferrer;
+
+  const selectedAmbassador = referrerFilter
+    ? ambassadors.find((a) => a.code === referrerFilter)
+    : null;
+
+  const subTabs: { key: PartnerSubTab; label: string; count: number }[] = [
+    { key: "qualified", label: "Qualified", count: filteredQualified.length },
+    { key: "unqualified", label: "Unqualified", count: filteredUnqualified.length },
+    { key: "ambassadors", label: "Ambassadors", count: ambassadors.length },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-full border border-neutral-200 bg-white p-0.5 shadow-sm">
+          {subTabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setSubTab(t.key)}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                subTab === t.key
+                  ? "bg-ink text-white"
+                  : "text-neutral-600 hover:text-neutral-900"
+              }`}
+            >
+              {t.label} ({t.count})
+            </button>
+          ))}
+        </div>
+
+        {subTab !== "ambassadors" && (
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-medium text-neutral-500">
+              Referred by
+            </label>
+            <select
+              value={referrerFilter}
+              onChange={(e) => setReferrerFilter(e.target.value)}
+              className="rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm focus:border-neutral-500 focus:outline-none"
+            >
+              <option value="">All referrers</option>
+              {ambassadors.map((a) => (
+                <option key={String(a.code)} value={String(a.code)}>
+                  {String(a.name)} — {String(a.code)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {selectedAmbassador && subTab !== "ambassadors" && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2.5">
+          <p className="text-sm text-neutral-700">
+            Showing referrals from{" "}
+            <span className="font-medium text-neutral-900">
+              {String(selectedAmbassador.name)}
+            </span>{" "}
+            <span className="text-neutral-400">
+              ({String(selectedAmbassador.code)})
+            </span>
+            {" · "}
+            {filteredQualified.length} qualified ·{" "}
+            {filteredUnqualified.length} unqualified
+          </p>
+          <button
+            onClick={() => setReferrerFilter("")}
+            className="text-xs font-medium text-neutral-500 hover:text-neutral-900"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
+
+      {subTab === "qualified" ? (
+        <Table rows={filteredQualified} columns={PARTNER_APPLICANT_COLUMNS} />
+      ) : subTab === "unqualified" ? (
+        <Table rows={filteredUnqualified} columns={PARTNER_UNQUALIFIED_COLUMNS} />
+      ) : (
+        <Table rows={ambassadorsWithCounts} columns={PARTNER_AMBASSADOR_COLUMNS} />
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Dashboard shell                                                     */
 /* ------------------------------------------------------------------ */
 
 export default function AdminDashboard({
   applications,
   briefs,
+  partnerAmbassadors = [],
+  partnerQualified = [],
+  partnerUnqualified = [],
 }: {
   applications: Row[];
   briefs: Row[];
+  partnerAmbassadors?: Row[];
+  partnerQualified?: Row[];
+  partnerUnqualified?: Row[];
 }) {
-  const [tab, setTab] = useState<"applications" | "briefs" | "vibe">(
-    "applications",
-  );
+  const [tab, setTab] = useState<
+    "applications" | "briefs" | "partner" | "vibe"
+  >("applications");
   const router = useRouter();
 
   async function handleLogout() {
@@ -1557,6 +1762,16 @@ export default function AdminDashboard({
             Company briefs ({briefs.length})
           </button>
           <button
+            onClick={() => setTab("partner")}
+            className={`px-3 py-2 text-sm font-medium ${
+              tab === "partner"
+                ? "border-b-2 border-neutral-900 text-neutral-900"
+                : "text-neutral-500 hover:text-neutral-700"
+            }`}
+          >
+            Partner ({partnerQualified.length + partnerUnqualified.length})
+          </button>
+          <button
             onClick={() => setTab("vibe")}
             className={`px-3 py-2 text-sm font-medium ${
               tab === "vibe"
@@ -1577,6 +1792,12 @@ export default function AdminDashboard({
           />
         ) : tab === "briefs" ? (
           <Table rows={briefs} columns={BRIEF_COLUMNS} />
+        ) : tab === "partner" ? (
+          <PartnerSection
+            ambassadors={partnerAmbassadors}
+            qualified={partnerQualified}
+            unqualified={partnerUnqualified}
+          />
         ) : (
           <VibeSearch />
         )}
