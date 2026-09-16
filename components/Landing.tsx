@@ -648,7 +648,7 @@ function Partner() {
               href="/partner/apply"
               className={`${btn} bg-white text-ink hover:bg-flame hover:text-white`}
             >
-              Apply to film
+              Start earning
             </Link>
             <Link
               href="/partner/refer"
