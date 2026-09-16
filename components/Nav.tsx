@@ -37,20 +37,20 @@ export default function Nav() {
         I&apos;m hiring
       </Link>
       <Link
-        href="/partner/info"
-        className={`hidden rounded-full bg-lime text-[15px] font-semibold text-ink shadow-[0_4px_18px_-6px_rgba(182,231,92,0.7)] transition-all duration-500 hover:bg-flame hover:text-white hover:shadow-[0_4px_18px_-4px_rgba(255,90,24,0.55)] sm:block ${
-          compact ? "px-4 py-2" : "px-5 py-2.5"
-        }`}
-      >
-        Earn Now
-      </Link>
-      <Link
         href="/apply"
-        className={`rounded-full bg-ink text-[15px] text-white transition-all duration-500 hover:bg-flame ${
+        className={`hidden rounded-full border border-ink/15 bg-white text-[15px] transition-all duration-500 hover:border-ink sm:block ${
           compact ? "px-4 py-2" : "px-5 py-2.5"
         }`}
       >
         Apply
+      </Link>
+      <Link
+        href="/partner/info"
+        className={`rounded-full bg-ink text-[15px] text-white transition-all duration-500 hover:bg-flame ${
+          compact ? "px-4 py-2" : "px-5 py-2.5"
+        }`}
+      >
+        Earn Now
       </Link>
     </>
   );
