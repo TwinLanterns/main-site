@@ -656,6 +656,12 @@ function Partner() {
             >
               Become an ambassador
             </Link>
+            <Link
+              href="/partner/info"
+              className={`${btn} bg-lime text-ink hover:bg-white`}
+            >
+              More info
+            </Link>
           </div>
 
           <dl className="mt-12 grid gap-7 border-t border-white/15 pt-8 sm:grid-cols-3">

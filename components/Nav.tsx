@@ -37,6 +37,14 @@ export default function Nav() {
         I&apos;m hiring
       </Link>
       <Link
+        href="/partner/info"
+        className={`hidden rounded-full bg-lime text-[15px] font-semibold text-ink shadow-[0_4px_18px_-6px_rgba(182,231,92,0.7)] transition-all duration-500 hover:bg-flame hover:text-white hover:shadow-[0_4px_18px_-4px_rgba(255,90,24,0.55)] sm:block ${
+          compact ? "px-4 py-2" : "px-5 py-2.5"
+        }`}
+      >
+        Earn Now
+      </Link>
+      <Link
         href="/apply"
         className={`rounded-full bg-ink text-[15px] text-white transition-all duration-500 hover:bg-flame ${
           compact ? "px-4 py-2" : "px-5 py-2.5"
@@ -147,17 +155,21 @@ export default function Nav() {
 
         {open && (
           <div className="pointer-events-auto mt-2 overflow-hidden rounded-[28px] border border-line bg-white md:hidden">
-            {[...links, { href: "/companies", label: "I'm hiring" }].map(
-              (l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className="block border-b border-line px-5 py-4 text-[16px] last:border-0"
-                >
-                  {l.label}
-                </Link>
-              ),
-            )}
+            {[
+              ...links.map((l) => ({ ...l, pop: false })),
+              { href: "/partner/info", label: "Earn Now", pop: true },
+              { href: "/companies", label: "I'm hiring", pop: false },
+            ].map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`block border-b border-line px-5 py-4 text-[16px] last:border-0 ${
+                  l.pop ? "bg-lime font-semibold text-ink" : ""
+                }`}
+              >
+                {l.label}
+              </Link>
+            ))}
           </div>
         )}
       </div>
