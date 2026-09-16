@@ -1,4 +1,4 @@
-// scripts/chat.ts
+// scripts/test-deepseek-api.ts
 
 import * as readline from "readline";
 import { streamDeepSeekWeb, ChatMessage, StreamEvent } from "../lib/deepseek";

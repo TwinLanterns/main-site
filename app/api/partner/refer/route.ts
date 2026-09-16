@@ -6,9 +6,8 @@ import {
   PartnerConfigError,
   PartnerSaveError,
 } from "@/lib/submissions/partner-persistence";
+import { parsePartnerReferRequest } from "@/lib/submissions/partner-parse";
 import { sendPartnerAmbassadorEmails } from "@/lib/email/partner-emails";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function getOrigin(req: Request): string {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -21,51 +20,36 @@ function getOrigin(req: Request): string {
 
   return new URL(req.url).origin;
 }
+
 function badRequest(error: string) {
   return NextResponse.json({ ok: false, error }, { status: 400 });
 }
 
 export async function POST(req: Request) {
-  let body: unknown;
+  const parsed = await parsePartnerReferRequest(req);
+  if (!parsed.ok) {
+    return badRequest(parsed.error);
+  }
+
+  const { name, email } = parsed.data;
+
   try {
-    body = await req.json();
-  } catch {
-    return badRequest("Invalid JSON");
-  }
-
-  if (typeof body !== "object" || body === null) {
-    return badRequest("Missing or invalid name/email");
-  }
-
-  const { name, email } = body as Record<string, unknown>;
-
-  const nameStr = typeof name === "string" ? name.trim() : "";
-  const emailStr = typeof email === "string" ? email.trim() : "";
-
-  if (!nameStr || !emailStr || !EMAIL_RE.test(emailStr)) {
-    return badRequest("Missing or invalid name/email");
-  }
-
-    try {
-    const { code } = await savePartnerAmbassador({
-        name: nameStr,
-        email: emailStr,
-    });
+    const { code } = await savePartnerAmbassador({ name, email });
 
     const referralUrl = `${getOrigin(req)}/partner/apply?ref=${encodeURIComponent(code)}`;
 
     try {
-        await sendPartnerAmbassadorEmails({
-        payload: { name: nameStr, email: emailStr },
+      await sendPartnerAmbassadorEmails({
+        payload: { name, email },
         code,
         referralUrl,
-        });
+      });
     } catch (err) {
-        console.error("partner ambassador emails failed", err);
+      console.error("partner ambassador emails failed", err);
     }
 
     return NextResponse.json({ ok: true, code });
-    } catch (err) {
+  } catch (err) {
     if (err instanceof PartnerConfigError) {
       return NextResponse.json(
         { ok: false, error: "Server misconfigured" },

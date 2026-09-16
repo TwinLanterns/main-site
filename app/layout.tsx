@@ -94,14 +94,6 @@ const jsonLd = {
       alternateName: ["TwinLanterns", "Twin Lanterns Co"],
       url: site,
       publisher: { "@id": `${site}/#organization` },
-      potentialAction: {
-        "@type": "SearchAction",
-        target: {
-          "@type": "EntryPoint",
-          urlTemplate: `${site}/search?q={search_term_string}`
-        },
-        "query-input": "required name=search_term_string"
-      }
     }
   ],
 };

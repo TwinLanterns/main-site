@@ -1,0 +1,103 @@
+import type { PartnerApplicantPayload, PartnerAmbassadorPayload } from "./partner-types";
+import type { DeviceOs } from "./partner-eligibility";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+export type ParsePartnerApplicantResult =
+  | { ok: true; data: PartnerApplicantPayload }
+  | { ok: false; status: 400; error: string };
+
+export type ParsePartnerReferResult =
+  | { ok: true; data: PartnerAmbassadorPayload }
+  | { ok: false; status: 400; error: string };
+
+// Narrow unknown → string | undefined. Never throws.
+function str(v: unknown): string | undefined {
+  return typeof v === "string" ? v : undefined;
+}
+
+// Strict boolean: only literal `true` passes. `"false"`, `1`, etc. all fail.
+function bool(v: unknown): boolean {
+  return v === true;
+}
+
+export async function parsePartnerApplicantRequest(
+  req: Request,
+): Promise<ParsePartnerApplicantResult> {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return { ok: false, status: 400, error: "Invalid JSON" };
+  }
+
+  if (typeof body !== "object" || body === null || !("payload" in body)) {
+    return { ok: false, status: 400, error: "Missing fields" };
+  }
+
+  const payload = (body as { payload: unknown }).payload;
+  if (typeof payload !== "object" || payload === null) {
+    return { ok: false, status: 400, error: "Missing fields" };
+  }
+
+  const p = payload as Record<string, unknown>;
+
+  const firstName = str(p.firstName)?.trim() ?? "";
+  const email = str(p.email)?.trim() ?? "";
+
+  if (!firstName || !email || !EMAIL_RE.test(email)) {
+    return { ok: false, status: 400, error: "Missing or invalid name/email" };
+  }
+
+  // Enum-validate deviceOs — anything other than the two literals becomes "".
+  const deviceOs: DeviceOs | "" =
+    p.deviceOs === "ios" || p.deviceOs === "android" ? p.deviceOs : "";
+
+  const taskInterests = Array.isArray(p.taskInterests)
+    ? p.taskInterests.filter((x): x is string => typeof x === "string")
+    : [];
+
+  const data: PartnerApplicantPayload = {
+    firstName,
+    lastName: str(p.lastName)?.trim() || undefined,
+    email,
+    phone: str(p.phone)?.trim() || undefined,
+    location: str(p.location)?.trim() || undefined,
+    referredBy: str(p.referredBy)?.trim() || undefined,
+    referrerCollege: str(p.referrerCollege)?.trim() || undefined,
+    deviceOs,
+    deviceModel: str(p.deviceModel)?.trim() || "",
+    taskInterests,
+    filmingAck: bool(p.filmingAck),
+    consent: bool(p.consent),
+    referredByCode: str(p.referredByCode)?.trim() || null,
+  };
+
+  return { ok: true, data };
+}
+
+export async function parsePartnerReferRequest(
+  req: Request,
+): Promise<ParsePartnerReferResult> {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return { ok: false, status: 400, error: "Invalid JSON" };
+  }
+
+  if (typeof body !== "object" || body === null) {
+    return { ok: false, status: 400, error: "Missing or invalid name/email" };
+  }
+
+  const { name, email } = body as Record<string, unknown>;
+
+  const nameStr = typeof name === "string" ? name.trim() : "";
+  const emailStr = typeof email === "string" ? email.trim() : "";
+
+  if (!nameStr || !emailStr || !EMAIL_RE.test(emailStr)) {
+    return { ok: false, status: 400, error: "Missing or invalid name/email" };
+  }
+
+  return { ok: true, data: { name: nameStr, email: emailStr } };
+}

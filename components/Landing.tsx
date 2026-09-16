@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Reveal } from "./Reveal";
-import Shape, { shapePaths } from "./Shapes";
+import Shape from "./Shapes";
 
 const wrap = "mx-auto w-full max-w-[1240px] px-5";
 const btn =
@@ -497,68 +497,10 @@ function Roles() {
   );
 }
 
-/* --------------------------------- founders --------------------------------- */
-
-const founders = [
-  {
-    name: "Carlos Castaneda",
-    role: "Co-founder — Talent & Partnerships",
-    school: "Political Science & Global Studies, UCLA",
-    photo: "/team/carlos.png",
-    bio: "Carlos leads the talent side of Twin Lanterns: sourcing, screening and the conversations that decide whether a candidate goes forward. His background in political science and global studies is built on research, interviewing and reading people accurately — the same skills that make a shortlist trustworthy. He owns our campus partnerships and speaks with every student we put in front of a founder.",
-    skills: [
-      "Candidate screening & interviews",
-      "Campus and club partnerships",
-      "Shortlist quality control",
-    ],
-  },
-  {
-    name: "Cameron Negahban",
-    role: "Co-founder — Client & Operations",
-    school: "Economics & Biology, UCLA",
-    photo: "/team/cameron.png",
-    bio: "Cameron runs the company side: scoping roles with founders, translating vague needs into a real job description, and keeping every search on schedule. An economics and biology background gives him an analytical, evidence-first way of working — he tracks what actually predicts a good hire and adjusts the process around it. He's the founder's point of contact from intake through start date.",
-    skills: ["Role scoping with founders", "Search operations & timelines"],
-  },
-];
-
-/** Photo poured into an organic shape that turns and breathes like a bubble. */
-function BlobPhoto({
-  src,
-  alt,
-  kind,
-  id,
-}: {
-  src: string;
-  alt: string;
-  kind: "clover" | "scallop";
-  id: string;
-}) {
-  return (
-    <svg viewBox="0 0 200 200" role="img" aria-label={alt} className="w-full">
-      <defs>
-        <clipPath id={id}>
-          <path d={shapePaths[kind]} className="blob-morph" />
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${id})`}>
-        <image
-          href={src}
-          x="-30"
-          y="-26"
-          width="262"
-          height="272"
-          preserveAspectRatio="xMidYMin slice"
-        />
-      </g>
-    </svg>
-  );
-}
-
 /* ----------------------------------- partner ---------------------------------- */
 
 const partnerStats = [
-  ["Paid per clip", "not by the hour — you set the pace"],
+  ["$10/hr", "for approved filming time"],
   ["Any modern phone", "iPhone 12 or later, recent Galaxy S / Pixel"],
   ["No experience", "a ten-minute setup is the whole bar"],
 ];
@@ -577,7 +519,7 @@ const partnerSteps = [
   {
     n: "03",
     t: "Get paid",
-    b: "Upload clips, get paid per approved clip. No invoices, no chasing hours.",
+    b: "Upload clips, get paid $10/hr for approved footage. No invoices, no chasing hours.",
   },
 ];
 
