@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Reorder, useDragControls } from "motion/react";
 import Shape from "./Shapes";
 
@@ -54,6 +54,160 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
       {...props}
       className={`${base} appearance-none ${props.className ?? ""}`}
     />
+  );
+}
+
+/* --------------------------- inline OTP email check -------------------------- */
+
+export type VerificationPurpose =
+  | "student"
+  | "company"
+  | "partner_applicant"
+  | "partner_ambassador";
+
+const RESEND_COOLDOWN = 30; // seconds — mirrors lib/verification/store.ts
+
+export function EmailVerify({
+  email,
+  purpose,
+  verified,
+  onVerified,
+}: {
+  email: string;
+  purpose: VerificationPurpose;
+  verified: boolean;
+  onVerified: (verified: boolean) => void;
+}) {
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+  const lastEmail = useRef(email);
+
+  // A verified/sent code only proves ownership of the address it was sent
+  // to — if the field changes underneath it, the proof no longer applies.
+  useEffect(() => {
+    if (email === lastEmail.current) return;
+    lastEmail.current = email;
+    setSent(false);
+    setCode("");
+    setError(null);
+    if (verified) onVerified(false);
+  }, [email, verified, onVerified]);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+
+  async function sendCode() {
+    if (!emailOk || sending || cooldown > 0) return;
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/verify/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, purpose }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok)
+        throw new Error(data.error || "Could not send a code");
+      setSent(true);
+      setCooldown(RESEND_COOLDOWN);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send a code");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function confirmCode() {
+    if (code.trim().length !== 6 || confirming) return;
+    setConfirming(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/verify/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, purpose, code: code.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok)
+        throw new Error(data.error || "That code doesn't match");
+      onVerified(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That code doesn't match");
+    } finally {
+      setConfirming(false);
+    }
+  }
+
+  if (verified) {
+    return (
+      <p className="mt-2 flex items-center gap-1.5 text-[13px] text-ink">
+        <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 text-lime" fill="none">
+          <path
+            d="M2 6.2 4.6 8.8 10 3.4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        Email verified
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-2">
+      {!sent ? (
+        <button
+          type="button"
+          onClick={sendCode}
+          disabled={!emailOk || sending}
+          className="text-[13px] text-flame underline underline-offset-4 transition-opacity disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
+        >
+          {sending ? "Sending…" : "Send a verification code"}
+        </button>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            value={code}
+            onChange={(e) =>
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
+            placeholder="6-digit code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            className="w-28 rounded-[12px] border border-line bg-white px-3 py-2.5 text-center text-[15px] tracking-[0.3em] text-ink outline-none transition-colors focus:border-ink"
+          />
+          <button
+            type="button"
+            onClick={confirmCode}
+            disabled={code.trim().length !== 6 || confirming}
+            className="rounded-full bg-ink px-4 py-2.5 text-[13px] text-white transition-colors enabled:hover:bg-flame disabled:opacity-35"
+          >
+            {confirming ? "Checking…" : "Verify"}
+          </button>
+          <button
+            type="button"
+            onClick={sendCode}
+            disabled={cooldown > 0 || sending}
+            className="text-[13px] text-muted underline underline-offset-4 disabled:cursor-not-allowed disabled:no-underline"
+          >
+            {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend"}
+          </button>
+        </div>
+      )}
+      {error && <p className="mt-2 text-[13px] text-flame">{error}</p>}
+    </div>
   );
 }
 

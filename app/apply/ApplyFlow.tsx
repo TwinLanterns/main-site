@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   ChoiceCards,
   DropZone,
+  EmailVerify,
   Field,
   Input,
   NavButtons,
@@ -100,6 +101,7 @@ export default function ApplyFlow() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailVerified, setEmailVerified] = useState(false);
 
   useEffect(() => {
     try {
@@ -129,13 +131,14 @@ export default function ApplyFlow() {
         return (
           data.firstName.trim().length > 1 &&
           emailOk(data.email) &&
+          emailVerified &&
           !!data.level &&
           data.school.trim().length > 1
         );
       default:
         return data.built.trim().length > 19;
     }
-  }, [step, data]);
+  }, [step, data, emailVerified]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -334,6 +337,12 @@ export default function ApplyFlow() {
                         onChange={(e) => set("email", e.target.value)}
                         placeholder="maya@ucla.edu"
                         autoComplete="email"
+                      />
+                      <EmailVerify
+                        email={data.email}
+                        purpose="student"
+                        verified={emailVerified}
+                        onVerified={setEmailVerified}
                       />
                     </Field>
                     <Field

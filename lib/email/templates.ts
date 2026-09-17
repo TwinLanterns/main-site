@@ -105,6 +105,20 @@ export function title(text: string): string {
   return `<h1 style="margin:14px 0 22px;font-size:24px;line-height:1.25;font-weight:500;letter-spacing:-0.01em;color:${COLOR.ink}">${text}</h1>`;
 }
 
+// ---------- Verification code ----------
+
+export function renderVerificationCode(code: string): string {
+  const inner = `
+    ${brandHeader()}
+    ${title("Confirm your email")}
+    <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:${COLOR.ink}">Enter this code to confirm it's really you:</p>
+    <p style="margin:0 0 22px;font-size:32px;font-weight:600;letter-spacing:0.3em;color:${COLOR.ink}">${escapeHtml(code)}</p>
+    <p style="margin:0;font-size:13px;line-height:1.6;color:${COLOR.muted}">This code expires in 10 minutes. If you didn't request it, you can ignore this email.</p>
+  `;
+
+  return shell(inner, { preheader: `Your verification code is ${code}.` });
+}
+
 // ---------- Payload table ----------
 
 function renderRows(payload: SubmissionPayload): string {

@@ -8,7 +8,7 @@
 
 import { useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { Field, Input, NavButtons, ease } from "@/components/form";
+import { EmailVerify, Field, Input, NavButtons, ease } from "@/components/form";
 
 export default function AmbassadorFlow() {
   const [name, setName] = useState("");
@@ -17,8 +17,12 @@ export default function AmbassadorFlow() {
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
 
-  const valid = name.trim().length > 1 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+  const valid =
+    name.trim().length > 1 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) &&
+    emailVerified;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -96,6 +100,12 @@ export default function AmbassadorFlow() {
               data-lpignore="true"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+            />
+            <EmailVerify
+              email={email}
+              purpose="partner_ambassador"
+              verified={emailVerified}
+              onVerified={setEmailVerified}
             />
           </Field>
           {error && <p className="text-[13.5px] text-flame">{error}</p>}

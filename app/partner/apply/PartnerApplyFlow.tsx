@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
+  EmailVerify,
   Field,
   Input,
   Pills,
@@ -97,6 +98,7 @@ export default function PartnerApplyFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ qualified: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [emailVerified, setEmailVerified] = useState(false);
 
   useEffect(() => {
     try {
@@ -154,7 +156,7 @@ export default function PartnerApplyFlow() {
         Boolean(draft.deviceModel));
 
     const stepValid = [
-    draft.firstName.trim().length > 1 && EMAIL_RE.test(draft.email),
+    draft.firstName.trim().length > 1 && EMAIL_RE.test(draft.email) && emailVerified,
     deviceReady && draft.filmingAck !== "" && draft.consent !== "",
     draft.taskInterests.length > 0,
     true,
@@ -286,6 +288,12 @@ export default function PartnerApplyFlow() {
                         data-lpignore="true"
                         value={draft.email}
                         onChange={(e) => update("email", e.target.value)}
+                      />
+                      <EmailVerify
+                        email={draft.email}
+                        purpose="partner_applicant"
+                        verified={emailVerified}
+                        onVerified={setEmailVerified}
                       />
                     </Field>
                     <Field label="Phone" hint="Optional">

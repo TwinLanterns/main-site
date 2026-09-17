@@ -166,12 +166,18 @@ they should be uninstalled to keep the tree honest.
 │   │
 │   └── api/
 │       ├── submit/route.ts         POST — thin orchestrator:
-│       │                           parse → save → notify
+│       │                           parse → duplicate/verify check → save →
+│       │                           consume verification → notify (§4.8)
 │       ├── partner/
 │       │   ├── submit/route.ts     POST — applicant intake; inline
 │       │   │                       validation (no shared parse module)
 │       │   └── refer/route.ts      POST — ambassador signup; generates a
 │       │                           referral code
+│       ├── verify/
+│       │   ├── send/route.ts       POST — duplicate check + issues a 6-digit
+│       │   │                       OTP by email (§4.8)
+│       │   └── confirm/route.ts    POST — checks the OTP, marks the
+│       │                           (email, purpose) row verified (§4.8)
 │       └── admin/
 │           ├── login/route.ts      POST — verify creds, set cookie
 │           ├── logout/route.ts     POST — clear cookie
@@ -181,7 +187,8 @@ they should be uninstalled to keep the tree honest.
 ├── components/
 │   ├── form.tsx                    Design system: Field, Input, Pills,
 │   │                               ChoiceCards, Slider, RankList, DropZone,
-│   │                               StepHeader, StepRail, Progress, NavButtons, ease
+│   │                               StepHeader, StepRail, Progress, NavButtons,
+│   │                               EmailVerify (§4.8), ease
 │   ├── Landing.tsx                 Homepage composed of internal sections
 │   │                               (includes the Partner promo section)
 │   ├── Nav.tsx                     Floating nav pill with scroll-collapse;
@@ -213,15 +220,27 @@ they should be uninstalled to keep the tree honest.
 │   │                               throws PartnerConfigError (500) /
 │   │                               PartnerSaveError (502) — a separate class
 │   │                               hierarchy from Submission*Error (see §12)
+│   ├── verification/               Email OTP + duplicate prevention (§4.8),
+│   │   │                           shared by all three submission routes
+│   │   ├── types.ts                VerificationPurpose + VERIFICATION_PURPOSES
+│   │   ├── store.ts                email_verifications CRUD; throws
+│   │   │                           VerificationConfigError (500) /
+│   │   │                           VerificationRequestError (400/429) /
+│   │   │                           VerificationRequiredError (400)
+│   │   └── duplicate.ts            findDuplicateEmail — case-insensitive
+│   │                               lookup per purpose, no DB constraint
 │   └── email/
 │       ├── resend.ts               Transport: sendResendEmail,
 │       │                           getEmailConfig, ResendAttachment
-│       ├── templates.ts            HTML renderers + escapeHtml
+│       ├── templates.ts            HTML renderers + escapeHtml +
+│       │                           renderVerificationCode (§4.8)
 │       ├── submission-emails.ts    Internal notify + submitter confirmation
 │       ├── partner-templates.ts      Partner HTML renderers (reuses templates.ts
 │       │                           helpers)
-│       └── partner-emails.ts         Partner internal notify + confirmation
-│                                   (applicant + ambassador)
+│       ├── partner-emails.ts         Partner internal notify + confirmation
+│       │                           (applicant + ambassador)
+│       └── verification-emails.ts  Sends the OTP code (§4.8) — the one email
+│                                   send in the app that's allowed to throw
 │
 ├── scripts/
 │   ├── migrate-lovable.ts          Lovable students → student_applications
@@ -242,6 +261,10 @@ they should be uninstalled to keep the tree honest.
 │   │   next.svg, vercel.svg,
 │   │   window.svg
 │   └── team/{carlos,cameron}.png   Orphaned — Founders section removed
+│
+├── supabase/
+│   └── email_verifications.sql     Schema for the OTP table (§4.8) — apply
+│                                   by hand in the Supabase SQL editor
 │
 ├── proxy.ts                        Next.js 16 middleware — gates /admin/*
 │                                   and the two protected admin API routes
@@ -686,6 +709,119 @@ string between `partner_ambassadors` and the two applicant tables.
 | `PartnerConfigError` | `500 { error: "Server misconfigured" }` |
 | `PartnerSaveError` or any other error | `502 { error: "Save failed" }` |
 | Email failure (any layer) | logged, never fails |
+
+---
+
+### 4.8 Email Verification & Duplicate Prevention
+
+All four public funnels (`/api/submit` with `kind: "student"` or
+`"company"`, `/api/partner/submit`, `/api/partner/refer`) require the submitter's
+email to be verified via an inline 6-digit OTP, and reject a submission
+outright if that email already has a row in the relevant table(s). This
+lives outside the `submissions`/`partner-*` persistence modules, in
+`lib/verification/`, so it applies uniformly across both class hierarchies
+(`Submission*Error` and `Partner*Error`) without touching either.
+
+```
+components/form.tsx → <EmailVerify purpose="student|company|partner_applicant|partner_ambassador">
+│  Renders inline under the email Field in each wizard's contact step.
+│  Owns its own fetch calls — no prop drilling through the wizard beyond
+│  `email` in / `verified` boolean out (same "self-contained widget" pattern
+│  as DropZone).
+▼
+POST /api/verify/send { email, purpose }
+│  1. findDuplicateEmail(purpose, email) — 409 if already present
+│  2. issueVerificationCode — upserts lib/verification/store.ts's
+│     email_verifications row (see below), emails the code
+▼
+POST /api/verify/confirm { email, purpose, code }
+│  confirmVerificationCode — matches code, sets verified = true
+▼
+User continues the wizard and submits. The step's "Continue"/"Submit" button
+stays disabled until `verified` is true, same mechanism as every other
+per-step validity check in §9.4.
+▼
+POST /api/submit | /api/partner/submit | /api/partner/refer
+│  Before calling saveSubmission / savePartnerApplicant / savePartnerAmbassador:
+│  1. findDuplicateEmail again (closes the race between "send code" and
+│     "submit" — someone else may have taken that email in between)
+│  2. assertEmailVerified — re-reads the row; throws
+│     VerificationRequiredError if verified is not true
+│  On success: consumeVerification deletes the row (best-effort, not
+│  awaited-to-fail — a cleanup miss just leaves a stale row that a later
+│  resend overwrites)
+```
+
+**`email_verifications` table** (`supabase/email_verifications.sql` — apply
+by hand in the Supabase SQL editor; there's no migration runner in this
+repo, same as every other table)
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | uuid | PK |
+| `email` | text | lowercased + trimmed before every read/write in `store.ts` — the table itself has no `citext` |
+| `purpose` | text | one of `student` / `company` / `partner_applicant` / `partner_ambassador` |
+| `code` | text | 6 ASCII digits |
+| `attempts` | int | incremented on each wrong guess; 5 exhausts the code |
+| `verified` | boolean | |
+| `expires_at` | timestamptz | 10 minutes from issue; only gates the *code*, not the `verified` flag once set (see note below) |
+| `created_at` | timestamptz | also doubles as the resend-cooldown clock (30s) |
+
+> **Unique constraint:** `(email, purpose)` — `issueVerificationCode` upserts
+> on this pair, so requesting a new code overwrites the old one rather than
+> creating a second row.
+
+**Why duplicate checks live outside the DB schema.** `student_applications`,
+`company_briefs`, etc. have no unique constraint on their email columns —
+adding one retroactively risks failing on pre-existing duplicate rows from
+the Lovable migration (§10.1) or legitimate re-applications made before this
+feature existed. Instead, `findDuplicateEmail` does an app-level
+case-insensitive lookup (`ilike`, with `%`/`_` escaped so a literal one in
+an address can't broaden the match) before insert. This is a check-then-act
+race in theory; in practice, submission volume here is low enough that it's
+not worth the schema risk of a hard constraint. Partner applicants are the one
+purpose that checks two tables (`partner_applicants_qualified` and
+`_unqualified`) since eligibility decides which one a given applicant lands
+in — someone rejected once shouldn't be able to re-apply under the same
+email and land in the other table.
+
+**Verified-flag lifetime.** Once `confirmVerificationCode` sets
+`verified = true`, `assertEmailVerified` does not re-check `expires_at` —
+only `confirmVerificationCode` itself does, at the moment the code is
+checked. So a stale `expires_at` never invalidates an already-verified row;
+only `consumeVerification` (on successful submit) or a fresh
+`issueVerificationCode` (which overwrites the row) clears it. This is a
+deliberate simplification for a marketing-site signup flow, not a session
+token — don't reuse this table for anything higher-stakes without adding
+that check back.
+
+**Email delivery.** `lib/email/verification-emails.ts` reuses the same
+Resend transport and `templates.ts` helpers as `submission-emails.ts` /
+`partner-emails.ts`, but unlike those, a failed send is **not** swallowed —
+`issueVerificationCode` lets it throw, because the code is the applicant's
+only way to complete the OTP step (contrast with the internal/confirmation
+notification emails in §6.4, which are always best-effort). When
+`RESEND_API_KEY` isn't set (e.g. local dev), it logs the code to the server
+console instead of sending, so the flow stays testable without email
+configured.
+
+**Failure modes** (both `/api/verify/send` and `/api/verify/confirm`)
+
+| Condition | Response |
+| --- | --- |
+| Invalid JSON body | `400 { ok: false, error: "Invalid JSON" }` |
+| Missing/invalid `email`, `purpose`, or (confirm only) non-6-digit `code` | `400` |
+| Duplicate email (`send` only) | `409` with a purpose-specific message |
+| Resend cooldown not elapsed (`send` only) | `429` |
+| Code expired / wrong / attempts exhausted (`confirm` only) | `400` |
+| Supabase env missing (`VerificationConfigError`) | `500 { ok: false, error: "Server misconfigured" }` |
+| Any other error | `502` |
+
+The three submission routes surface the same `VerificationRequiredError` /
+duplicate check as a `400` / `409` on their own response shape (`{ error }`
+for `/api/submit`, `{ ok: false, error }` for the two Partner routes) rather
+than re-exporting these types — see each route's own failure-mode table
+above.
 
 ---
 

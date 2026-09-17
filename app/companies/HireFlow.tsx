@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
+  EmailVerify,
   Field,
   Input,
   NavButtons,
@@ -94,6 +95,7 @@ export default function HireFlow() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailVerified, setEmailVerified] = useState(false);
 
   useEffect(() => {
     try {
@@ -118,6 +120,7 @@ export default function HireFlow() {
           data.company.trim().length > 1 &&
           data.name.trim().length > 1 &&
           emailOk(data.email) &&
+          emailVerified &&
           !!data.stage
         );
       case 1:
@@ -131,7 +134,7 @@ export default function HireFlow() {
       default:
         return true;
     }
-  }, [step, data]);
+  }, [step, data, emailVerified]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -234,6 +237,12 @@ export default function HireFlow() {
                         onChange={(e) => set("email", e.target.value)}
                         placeholder="alex@northlight.co"
                         autoComplete="email"
+                      />
+                      <EmailVerify
+                        email={data.email}
+                        purpose="company"
+                        verified={emailVerified}
+                        onVerified={setEmailVerified}
                       />
                     </Field>
                     <Field label="Stage" className="sm:col-span-2">
