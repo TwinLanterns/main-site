@@ -1,6 +1,8 @@
 // app/api/verify/send/route.ts
 
 import { NextResponse } from "next/server";
+import { badRequest, parseJsonBody } from "@/lib/http";
+import { isValidEmail } from "@/lib/validation";
 import { findDuplicateEmail } from "@/lib/verification/duplicate";
 import {
   issueVerificationCode,
@@ -12,8 +14,6 @@ import {
   type VerificationPurpose,
 } from "@/lib/verification/types";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
 const DUPLICATE_MESSAGE: Record<VerificationPurpose, string> = {
   student: "You've already applied with this email.",
   company: "You've already sent a brief with this email.",
@@ -21,17 +21,12 @@ const DUPLICATE_MESSAGE: Record<VerificationPurpose, string> = {
   partner_ambassador: "You're already a Partner ambassador with this email.",
 };
 
-function badRequest(error: string) {
-  return NextResponse.json({ ok: false, error }, { status: 400 });
-}
-
 export async function POST(req: Request) {
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
+  const parsed = await parseJsonBody(req);
+  if (!parsed.ok) {
     return badRequest("Invalid JSON");
   }
+  const body = parsed.body;
 
   if (typeof body !== "object" || body === null) {
     return badRequest("Missing fields");
@@ -39,7 +34,7 @@ export async function POST(req: Request) {
 
   const { email, purpose } = body as { email?: unknown; purpose?: unknown };
 
-  if (typeof email !== "string" || !EMAIL_RE.test(email.trim())) {
+  if (typeof email !== "string" || !isValidEmail(email)) {
     return badRequest("Missing or invalid email");
   }
 

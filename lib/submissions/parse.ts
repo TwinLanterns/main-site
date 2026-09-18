@@ -1,3 +1,4 @@
+import { parseJsonBody } from "@/lib/http";
 import type {
   CompanyPayload,
   StudentPayload,
@@ -21,13 +22,11 @@ function normalizeAttachment(value: unknown): SubmissionAttachment | null {
 export async function parseSubmissionRequest(
   req: Request,
 ): Promise<ParseSubmissionResult> {
-  let body: unknown;
-
-  try {
-    body = await req.json();
-  } catch {
+  const parsed = await parseJsonBody(req);
+  if (!parsed.ok) {
     return { ok: false, status: 400, error: "Invalid JSON" };
   }
+  const body = parsed.body;
 
   if (!body || typeof body !== "object") {
     return { ok: false, status: 400, error: "Missing fields" };

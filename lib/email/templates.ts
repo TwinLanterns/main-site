@@ -96,9 +96,14 @@ export function brandHeader(): string {
   </table>`;
 }
 
+// Shared with lib/email/partner-templates.ts, which reuses this for its own
+// status pills (Qualified/Unqualified, New ambassador, …).
+export function pill(label: string): string {
+  return `<span style="display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${COLOR.flame};background:${COLOR.shell};border:1px solid ${COLOR.line};border-radius:999px;padding:4px 10px">${escapeHtml(label)}</span>`;
+}
+
 function kindPill(kind: SubmissionKind): string {
-  const label = kind === "student" ? "Student application" : "Company brief";
-  return `<span style="display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${COLOR.flame};background:${COLOR.shell};border:1px solid ${COLOR.line};border-radius:999px;padding:4px 10px">${label}</span>`;
+  return pill(kind === "student" ? "Student application" : "Company brief");
 }
 
 export function title(text: string): string {
@@ -121,25 +126,33 @@ export function renderVerificationCode(code: string): string {
 
 // ---------- Payload table ----------
 
-function renderRows(payload: SubmissionPayload): string {
-  const entries = Object.entries(payload as Record<string, unknown>);
-  if (entries.length === 0) return "";
-
-  const rows = entries
-    .map(([key, value], i) => {
+// Shared with lib/email/partner-templates.ts, which builds its own
+// [label, value] pairs directly instead of deriving them from an object.
+export function renderKeyValueTable(items: [string, string][]): string {
+  const rows = items
+    .map(([label, value], i) => {
       const borderTop = i === 0 ? "" : `border-top:1px solid ${COLOR.line};`;
       return `<tr>
         <td style="${borderTop}padding:12px 14px 12px 0;vertical-align:top;width:34%;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:${COLOR.muted}">${escapeHtml(
-          humanizeKey(key),
+          label,
         )}</td>
         <td style="${borderTop}padding:12px 0;vertical-align:top;font-size:14px;line-height:1.5;color:${COLOR.ink};word-break:break-word">${escapeHtml(
-          formatValue(value),
+          value,
         )}</td>
       </tr>`;
     })
     .join("");
 
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">${rows}</table>`;
+}
+
+function renderRows(payload: SubmissionPayload): string {
+  const entries = Object.entries(payload as Record<string, unknown>);
+  if (entries.length === 0) return "";
+
+  return renderKeyValueTable(
+    entries.map(([key, value]) => [humanizeKey(key), formatValue(value)]),
+  );
 }
 
 // ---------- Public renderers ----------

@@ -8,24 +8,13 @@ import type {
   PartnerApplicantPayload,
   PartnerAmbassadorPayload,
 } from "@/lib/submissions/partner-types";
-import {
-  getEmailConfig,
-  sendResendEmail,
-  type ResendAttachment,
-} from "./resend";
+import { getEmailConfig, sendResendEmailSafely, MARK_ATTACHMENT } from "./resend";
 import {
   renderPartnerApplicantInternal,
   renderPartnerApplicantConfirmation,
   renderPartnerAmbassadorInternal,
   renderPartnerAmbassadorConfirmation,
 } from "./partner-templates";
-
-const MARK_ATTACHMENT: ResendAttachment = {
-  filename: "icon.png",
-  path: "https://twinlanterns.co/icon.png",
-  content_id: "mark",
-  content_type: "image/png",
-};
 
 export async function sendPartnerApplicantEmails(input: {
   payload: PartnerApplicantPayload;
@@ -46,31 +35,29 @@ export async function sendPartnerApplicantEmails(input: {
     .filter(Boolean)
     .join(" ");
 
-  try {
-    await sendResendEmail({
+  await sendResendEmailSafely(
+    {
       to: [to],
       subject: `New Partner applicant (${qualified ? "qualified" : "unqualified"}) — ${fullName}`,
       html: renderPartnerApplicantInternal(payload, { qualified, reasons }),
       attachments: [MARK_ATTACHMENT],
-    });
-  } catch (err) {
-    console.error("resend request failed (partner applicant internal)", err);
-  }
+    },
+    "partner applicant internal",
+  );
 
   if (!payload.email) return;
 
-  try {
-    await sendResendEmail({
+  await sendResendEmailSafely(
+    {
       to: [payload.email],
       subject: qualified
         ? "You're in — Partner"
         : "We've got your application — Partner",
       html: renderPartnerApplicantConfirmation(payload, { qualified }),
       attachments: [MARK_ATTACHMENT],
-    });
-  } catch (err) {
-    console.error("resend request failed (partner applicant confirmation)", err);
-  }
+    },
+    "partner applicant confirmation",
+  );
 }
 
 export async function sendPartnerAmbassadorEmails(input: {
@@ -88,25 +75,23 @@ export async function sendPartnerAmbassadorEmails(input: {
     return;
   }
 
-  try {
-    await sendResendEmail({
+  await sendResendEmailSafely(
+    {
       to: [to],
       subject: `New Partner ambassador — ${payload.name}`,
       html: renderPartnerAmbassadorInternal(payload, { code }),
       attachments: [MARK_ATTACHMENT],
-    });
-  } catch (err) {
-    console.error("resend request failed (partner ambassador internal)", err);
-  }
+    },
+    "partner ambassador internal",
+  );
 
-  try {
-    await sendResendEmail({
+  await sendResendEmailSafely(
+    {
       to: [payload.email],
       subject: "You're a Partner ambassador — here's your link",
       html: renderPartnerAmbassadorConfirmation(payload, { code, referralUrl }),
       attachments: [MARK_ATTACHMENT],
-    });
-  } catch (err) {
-    console.error("resend request failed (partner ambassador confirmation)", err);
-  }
+    },
+    "partner ambassador confirmation",
+  );
 }

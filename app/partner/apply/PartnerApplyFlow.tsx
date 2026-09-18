@@ -28,10 +28,10 @@ import {
   evaluatePartnerEligibility,
   type DeviceOs,
 } from "@/lib/submissions/partner-eligibility";
+import { isValidEmail } from "@/lib/validation";
 
 const DRAFT_KEY = "tl-partner-draft-v1";
 const REF_KEY = "tl-partner-ref-code";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const STEPS = ["About you", "Eligibility", "Tasks", "Finish"] as const;
 
@@ -156,7 +156,7 @@ export default function PartnerApplyFlow() {
         Boolean(draft.deviceModel));
 
     const stepValid = [
-    draft.firstName.trim().length > 1 && EMAIL_RE.test(draft.email) && emailVerified,
+    draft.firstName.trim().length > 1 && isValidEmail(draft.email) && emailVerified,
     deviceReady && draft.filmingAck !== "" && draft.consent !== "",
     draft.taskInterests.length > 0,
     true,

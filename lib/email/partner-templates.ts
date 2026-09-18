@@ -8,31 +8,15 @@ import type {
   PartnerApplicantPayload,
   PartnerAmbassadorPayload,
 } from "@/lib/submissions/partner-types";
-import { COLOR, shell, brandHeader, title, escapeHtml } from "./templates";
-
-function pill(label: string): string {
-  return `<span style="display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${COLOR.flame};background:${COLOR.shell};border:1px solid ${COLOR.line};border-radius:999px;padding:4px 10px">${escapeHtml(
-    label,
-  )}</span>`;
-}
-
-function row(label: string, value: string, first = false): string {
-  const borderTop = first ? "" : `border-top:1px solid ${COLOR.line};`;
-  return `<tr>
-    <td style="${borderTop}padding:12px 14px 12px 0;vertical-align:top;width:34%;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:${COLOR.muted}">${escapeHtml(
-      label,
-    )}</td>
-    <td style="${borderTop}padding:12px 0;vertical-align:top;font-size:14px;line-height:1.5;color:${COLOR.ink};word-break:break-word">${escapeHtml(
-      value,
-    )}</td>
-  </tr>`;
-}
-
-function rows(items: [string, string][]): string {
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">${items
-    .map(([l, v], i) => row(l, v, i === 0))
-    .join("")}</table>`;
-}
+import {
+  COLOR,
+  shell,
+  brandHeader,
+  title,
+  escapeHtml,
+  pill,
+  renderKeyValueTable as rows,
+} from "./templates";
 
 const PARTNER_FOOTER = `Partner · Twin Lanterns  · Real-world task data.<br />
 <a href="https://twinlanterns.co/partner" style="color:${COLOR.muted};text-decoration:underline">twinlanterns.co/partner</a>`;

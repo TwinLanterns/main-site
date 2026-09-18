@@ -1,7 +1,7 @@
+import { parseJsonBody } from "@/lib/http";
+import { isValidEmail } from "@/lib/validation";
 import type { PartnerApplicantPayload, PartnerAmbassadorPayload } from "./partner-types";
 import type { DeviceOs } from "./partner-eligibility";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export type ParsePartnerApplicantResult =
   | { ok: true; data: PartnerApplicantPayload }
@@ -24,12 +24,11 @@ function bool(v: unknown): boolean {
 export async function parsePartnerApplicantRequest(
   req: Request,
 ): Promise<ParsePartnerApplicantResult> {
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
+  const parsed = await parseJsonBody(req);
+  if (!parsed.ok) {
     return { ok: false, status: 400, error: "Invalid JSON" };
   }
+  const body = parsed.body;
 
   if (typeof body !== "object" || body === null || !("payload" in body)) {
     return { ok: false, status: 400, error: "Missing fields" };
@@ -45,7 +44,7 @@ export async function parsePartnerApplicantRequest(
   const firstName = str(p.firstName)?.trim() ?? "";
   const email = str(p.email)?.trim() ?? "";
 
-  if (!firstName || !email || !EMAIL_RE.test(email)) {
+  if (!firstName || !email || !isValidEmail(email)) {
     return { ok: false, status: 400, error: "Missing or invalid name/email" };
   }
 
@@ -79,12 +78,11 @@ export async function parsePartnerApplicantRequest(
 export async function parsePartnerReferRequest(
   req: Request,
 ): Promise<ParsePartnerReferResult> {
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
+  const parsed = await parseJsonBody(req);
+  if (!parsed.ok) {
     return { ok: false, status: 400, error: "Invalid JSON" };
   }
+  const body = parsed.body;
 
   if (typeof body !== "object" || body === null) {
     return { ok: false, status: 400, error: "Missing or invalid name/email" };
@@ -95,7 +93,7 @@ export async function parsePartnerReferRequest(
   const nameStr = typeof name === "string" ? name.trim() : "";
   const emailStr = typeof email === "string" ? email.trim() : "";
 
-  if (!nameStr || !emailStr || !EMAIL_RE.test(emailStr)) {
+  if (!nameStr || !emailStr || !isValidEmail(emailStr)) {
     return { ok: false, status: 400, error: "Missing or invalid name/email" };
   }
 

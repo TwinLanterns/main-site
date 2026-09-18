@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   ChoiceCards,
@@ -22,6 +22,8 @@ import {
   type Upload,
 } from "@/components/form";
 import Shape from "@/components/Shapes";
+import { isValidEmail } from "@/lib/validation";
+import { useDraftState } from "@/lib/useDraftState";
 
 const steps = [
   "Interests",
@@ -92,32 +94,15 @@ const empty: Draft = {
 };
 
 const KEY = "tl-student-draft-v2";
-const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 
 export default function ApplyFlow() {
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<Draft>(empty);
+  const [data, , set] = useDraftState<Draft>(KEY, empty);
   const [file, setFile] = useState<Upload>(null);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setData({ ...empty, ...JSON.parse(raw) });
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(data));
-    } catch {}
-  }, [data]);
-
-  const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
-    setData((d) => ({ ...d, [key]: value }));
 
   const valid = useMemo(() => {
     switch (step) {
@@ -130,7 +115,7 @@ export default function ApplyFlow() {
       case 3:
         return (
           data.firstName.trim().length > 1 &&
-          emailOk(data.email) &&
+          isValidEmail(data.email) &&
           emailVerified &&
           !!data.level &&
           data.school.trim().length > 1

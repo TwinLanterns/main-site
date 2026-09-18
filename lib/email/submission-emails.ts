@@ -1,20 +1,14 @@
 import type { Submission } from "@/lib/submissions/types";
 import {
   getEmailConfig,
-  sendResendEmail,
+  sendResendEmailSafely,
+  MARK_ATTACHMENT,
   type ResendAttachment,
 } from "./resend";
 import {
   renderConfirmation,
   renderInternalNotification,
 } from "./templates";
-
-const MARK_ATTACHMENT: ResendAttachment = {
-  filename: "icon.png",
-  path: "https://twinlanterns.co/icon.png",
-  content_id: "mark",
-  content_type: "image/png",
-};
 
 function getString(payload: Submission["payload"], key: string): string {
   const value = (payload as Record<string, unknown>)[key];
@@ -52,16 +46,15 @@ export async function sendSubmissionEmails(
         )}`
       : `New role brief — ${getString(payload, "company")}`;
 
-  try {
-    await sendResendEmail({
+  await sendResendEmailSafely(
+    {
       to: [to],
       subject: internalSubject,
       html: renderInternalNotification(kind, payload),
       attachments: internalAttachments,
-    });
-  } catch (err) {
-    console.error("resend request failed (internal notify)", err);
-  }
+    },
+    "internal notify",
+  );
 
   const submitterEmail = getString(payload, "email");
   if (!submitterEmail) return;
@@ -71,14 +64,13 @@ export async function sendSubmissionEmails(
       ? "We've got your application — Twin Lanterns"
       : "We've got your brief — Twin Lanterns";
 
-  try {
-    await sendResendEmail({
+  await sendResendEmailSafely(
+    {
       to: [submitterEmail],
       subject: confirmationSubject,
       html: renderConfirmation(kind, payload),
       attachments: [MARK_ATTACHMENT],
-    });
-  } catch (err) {
-    console.error("resend request failed (confirmation)", err);
-  }
+    },
+    "confirmation",
+  );
 }

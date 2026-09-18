@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Reorder, useDragControls } from "motion/react";
+import { isValidEmail } from "@/lib/validation";
 import Shape from "./Shapes";
 
 export const ease = [0.22, 1, 0.36, 1] as const;
@@ -103,7 +104,7 @@ export function EmailVerify({
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+  const emailOk = isValidEmail(email);
 
   async function sendCode() {
     if (!emailOk || sending || cooldown > 0) return;

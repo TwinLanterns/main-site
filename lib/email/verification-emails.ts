@@ -7,15 +7,8 @@
 // is deliberately NOT swallowed by the caller; lib/verification/store.ts
 // lets it throw.
 
-import { getEmailConfig, sendResendEmail } from "./resend";
+import { getEmailConfig, sendResendEmail, MARK_ATTACHMENT } from "./resend";
 import { renderVerificationCode } from "./templates";
-
-const MARK_ATTACHMENT = {
-  filename: "icon.png",
-  path: "https://twinlanterns.co/icon.png",
-  content_id: "mark",
-  content_type: "image/png",
-};
 
 export async function sendVerificationCodeEmail(
   email: string,

@@ -5,7 +5,7 @@
 // save until `assertEmailVerified` confirms it. Keyed on (email, purpose) —
 // there's one row per address per funnel, upserted on resend.
 
-import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { getSupabaseOrThrow } from "@/lib/supabase-or-throw";
 import { sendVerificationCodeEmail } from "@/lib/email/verification-emails";
 import type { VerificationPurpose } from "./types";
 
@@ -47,13 +47,12 @@ function generateCode(): string {
 }
 
 function client() {
-  try {
-    return getSupabaseServerClient();
-  } catch (err) {
-    throw new VerificationConfigError(
-      err instanceof Error ? err.message : "Supabase not configured",
-    );
-  }
+  return getSupabaseOrThrow(
+    (err) =>
+      new VerificationConfigError(
+        err instanceof Error ? err.message : "Supabase not configured",
+      ),
+  );
 }
 
 export async function issueVerificationCode(

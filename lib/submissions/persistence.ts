@@ -1,4 +1,4 @@
-import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { getSupabaseOrThrow } from "@/lib/supabase-or-throw";
 import type { Submission } from "./types";
 
 export class SubmissionConfigError extends Error {
@@ -16,14 +16,7 @@ export class SubmissionSaveError extends Error {
 }
 
 export async function saveSubmission(submission: Submission): Promise<void> {
-  let supabase: ReturnType<typeof getSupabaseServerClient>;
-
-  try {
-    supabase = getSupabaseServerClient();
-  } catch (err) {
-    console.error("supabase config error", err);
-    throw new SubmissionConfigError();
-  }
+  const supabase = getSupabaseOrThrow(() => new SubmissionConfigError());
 
   if (submission.kind === "student") {
     const p = submission.payload;

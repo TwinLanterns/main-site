@@ -5,13 +5,8 @@ import {
   SubmissionConfigError,
 } from "@/lib/submissions/persistence";
 import { sendSubmissionEmails } from "@/lib/email/submission-emails";
-import { findDuplicateEmail } from "@/lib/verification/duplicate";
-import {
-  assertEmailVerified,
-  consumeVerification,
-  VerificationConfigError,
-  VerificationRequiredError,
-} from "@/lib/verification/store";
+import { checkEmailVerification } from "@/lib/verification/check";
+import { consumeVerification } from "@/lib/verification/store";
 
 const DUPLICATE_MESSAGE: Record<"student" | "company", string> = {
   student: "You've already applied with this email.",
@@ -32,27 +27,12 @@ export async function POST(req: Request) {
   const email = (parsed.data.payload as { email?: string }).email?.trim() ?? "";
 
   if (email) {
-    try {
-      if (await findDuplicateEmail(kind, email)) {
-        return NextResponse.json(
-          { error: DUPLICATE_MESSAGE[kind] },
-          { status: 409 },
-        );
-      }
-      await assertEmailVerified(email, kind);
-    } catch (err) {
-      if (err instanceof VerificationConfigError) {
-        return NextResponse.json(
-          { error: "Server misconfigured" },
-          { status: 500 },
-        );
-      }
-      if (err instanceof VerificationRequiredError) {
-        return NextResponse.json({ error: err.message }, { status: 400 });
-      }
-      console.error("verification check failed", err);
-      return NextResponse.json({ error: "Save failed" }, { status: 502 });
-    }
+    const verifyError = await checkEmailVerification(
+      kind,
+      email,
+      DUPLICATE_MESSAGE[kind],
+    );
+    if (verifyError) return verifyError;
   }
 
   try {

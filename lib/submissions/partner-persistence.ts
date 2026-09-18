@@ -4,7 +4,8 @@
 // (PartnerConfigError → 500, PartnerSaveError → 502) so app/api/partner/*
 // routes can stay thin orchestrators, same as app/api/submit/route.ts.
 
-import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { NextResponse } from "next/server";
+import { getSupabaseOrThrow } from "@/lib/supabase-or-throw";
 import { evaluatePartnerEligibility } from "./partner-eligibility";
 import type { PartnerApplicantPayload, PartnerAmbassadorPayload } from "./partner-types";
 
@@ -29,17 +30,16 @@ export interface SavePartnerApplicantResult {
   reasons: string[];
 }
 
+function toPartnerConfigError(err: unknown): PartnerConfigError {
+  return new PartnerConfigError(
+    err instanceof Error ? err.message : "Supabase not configured",
+  );
+}
+
 export async function savePartnerApplicant(
   payload: PartnerApplicantPayload,
 ): Promise<SavePartnerApplicantResult> {
-  let supabase;
-  try {
-    supabase = getSupabaseServerClient();
-  } catch (err) {
-    throw new PartnerConfigError(
-      err instanceof Error ? err.message : "Supabase not configured",
-    );
-  }
+  const supabase = getSupabaseOrThrow(toPartnerConfigError);
 
   const { qualified, reasons } = evaluatePartnerEligibility({
     deviceOs: payload.deviceOs,
@@ -93,14 +93,7 @@ export interface SavePartnerAmbassadorResult {
 export async function savePartnerAmbassador(
   payload: PartnerAmbassadorPayload,
 ): Promise<SavePartnerAmbassadorResult> {
-  let supabase;
-  try {
-    supabase = getSupabaseServerClient();
-  } catch (err) {
-    throw new PartnerConfigError(
-      err instanceof Error ? err.message : "Supabase not configured",
-    );
-  }
+  const supabase = getSupabaseOrThrow(toPartnerConfigError);
 
   // Retry on the rare code collision (unique constraint on `code`).
   const MAX_ATTEMPTS = 5;
@@ -136,4 +129,29 @@ export async function savePartnerAmbassador(
   throw new PartnerSaveError(
     lastError ?? "Could not generate a unique referral code — try again",
   );
+}
+
+// Shared by app/api/partner/submit and app/api/partner/refer for the catch-all
+// at the bottom of their POST handlers. `exposeDevMessage` mirrors what
+// app/api/partner/submit did before this was extracted — it isn't set for
+// app/api/partner/refer.
+export function partnerErrorResponse(
+  err: unknown,
+  opts: { exposeDevMessage?: boolean } = {},
+): NextResponse {
+  const dev = opts.exposeDevMessage && process.env.NODE_ENV === "development";
+
+  if (err instanceof PartnerConfigError) {
+    return NextResponse.json(
+      { ok: false, error: dev ? err.message : "Server misconfigured" },
+      { status: 500 },
+    );
+  }
+  if (err instanceof PartnerSaveError) {
+    return NextResponse.json(
+      { ok: false, error: dev ? err.message : "Save failed" },
+      { status: 502 },
+    );
+  }
+  return NextResponse.json({ ok: false, error: "Save failed" }, { status: 502 });
 }

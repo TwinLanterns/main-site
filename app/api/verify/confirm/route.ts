@@ -1,6 +1,8 @@
 // app/api/verify/confirm/route.ts
 
 import { NextResponse } from "next/server";
+import { badRequest, parseJsonBody } from "@/lib/http";
+import { isValidEmail } from "@/lib/validation";
 import {
   confirmVerificationCode,
   VerificationConfigError,
@@ -11,19 +13,12 @@ import {
   type VerificationPurpose,
 } from "@/lib/verification/types";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-function badRequest(error: string) {
-  return NextResponse.json({ ok: false, error }, { status: 400 });
-}
-
 export async function POST(req: Request) {
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
+  const parsed = await parseJsonBody(req);
+  if (!parsed.ok) {
     return badRequest("Invalid JSON");
   }
+  const body = parsed.body;
 
   if (typeof body !== "object" || body === null) {
     return badRequest("Missing fields");
@@ -35,7 +30,7 @@ export async function POST(req: Request) {
     code?: unknown;
   };
 
-  if (typeof email !== "string" || !EMAIL_RE.test(email.trim())) {
+  if (typeof email !== "string" || !isValidEmail(email)) {
     return badRequest("Missing or invalid email");
   }
 
