@@ -7,21 +7,33 @@ import { useEffect, useState } from "react";
 // it on mount, keyed by a per-flow string so drafts never collide.
 export function useDraftState<T extends object>(key: string, empty: T) {
   const [data, setData] = useState<T>(empty);
+  // Flips true once the mount effect below has attempted a restore. Without
+  // it, the save effect fires on the same initial pass — before the restore
+  // effect's setData has committed — and writes the still-default `empty`
+  // state over whatever draft was already in storage, wiping it. Gating the
+  // save on real state (not a ref) means the two are always batched
+  // together: `data` can never be observed as stale while `hydrated` is
+  // true. Also survives React StrictMode's double-invoked mount effects in
+  // dev, since both passes read a still-`false` `hydrated` closure and skip
+  // the write until the batched update actually commits.
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(key);
       if (raw) setData({ ...empty, ...JSON.parse(raw) });
     } catch {}
+    setHydrated(true);
     // Restore once on mount only — `empty` and `key` are constants per flow.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
     try {
       localStorage.setItem(key, JSON.stringify(data));
     } catch {}
-  }, [key, data]);
+  }, [key, data, hydrated]);
 
   const set = <K extends keyof T>(field: K, value: T[K]) =>
     setData((d) => ({ ...d, [field]: value }));
