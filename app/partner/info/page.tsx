@@ -239,6 +239,12 @@ function Hero() {
             >
               Become an ambassador
             </Link>
+            <Link
+              href="/partner/gopro"
+              className={`${btn} bg-lime text-ink hover:bg-white`}
+            >
+              GoPro home program
+            </Link>
           </div>
 
           <dl className="mx-auto mt-12 grid max-w-3xl gap-7 border-t border-white/15 pt-8 sm:grid-cols-3">

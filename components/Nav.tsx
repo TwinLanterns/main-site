@@ -12,12 +12,32 @@ const links = [
   { href: "/#faq", label: "FAQ" },
 ];
 
+const earnLinks = [
+  { href: "/partner/info", label: "Filming info" },
+  { href: "/partner/gopro", label: "GoPro home program" },
+];
+
 export default function Nav() {
   const [open, setOpen] = useState(false);
   const [small, setSmall] = useState(false);
+  const [earnOpen, setEarnOpen] = useState(false);
   const pathname = usePathname();
 
-  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    setOpen(false);
+    setEarnOpen(false);
+  }, [pathname]);
+
+  // touch devices can't hover, so the earn menu opens on tap instead;
+  // any tap outside it closes it again
+  useEffect(() => {
+    if (!earnOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (!(e.target as Element).closest("[data-earn-menu]")) setEarnOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [earnOpen]);
 
   useEffect(() => {
     const onScroll = () => setSmall(window.scrollY > 40);
@@ -44,14 +64,42 @@ export default function Nav() {
       >
         Apply
       </Link>
-      <Link
-        href="/partner/info"
-        className={`rounded-full bg-ink text-[15px] text-white transition-all duration-500 hover:bg-flame ${
-          compact ? "px-4 py-2" : "px-5 py-2.5"
-        }`}
-      >
-        Earn Now
-      </Link>
+      <div data-earn-menu className="group relative">
+        <Link
+          href="/partner/info"
+          aria-haspopup="true"
+          aria-expanded={earnOpen}
+          onClick={(e) => {
+            if (!window.matchMedia("(hover: none)").matches) return;
+            e.preventDefault();
+            setEarnOpen((v) => !v);
+          }}
+          className={`block rounded-full text-[15px] text-white transition-all duration-500 group-hover:bg-flame ${
+            earnOpen ? "bg-flame" : "bg-ink"
+          } ${compact ? "px-4 py-2" : "px-5 py-2.5"}`}
+        >
+          Earn Now
+        </Link>
+        {/* pt-2 bridges the gap so the menu stays open while the cursor moves down */}
+        <div
+          className={`absolute right-0 top-full z-10 pt-2 transition-all duration-200 group-hover:visible group-hover:opacity-100 group-has-[:focus-visible]:visible group-has-[:focus-visible]:opacity-100 ${
+            earnOpen ? "visible opacity-100" : "invisible opacity-0"
+          }`}
+        >
+          <div className="w-max overflow-hidden rounded-[20px] border border-line bg-white p-1.5 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.45)]">
+            {earnLinks.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                onClick={() => setEarnOpen(false)}
+                className="block rounded-full px-4 py-2 text-[14.5px] text-muted transition-colors hover:bg-shell hover:text-ink"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
     </>
   );
 
@@ -158,6 +206,7 @@ export default function Nav() {
             {[
               ...links.map((l) => ({ ...l, pop: false })),
               { href: "/partner/info", label: "Earn Now", pop: true },
+              { href: "/partner/gopro", label: "GoPro home program", pop: false },
               { href: "/companies", label: "I'm hiring", pop: false },
             ].map((l) => (
               <Link

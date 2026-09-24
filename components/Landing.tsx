@@ -651,6 +651,25 @@ function Partner() {
               ))}
             </ul>
           </div>
+
+          <Link
+            href="/partner/gopro"
+            className="group mt-4 flex items-center justify-between gap-5 rounded-[24px] bg-lime p-6 text-ink transition-colors hover:bg-white sm:px-8"
+          >
+            <div>
+              <p className="label !text-ink/60">New — GoPro home program</p>
+              <p className="mt-2 text-[15px] leading-relaxed">
+                Record first-person video of tidying and organizing in your own
+                home with a head-mounted GoPro we supply.
+              </p>
+            </div>
+            <span
+              aria-hidden
+              className="shrink-0 text-[22px] transition-transform group-hover:translate-x-1"
+            >
+              →
+            </span>
+          </Link>
         </Reveal>
       </div>
     </section>
