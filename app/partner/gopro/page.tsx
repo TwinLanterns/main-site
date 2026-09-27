@@ -25,7 +25,7 @@ const householdMath = [
   ["5", "scenes per household"],
   ["10 hrs", "per scene"],
   ["50 hrs", "per household"],
-  ["~5 hrs/day", "across 10 recording days"],
+  ["5 hrs/week", "minimum commitment"],
 ];
 
 const recruitment = [
@@ -56,7 +56,7 @@ const recruitment = [
     color: "text-lilac",
     points: [
       "Schedule operators against the weekly ramp plan",
-      "Approx. 5 hours per household per day, 10 consecutive days per household",
+      "Just 5 hours per household per week minimum — households can record more if they choose",
       "Once a household reaches its 50-hour target, manage batch handover and transition cleanly",
     ],
   },
