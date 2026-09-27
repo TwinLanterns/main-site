@@ -210,7 +210,7 @@ function Overview() {
             />
             <p className="label">Budget</p>
             <p className="display mt-6 text-[clamp(3rem,6vw,4.5rem)]">
-              $20<span className="text-[0.4em] text-muted">/valid hr</span>
+              $10<span className="text-[0.4em] text-muted">/valid hr</span>
             </p>
             <p className="mt-6 max-w-[42ch] text-[15.5px] leading-relaxed text-muted">
               USD 20 per valid hour, inclusive of recruitment, participant
