@@ -213,7 +213,7 @@ function Overview() {
               $10<span className="text-[0.4em] text-muted">/valid hr</span>
             </p>
             <p className="mt-6 max-w-[42ch] text-[15.5px] leading-relaxed text-muted">
-              USD 20 per valid hour, inclusive of recruitment, participant
+              10 USD per valid hour, inclusive of recruitment, participant
               incentives, management overhead, and shipping to each household.
               Payment is calculated on QA-approved video hours only.
             </p>
