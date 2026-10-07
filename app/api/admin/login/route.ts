@@ -5,6 +5,7 @@ import {
   ADMIN_SESSION_MAX_AGE,
   createSessionToken,
 } from "@/lib/admin-auth";
+import { rateLimit } from "@/lib/rate-limit";
 
 function safeCompare(a: string, b: string) {
   const bufA = Buffer.from(a);
@@ -19,6 +20,9 @@ function safeCompare(a: string, b: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, "admin-login", 5, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const body = await req.json().catch(() => null);
   const username = typeof body?.username === "string" ? body.username : "";
   const password = typeof body?.password === "string" ? body.password : "";
