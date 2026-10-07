@@ -84,6 +84,18 @@ const PARTNER_UNQUALIFIED_COLUMNS = [
   "created_at",
 ];
 
+const PARTNER_GOPRO_COLUMNS = [
+  "first_name",
+  "last_name",
+  "email",
+  "phone",
+  "location",
+  "qualified",
+  "disqualified_reasons",
+  "referred_by",
+  "created_at",
+];
+
 const PARTNER_AMBASSADOR_COLUMNS = [
   "name",
   "email",
@@ -1577,16 +1589,18 @@ function withReferralCounts(
   });
 }
 
-type PartnerSubTab = "qualified" | "unqualified" | "ambassadors";
+type PartnerSubTab = "qualified" | "unqualified" | "gopro" | "ambassadors";
 
 function PartnerSection({
   ambassadors,
   qualified,
   unqualified,
+  gopro,
 }: {
   ambassadors: Row[];
   qualified: Row[];
   unqualified: Row[];
+  gopro: Row[];
 }) {
   const [subTab, setSubTab] = useState<PartnerSubTab>("qualified");
   const [referrerFilter, setReferrerFilter] = useState<string>("");
@@ -1620,6 +1634,7 @@ function PartnerSection({
   const subTabs: { key: PartnerSubTab; label: string; count: number }[] = [
     { key: "qualified", label: "Qualified", count: filteredQualified.length },
     { key: "unqualified", label: "Unqualified", count: filteredUnqualified.length },
+    { key: "gopro", label: "GoPro", count: gopro.length },
     { key: "ambassadors", label: "Ambassadors", count: ambassadors.length },
   ];
 
@@ -1642,7 +1657,7 @@ function PartnerSection({
           ))}
         </div>
 
-        {subTab !== "ambassadors" && (
+        {subTab !== "ambassadors" && subTab !== "gopro" && (
           <div className="flex items-center gap-2">
             <label className="text-xs font-medium text-neutral-500">
               Referred by
@@ -1663,7 +1678,7 @@ function PartnerSection({
         )}
       </div>
 
-      {selectedAmbassador && subTab !== "ambassadors" && (
+      {selectedAmbassador && subTab !== "ambassadors" && subTab !== "gopro" && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2.5">
           <p className="text-sm text-neutral-700">
             Showing referrals from{" "}
@@ -1690,6 +1705,8 @@ function PartnerSection({
         <Table rows={filteredQualified} columns={PARTNER_APPLICANT_COLUMNS} />
       ) : subTab === "unqualified" ? (
         <Table rows={filteredUnqualified} columns={PARTNER_UNQUALIFIED_COLUMNS} />
+      ) : subTab === "gopro" ? (
+        <Table rows={gopro} columns={PARTNER_GOPRO_COLUMNS} />
       ) : (
         <Table rows={ambassadorsWithCounts} columns={PARTNER_AMBASSADOR_COLUMNS} />
       )}
@@ -1707,12 +1724,14 @@ export default function AdminDashboard({
   partnerAmbassadors = [],
   partnerQualified = [],
   partnerUnqualified = [],
+  partnerGopro = [],
 }: {
   applications: Row[];
   briefs: Row[];
   partnerAmbassadors?: Row[];
   partnerQualified?: Row[];
   partnerUnqualified?: Row[];
+  partnerGopro?: Row[];
 }) {
   const [tab, setTab] = useState<
     "applications" | "briefs" | "partner" | "vibe"
@@ -1769,7 +1788,7 @@ export default function AdminDashboard({
                 : "text-neutral-500 hover:text-neutral-700"
             }`}
           >
-            Partner ({partnerQualified.length + partnerUnqualified.length})
+            Partner ({partnerQualified.length + partnerUnqualified.length + partnerGopro.length})
           </button>
           <button
             onClick={() => setTab("vibe")}
@@ -1797,6 +1816,7 @@ export default function AdminDashboard({
             ambassadors={partnerAmbassadors}
             qualified={partnerQualified}
             unqualified={partnerUnqualified}
+            gopro={partnerGopro}
           />
         ) : (
           <VibeSearch />

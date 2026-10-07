@@ -7,11 +7,14 @@
 import type {
   PartnerApplicantPayload,
   PartnerAmbassadorPayload,
+  PartnerGoproPayload,
 } from "@/lib/submissions/partner-types";
 import { getEmailConfig, sendResendEmailSafely, MARK_ATTACHMENT } from "./resend";
 import {
   renderPartnerApplicantInternal,
   renderPartnerApplicantConfirmation,
+  renderPartnerGoproInternal,
+  renderPartnerGoproConfirmation,
   renderPartnerAmbassadorInternal,
   renderPartnerAmbassadorConfirmation,
 } from "./partner-templates";
@@ -57,6 +60,50 @@ export async function sendPartnerApplicantEmails(input: {
       attachments: [MARK_ATTACHMENT],
     },
     "partner applicant confirmation",
+  );
+}
+
+export async function sendPartnerGoproEmails(input: {
+  payload: PartnerGoproPayload;
+  qualified: boolean;
+  reasons: string[];
+}): Promise<void> {
+  const { configured, to } = getEmailConfig();
+  const { payload, qualified, reasons } = input;
+
+  if (!configured || !to) {
+    console.log(
+      `[partner] gopro applicant saved (${qualified ? "qualified" : "unqualified"}) — no email configured`,
+    );
+    return;
+  }
+
+  const fullName = [payload.firstName, payload.lastName]
+    .filter(Boolean)
+    .join(" ");
+
+  await sendResendEmailSafely(
+    {
+      to: [to],
+      subject: `New Partner GoPro sign-up (${qualified ? "qualified" : "unqualified"}) — ${fullName}`,
+      html: renderPartnerGoproInternal(payload, { qualified, reasons }),
+      attachments: [MARK_ATTACHMENT],
+    },
+    "partner gopro internal",
+  );
+
+  if (!payload.email) return;
+
+  await sendResendEmailSafely(
+    {
+      to: [payload.email],
+      subject: qualified
+        ? "You're on the list — Partner GoPro"
+        : "We've got your sign-up — Partner GoPro",
+      html: renderPartnerGoproConfirmation(payload, { qualified }),
+      attachments: [MARK_ATTACHMENT],
+    },
+    "partner gopro confirmation",
   );
 }
 

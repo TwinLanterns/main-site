@@ -6,8 +6,15 @@
 
 import { NextResponse } from "next/server";
 import { getSupabaseOrThrow } from "@/lib/supabase-or-throw";
-import { evaluatePartnerEligibility } from "./partner-eligibility";
-import type { PartnerApplicantPayload, PartnerAmbassadorPayload } from "./partner-types";
+import {
+  evaluatePartnerEligibility,
+  evaluatePartnerGoproEligibility,
+} from "./partner-eligibility";
+import type {
+  PartnerApplicantPayload,
+  PartnerAmbassadorPayload,
+  PartnerGoproPayload,
+} from "./partner-types";
 
 export class PartnerConfigError extends Error {}
 export class PartnerSaveError extends Error {}
@@ -83,6 +90,52 @@ export async function savePartnerApplicant(
     }
 
   return { id: data.id as string, table, qualified, reasons };
+}
+
+export interface SavePartnerGoproResult {
+  id: string;
+  qualified: boolean;
+  reasons: string[];
+}
+
+export async function savePartnerGoproApplicant(
+  payload: PartnerGoproPayload,
+): Promise<SavePartnerGoproResult> {
+  const supabase = getSupabaseOrThrow(toPartnerConfigError);
+
+  const { qualified, reasons } = evaluatePartnerGoproEligibility(payload);
+
+  const { data, error } = await supabase
+    .from("partner_gopro_applicants")
+    .insert({
+      first_name: payload.firstName,
+      last_name: payload.lastName ?? null,
+      email: payload.email,
+      phone: payload.phone ?? null,
+      location: payload.location ?? null,
+      qualified,
+      disqualified_reasons: qualified ? null : reasons,
+      is_adult: payload.isAdult,
+      has_core_areas: payload.hasCoreAreas,
+      can_keep_others_out: payload.canKeepOthersOut,
+      weekly_hours_ok: payload.weeklyHoursOk,
+      consent: payload.consent,
+      referred_by: payload.referredBy ?? null,
+      referrer_college: payload.referrerCollege ?? null,
+      referred_by_code: payload.referredByCode || null,
+      raw_payload: payload,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    console.error("supabase insert error (partner_gopro_applicants)", error);
+    throw new PartnerSaveError(
+      error?.message ?? "Insert into partner_gopro_applicants failed",
+    );
+  }
+
+  return { id: data.id as string, qualified, reasons };
 }
 
 export interface SavePartnerAmbassadorResult {

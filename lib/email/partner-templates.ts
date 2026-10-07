@@ -7,6 +7,7 @@
 import type {
   PartnerApplicantPayload,
   PartnerAmbassadorPayload,
+  PartnerGoproPayload,
 } from "@/lib/submissions/partner-types";
 import {
   COLOR,
@@ -100,6 +101,82 @@ export function renderPartnerApplicantConfirmation(
     preheader: status.qualified
       ? "You're in — here's what happens next."
       : "We got your application — here's what happens next.",
+    footer: PARTNER_FOOTER,
+  });
+}
+
+// ---------- GoPro applicant ----------
+
+const yn = (v: boolean) => (v ? "Yes" : "No");
+
+export function renderPartnerGoproInternal(
+  payload: PartnerGoproPayload,
+  status: { qualified: boolean; reasons: string[] },
+): string {
+  const fullName = [payload.firstName, payload.lastName]
+    .filter(Boolean)
+    .join(" ");
+
+  const items: [string, string][] = [
+    ["Name", fullName],
+    ["Email", payload.email],
+    ["Phone", payload.phone ?? ""],
+    ["Location", payload.location ?? ""],
+    ["18 or older", yn(payload.isAdult)],
+    ["Has all five core areas", yn(payload.hasCoreAreas)],
+    ["Can keep others out of frame", yn(payload.canKeepOthersOut)],
+    ["5+ hrs/week", yn(payload.weeklyHoursOk)],
+    ["Consent to home recording", yn(payload.consent)],
+    ["Referred by", payload.referredByCode ?? ""],
+    [
+      "Qualified",
+      status.qualified
+        ? "Yes"
+        : `No — ${status.reasons.join(", ") || "unknown"}`,
+    ],
+  ];
+
+  const heading = status.qualified
+    ? "New GoPro sign-up — qualified"
+    : "New GoPro sign-up — unqualified";
+
+  const inner = `
+    ${brandHeader()}
+    ${pill(status.qualified ? "Qualified" : "Unqualified")}
+    ${title(heading)}
+    ${rows(items)}
+  `;
+
+  return shell(inner, { preheader: heading, footer: PARTNER_FOOTER });
+}
+
+export function renderPartnerGoproConfirmation(
+  payload: PartnerGoproPayload,
+  status: { qualified: boolean },
+): string {
+  const firstName = payload.firstName?.trim() || "there";
+
+  const heading = status.qualified
+    ? `You're on the list, ${firstName}.`
+    : `Thanks for signing up, ${firstName}.`;
+
+  const body = status.qualified
+    ? "Thanks for signing up for the Partner GoPro home program. Your home looks like a fit — we'll email you next steps, including equipment and scheduling, within a couple of days."
+    : "Thanks for signing up for the Partner GoPro home program. Your home or availability doesn't match what we need for this round — but we keep every sign-up on file and will reach out if that changes.";
+
+  const inner = `
+    ${brandHeader()}
+    ${title(escapeHtml(heading))}
+    <p style="margin:0;font-size:15px;line-height:1.6;color:${COLOR.ink}">${escapeHtml(
+      body,
+    )}</p>
+    <p style="margin:26px 0 0;font-size:15px;line-height:1.6;color:${COLOR.muted}">— Twin Lanterns</p>
+  `;
+
+  return shell(inner, {
+    preheader: status.qualified
+      ? "You're on the list — here's what happens next."
+      : "We got your sign-up — here's what happens next.",
     footer: PARTNER_FOOTER,
   });
 }

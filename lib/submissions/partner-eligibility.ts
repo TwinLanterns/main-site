@@ -108,6 +108,27 @@ const REASONS = {
   NO_CONSENT: "no_consent",
 } as const;
 
+// GoPro home-collection program — criteria from app/partner/gopro/page.tsx.
+export interface PartnerGoproEligibilityInput {
+  isAdult: boolean;
+  hasCoreAreas: boolean;
+  canKeepOthersOut: boolean;
+  weeklyHoursOk: boolean;
+  consent: boolean;
+}
+
+export function evaluatePartnerGoproEligibility(
+  input: PartnerGoproEligibilityInput,
+): PartnerEligibilityResult {
+  const reasons: string[] = [];
+  if (!input.isAdult) reasons.push("under_18");
+  if (!input.hasCoreAreas) reasons.push("missing_core_areas");
+  if (!input.canKeepOthersOut) reasons.push("cannot_keep_others_out_of_frame");
+  if (!input.weeklyHoursOk) reasons.push("weekly_hours_not_met");
+  if (!input.consent) reasons.push("no_consent");
+  return { qualified: reasons.length === 0, reasons };
+}
+
 export function evaluatePartnerEligibility(
   input: PartnerEligibilityInput,
 ): PartnerEligibilityResult {

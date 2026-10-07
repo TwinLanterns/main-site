@@ -181,6 +181,15 @@ function Hero() {
             work.
           </p>
 
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/partner/gopro/apply"
+              className={`${btn} bg-lime text-ink hover:bg-white`}
+            >
+              Sign up for the GoPro program
+            </Link>
+          </div>
+
           <dl className="mx-auto mt-12 grid max-w-3xl gap-7 border-t border-white/15 pt-8 sm:grid-cols-3">
             {heroStats.map(([k, v]) => (
               <div key={v}>
@@ -474,7 +483,7 @@ function Cta() {
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
               href="/partner/info"
-              className={`${btn} bg-white text-ink hover:bg-flame hover:text-white`}
+              className={`${btn} border border-white/25 text-white hover:border-white`}
             >
               Partner filming info
             </Link>

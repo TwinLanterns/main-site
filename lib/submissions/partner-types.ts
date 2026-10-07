@@ -17,6 +17,21 @@ export interface PartnerApplicantPayload {
   consent: boolean;
   referredByCode: string | null;
 }
+export interface PartnerGoproPayload {
+  firstName: string;
+  lastName?: string;
+  email: string;
+  phone?: string;
+  location?: string;
+  referredBy?: string;
+  referrerCollege?: string;
+  isAdult: boolean;
+  hasCoreAreas: boolean;
+  canKeepOthersOut: boolean;
+  weeklyHoursOk: boolean;
+  consent: boolean;
+  referredByCode: string | null;
+}
 export interface PartnerAmbassadorPayload {
   name: string;
   email: string;
@@ -24,4 +39,5 @@ export interface PartnerAmbassadorPayload {
 
 export type PartnerSubmission =
   | { kind: "partner_applicant"; payload: PartnerApplicantPayload }
+  | { kind: "partner_gopro"; payload: PartnerGoproPayload }
   | { kind: "partner_ambassador"; payload: PartnerAmbassadorPayload };

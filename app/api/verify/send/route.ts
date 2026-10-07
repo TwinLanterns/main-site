@@ -19,6 +19,7 @@ const DUPLICATE_MESSAGE: Record<VerificationPurpose, string> = {
   company: "You've already sent a brief with this email.",
   partner_applicant: "You've already applied to Partner with this email.",
   partner_ambassador: "You're already a Partner ambassador with this email.",
+  partner_gopro: "You've already signed up for the GoPro program with this email.",
 };
 
 export async function POST(req: Request) {

@@ -1,10 +1,18 @@
 import { parseJsonBody } from "@/lib/http";
 import { isValidEmail } from "@/lib/validation";
-import type { PartnerApplicantPayload, PartnerAmbassadorPayload } from "./partner-types";
+import type {
+  PartnerApplicantPayload,
+  PartnerAmbassadorPayload,
+  PartnerGoproPayload,
+} from "./partner-types";
 import type { DeviceOs } from "./partner-eligibility";
 
 export type ParsePartnerApplicantResult =
   | { ok: true; data: PartnerApplicantPayload }
+  | { ok: false; status: 400; error: string };
+
+export type ParsePartnerGoproResult =
+  | { ok: true; data: PartnerGoproPayload }
   | { ok: false; status: 400; error: string };
 
 export type ParsePartnerReferResult =
@@ -68,6 +76,52 @@ export async function parsePartnerApplicantRequest(
     deviceModel: str(p.deviceModel)?.trim() || "",
     taskInterests,
     filmingAck: bool(p.filmingAck),
+    consent: bool(p.consent),
+    referredByCode: str(p.referredByCode)?.trim() || null,
+  };
+
+  return { ok: true, data };
+}
+
+export async function parsePartnerGoproRequest(
+  req: Request,
+): Promise<ParsePartnerGoproResult> {
+  const parsed = await parseJsonBody(req);
+  if (!parsed.ok) {
+    return { ok: false, status: 400, error: "Invalid JSON" };
+  }
+  const body = parsed.body;
+
+  if (typeof body !== "object" || body === null || !("payload" in body)) {
+    return { ok: false, status: 400, error: "Missing fields" };
+  }
+
+  const payload = (body as { payload: unknown }).payload;
+  if (typeof payload !== "object" || payload === null) {
+    return { ok: false, status: 400, error: "Missing fields" };
+  }
+
+  const p = payload as Record<string, unknown>;
+
+  const firstName = str(p.firstName)?.trim() ?? "";
+  const email = str(p.email)?.trim() ?? "";
+
+  if (!firstName || !email || !isValidEmail(email)) {
+    return { ok: false, status: 400, error: "Missing or invalid name/email" };
+  }
+
+  const data: PartnerGoproPayload = {
+    firstName,
+    lastName: str(p.lastName)?.trim() || undefined,
+    email,
+    phone: str(p.phone)?.trim() || undefined,
+    location: str(p.location)?.trim() || undefined,
+    referredBy: str(p.referredBy)?.trim() || undefined,
+    referrerCollege: str(p.referrerCollege)?.trim() || undefined,
+    isAdult: bool(p.isAdult),
+    hasCoreAreas: bool(p.hasCoreAreas),
+    canKeepOthersOut: bool(p.canKeepOthersOut),
+    weeklyHoursOk: bool(p.weeklyHoursOk),
     consent: bool(p.consent),
     referredByCode: str(p.referredByCode)?.trim() || null,
   };
