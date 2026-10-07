@@ -7,7 +7,7 @@ export type ResendAttachment = {
 };
 
 // The Twin Lanterns mark, inlined via cid so it renders in every email
-// template regardless of vertical (submission-emails.ts, partner-emails.ts,
+// template regardless of vertical (submission-emails.ts, earn-emails.ts,
 // verification-emails.ts).
 export const MARK_ATTACHMENT: ResendAttachment = {
   filename: "icon.png",

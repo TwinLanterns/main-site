@@ -63,10 +63,10 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
 export type VerificationPurpose =
   | "student"
   | "company"
-  | "partner_applicant"
-  | "partner_ambassador"
-  | "partner_gopro"
-  | "partner_speech";
+  | "earn_applicant"
+  | "earn_ambassador"
+  | "earn_gopro"
+  | "earn_speech";
 
 const RESEND_COOLDOWN = 30; // seconds — mirrors lib/verification/store.ts
 

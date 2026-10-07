@@ -65,7 +65,7 @@ const BRIEF_COLUMNS = [
   "created_at",
 ];
 
-const PARTNER_APPLICANT_COLUMNS = [
+const EARN_APPLICANT_COLUMNS = [
   "first_name",
   "last_name",
   "email",
@@ -78,13 +78,13 @@ const PARTNER_APPLICANT_COLUMNS = [
   "created_at",
 ];
 
-const PARTNER_UNQUALIFIED_COLUMNS = [
-  ...PARTNER_APPLICANT_COLUMNS.slice(0, -1),
+const EARN_UNQUALIFIED_COLUMNS = [
+  ...EARN_APPLICANT_COLUMNS.slice(0, -1),
   "disqualified_reasons",
   "created_at",
 ];
 
-const PARTNER_GOPRO_COLUMNS = [
+const EARN_GOPRO_COLUMNS = [
   "first_name",
   "last_name",
   "email",
@@ -96,7 +96,7 @@ const PARTNER_GOPRO_COLUMNS = [
   "created_at",
 ];
 
-const PARTNER_SPEECH_COLUMNS = [
+const EARN_SPEECH_COLUMNS = [
   "first_name",
   "last_name",
   "email",
@@ -113,7 +113,7 @@ const PARTNER_SPEECH_COLUMNS = [
   "created_at",
 ];
 
-const PARTNER_AMBASSADOR_COLUMNS = [
+const EARN_AMBASSADOR_COLUMNS = [
   "name",
   "email",
   "code",
@@ -1556,7 +1556,7 @@ function VibeSearch() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Partner — ambassadors + qualified/unqualified applicants             */
+/* Earn — ambassadors + qualified/unqualified applicants             */
 /* ------------------------------------------------------------------ */
 
 /** code -> ambassador row, for quick lookups when annotating applicants. */
@@ -1606,9 +1606,9 @@ function withReferralCounts(
   });
 }
 
-type PartnerSubTab = "qualified" | "unqualified" | "gopro" | "speech" | "ambassadors";
+type EarnSubTab = "qualified" | "unqualified" | "gopro" | "speech" | "ambassadors";
 
-function PartnerSection({
+function EarnSection({
   ambassadors,
   qualified,
   unqualified,
@@ -1621,7 +1621,7 @@ function PartnerSection({
   gopro: Row[];
   speech: Row[];
 }) {
-  const [subTab, setSubTab] = useState<PartnerSubTab>("qualified");
+  const [subTab, setSubTab] = useState<EarnSubTab>("qualified");
   const [referrerFilter, setReferrerFilter] = useState<string>("");
 
   const ambassadorMap = useMemo(() => buildAmbassadorMap(ambassadors), [ambassadors]);
@@ -1650,7 +1650,7 @@ function PartnerSection({
     ? ambassadors.find((a) => a.code === referrerFilter)
     : null;
 
-  const subTabs: { key: PartnerSubTab; label: string; count: number }[] = [
+  const subTabs: { key: EarnSubTab; label: string; count: number }[] = [
     { key: "qualified", label: "Qualified", count: filteredQualified.length },
     { key: "unqualified", label: "Unqualified", count: filteredUnqualified.length },
     { key: "gopro", label: "GoPro", count: gopro.length },
@@ -1722,15 +1722,15 @@ function PartnerSection({
       )}
 
       {subTab === "qualified" ? (
-        <Table rows={filteredQualified} columns={PARTNER_APPLICANT_COLUMNS} />
+        <Table rows={filteredQualified} columns={EARN_APPLICANT_COLUMNS} />
       ) : subTab === "unqualified" ? (
-        <Table rows={filteredUnqualified} columns={PARTNER_UNQUALIFIED_COLUMNS} />
+        <Table rows={filteredUnqualified} columns={EARN_UNQUALIFIED_COLUMNS} />
       ) : subTab === "gopro" ? (
-        <Table rows={gopro} columns={PARTNER_GOPRO_COLUMNS} />
+        <Table rows={gopro} columns={EARN_GOPRO_COLUMNS} />
       ) : subTab === "speech" ? (
-        <Table rows={speech} columns={PARTNER_SPEECH_COLUMNS} />
+        <Table rows={speech} columns={EARN_SPEECH_COLUMNS} />
       ) : (
-        <Table rows={ambassadorsWithCounts} columns={PARTNER_AMBASSADOR_COLUMNS} />
+        <Table rows={ambassadorsWithCounts} columns={EARN_AMBASSADOR_COLUMNS} />
       )}
     </div>
   );
@@ -1743,22 +1743,22 @@ function PartnerSection({
 export default function AdminDashboard({
   applications,
   briefs,
-  partnerAmbassadors = [],
-  partnerQualified = [],
-  partnerUnqualified = [],
-  partnerGopro = [],
-  partnerSpeech = [],
+  earnAmbassadors = [],
+  earnQualified = [],
+  earnUnqualified = [],
+  earnGopro = [],
+  earnSpeech = [],
 }: {
   applications: Row[];
   briefs: Row[];
-  partnerAmbassadors?: Row[];
-  partnerQualified?: Row[];
-  partnerUnqualified?: Row[];
-  partnerGopro?: Row[];
-  partnerSpeech?: Row[];
+  earnAmbassadors?: Row[];
+  earnQualified?: Row[];
+  earnUnqualified?: Row[];
+  earnGopro?: Row[];
+  earnSpeech?: Row[];
 }) {
   const [tab, setTab] = useState<
-    "applications" | "briefs" | "partner" | "vibe"
+    "applications" | "briefs" | "earn" | "vibe"
   >("applications");
   const router = useRouter();
 
@@ -1805,14 +1805,14 @@ export default function AdminDashboard({
             Company briefs ({briefs.length})
           </button>
           <button
-            onClick={() => setTab("partner")}
+            onClick={() => setTab("earn")}
             className={`px-3 py-2 text-sm font-medium ${
-              tab === "partner"
+              tab === "earn"
                 ? "border-b-2 border-neutral-900 text-neutral-900"
                 : "text-neutral-500 hover:text-neutral-700"
             }`}
           >
-            Partner ({partnerQualified.length + partnerUnqualified.length + partnerGopro.length + partnerSpeech.length})
+            Earn ({earnQualified.length + earnUnqualified.length + earnGopro.length + earnSpeech.length})
           </button>
           <button
             onClick={() => setTab("vibe")}
@@ -1835,13 +1835,13 @@ export default function AdminDashboard({
           />
         ) : tab === "briefs" ? (
           <Table rows={briefs} columns={BRIEF_COLUMNS} />
-        ) : tab === "partner" ? (
-          <PartnerSection
-            ambassadors={partnerAmbassadors}
-            qualified={partnerQualified}
-            unqualified={partnerUnqualified}
-            gopro={partnerGopro}
-            speech={partnerSpeech}
+        ) : tab === "earn" ? (
+          <EarnSection
+            ambassadors={earnAmbassadors}
+            qualified={earnQualified}
+            unqualified={earnUnqualified}
+            gopro={earnGopro}
+            speech={earnSpeech}
           />
         ) : (
           <VibeSearch />

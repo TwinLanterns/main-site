@@ -96,7 +96,7 @@ export function brandHeader(): string {
   </table>`;
 }
 
-// Shared with lib/email/partner-templates.ts, which reuses this for its own
+// Shared with lib/email/earn-templates.ts, which reuses this for its own
 // status pills (Qualified/Unqualified, New ambassador, …).
 export function pill(label: string): string {
   return `<span style="display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:${COLOR.flame};background:${COLOR.shell};border:1px solid ${COLOR.line};border-radius:999px;padding:4px 10px">${escapeHtml(label)}</span>`;
@@ -126,7 +126,7 @@ export function renderVerificationCode(code: string): string {
 
 // ---------- Payload table ----------
 
-// Shared with lib/email/partner-templates.ts, which builds its own
+// Shared with lib/email/earn-templates.ts, which builds its own
 // [label, value] pairs directly instead of deriving them from an object.
 export function renderKeyValueTable(items: [string, string][]): string {
   const rows = items

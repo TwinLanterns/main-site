@@ -497,15 +497,15 @@ function Roles() {
   );
 }
 
-/* ----------------------------------- partner ---------------------------------- */
+/* ----------------------------------- earn ---------------------------------- */
 
-const partnerStats = [
+const earnStats = [
   ["$10/hr", "for approved filming time"],
   ["Any modern phone", "iPhone 12 or later, recent Galaxy S / Pixel"],
   ["No experience", "a ten-minute setup is the whole bar"],
 ];
 
-const partnerSteps = [
+const earnSteps = [
   {
     n: "01",
     t: "Apply",
@@ -523,16 +523,16 @@ const partnerSteps = [
   },
 ];
 
-const partnerPoints = [
+const earnPoints = [
   "Film everyday tasks with a head-mounted phone — no experience required",
   "Shoot whenever it suits you; there are no shifts to sign up for",
   "Refer someone you trust and earn when they qualify",
 ];
 
-function Partner() {
+function Earn() {
   return (
     <section
-      id="partner"
+      id="earn"
       className="relative overflow-hidden bg-ink py-20 text-white sm:py-28"
     >
       {/* shape cluster */}
@@ -587,19 +587,19 @@ function Partner() {
 
           <div className="mt-9 flex flex-wrap gap-3">
             <Link
-              href="/partner/apply"
+              href="/earn/apply"
               className={`${btn} bg-white text-ink hover:bg-flame hover:text-white`}
             >
               Start earning
             </Link>
             <Link
-              href="/partner/refer"
+              href="/earn/refer"
               className={`${btn} border border-white/25 text-white hover:border-white`}
             >
               Become an ambassador
             </Link>
             <Link
-              href="/partner/info"
+              href="/earn/info"
               className={`${btn} bg-lime text-ink hover:bg-white`}
             >
               More info
@@ -607,7 +607,7 @@ function Partner() {
           </div>
 
           <dl className="mt-12 grid gap-7 border-t border-white/15 pt-8 sm:grid-cols-3">
-            {partnerStats.map(([k, v]) => (
+            {earnStats.map(([k, v]) => (
               <div key={v}>
                 <dt className="display text-[clamp(1.4rem,2.4vw,1.9rem)]">
                   {k}
@@ -624,7 +624,7 @@ function Partner() {
           <div className="rounded-[32px] border border-white/15 bg-white/[0.04] p-7 sm:p-10">
             <p className="label !text-white/50">How it works</p>
             <ol className="mt-8 space-y-7">
-              {partnerSteps.map((s) => (
+              {earnSteps.map((s) => (
                 <li key={s.n} className="flex gap-5">
                   <span className="display pt-0.5 text-[15px] text-white/40">
                     {s.n}
@@ -640,7 +640,7 @@ function Partner() {
             </ol>
 
             <ul className="mt-10 space-y-4 border-t border-white/15 pt-8">
-              {partnerPoints.map((pt) => (
+              {earnPoints.map((pt) => (
                 <li
                   key={pt}
                   className="flex gap-3.5 text-[14.5px] leading-relaxed text-white/70"
@@ -653,7 +653,7 @@ function Partner() {
           </div>
 
           <Link
-            href="/partner/gopro"
+            href="/earn/gopro"
             className="group mt-4 flex items-center justify-between gap-5 rounded-[24px] bg-lime p-6 text-ink transition-colors hover:bg-white sm:px-8"
           >
             <div>
@@ -672,7 +672,7 @@ function Partner() {
           </Link>
 
           <Link
-            href="/partner/speech"
+            href="/earn/speech"
             className="group mt-4 flex items-center justify-between gap-5 rounded-[24px] bg-sky p-6 text-ink transition-colors hover:bg-white sm:px-8"
           >
             <div>
@@ -819,7 +819,7 @@ export default function Landing() {
     <>
       <Hero />
       <Stats />
-      <Partner />
+      <Earn />
       <Split />
       <Process />
       <Statement />

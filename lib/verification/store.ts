@@ -1,7 +1,7 @@
 // lib/verification/store.ts
 //
 // Backs the inline 6-digit OTP flow: a code is emailed, the wizard collects
-// it, and the submission routes (app/api/submit, app/api/partner/*) refuse to
+// it, and the submission routes (app/api/submit, app/api/earn/*) refuse to
 // save until `assertEmailVerified` confirms it. Keyed on (email, purpose) —
 // there's one row per address per funnel, upserted on resend.
 

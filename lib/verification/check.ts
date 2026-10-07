@@ -1,7 +1,7 @@
 // lib/verification/check.ts
 //
 // Shared duplicate-email + verified-email gate used by every submit-like
-// route (app/api/submit, app/api/partner/submit, app/api/partner/refer) right
+// route (app/api/submit, app/api/earn/submit, app/api/earn/refer) right
 // before it persists anything.
 
 import { NextResponse } from "next/server";

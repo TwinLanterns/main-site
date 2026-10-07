@@ -17,10 +17,10 @@ import {
 const DUPLICATE_MESSAGE: Record<VerificationPurpose, string> = {
   student: "You've already applied with this email.",
   company: "You've already sent a brief with this email.",
-  partner_applicant: "You've already applied to Partner with this email.",
-  partner_ambassador: "You're already a Partner ambassador with this email.",
-  partner_gopro: "You've already signed up for the GoPro program with this email.",
-  partner_speech: "You've already signed up for the speech program with this email.",
+  earn_applicant: "You've already applied to Earn with this email.",
+  earn_ambassador: "You're already a Earn ambassador with this email.",
+  earn_gopro: "You've already signed up for the GoPro program with this email.",
+  earn_speech: "You've already signed up for the speech program with this email.",
 };
 
 export async function POST(req: Request) {

@@ -23,11 +23,11 @@ export default async function AdminPage() {
   const [
     { data: applications, error: applicationsError },
     { data: briefs, error: briefsError },
-    { data: partnerAmbassadors, error: partnerAmbassadorsError },
-    { data: partnerQualified, error: partnerQualifiedError },
-    { data: partnerUnqualified, error: partnerUnqualifiedError },
-    { data: partnerGopro, error: partnerGoproError },
-    { data: partnerSpeech, error: partnerSpeechError },
+    { data: earnAmbassadors, error: earnAmbassadorsError },
+    { data: earnQualified, error: earnQualifiedError },
+    { data: earnUnqualified, error: earnUnqualifiedError },
+    { data: earnGopro, error: earnGoproError },
+    { data: earnSpeech, error: earnSpeechError },
   ] = await Promise.all([
     supabase
       .from("student_applications")
@@ -67,23 +67,23 @@ export default async function AdminPage() {
       .select("*")
       .order("created_at", { ascending: false }),
     supabase
-      .from("partner_ambassadors")
+      .from("earn_ambassadors")
       .select("*")
       .order("created_at", { ascending: false }),
     supabase
-      .from("partner_applicants_qualified")
+      .from("earn_applicants_qualified")
       .select("*")
       .order("created_at", { ascending: false }),
     supabase
-      .from("partner_applicants_unqualified")
+      .from("earn_applicants_unqualified")
       .select("*")
       .order("created_at", { ascending: false }),
     supabase
-      .from("partner_gopro_applicants")
+      .from("earn_gopro_applicants")
       .select("*")
       .order("created_at", { ascending: false }),
     supabase
-      .from("partner_speech_participants")
+      .from("earn_speech_participants")
       .select("*")
       .order("created_at", { ascending: false }),
   ]);
@@ -91,22 +91,22 @@ export default async function AdminPage() {
   if (
     applicationsError ||
     briefsError ||
-    partnerAmbassadorsError ||
-    partnerQualifiedError ||
-    partnerUnqualifiedError ||
-    partnerGoproError ||
-    partnerSpeechError
+    earnAmbassadorsError ||
+    earnQualifiedError ||
+    earnUnqualifiedError ||
+    earnGoproError ||
+    earnSpeechError
   ) {
     return (
       <div className="p-8 text-sm text-red-600">
         Failed to load data:{" "}
         {applicationsError?.message ||
           briefsError?.message ||
-          partnerAmbassadorsError?.message ||
-          partnerQualifiedError?.message ||
-          partnerUnqualifiedError?.message ||
-          partnerGoproError?.message ||
-          partnerSpeechError?.message}
+          earnAmbassadorsError?.message ||
+          earnQualifiedError?.message ||
+          earnUnqualifiedError?.message ||
+          earnGoproError?.message ||
+          earnSpeechError?.message}
       </div>
     );
   }
@@ -115,11 +115,11 @@ export default async function AdminPage() {
     <AdminDashboard
       applications={applications ?? []}
       briefs={briefs ?? []}
-      partnerAmbassadors={partnerAmbassadors ?? []}
-      partnerQualified={partnerQualified ?? []}
-      partnerUnqualified={partnerUnqualified ?? []}
-      partnerGopro={partnerGopro ?? []}
-      partnerSpeech={partnerSpeech ?? []}
+      earnAmbassadors={earnAmbassadors ?? []}
+      earnQualified={earnQualified ?? []}
+      earnUnqualified={earnUnqualified ?? []}
+      earnGopro={earnGopro ?? []}
+      earnSpeech={earnSpeech ?? []}
     />
   );
 }

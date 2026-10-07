@@ -5,7 +5,7 @@
 > Twin Lanterns is a two-sided marketplace that connects high school and college
 > students with startups and small companies looking for part-time or intern
 > talent. Students apply once, companies submit a role brief, and the two founders
-> personally screen and match. The same app also hosts **Partner**, a second,
+> personally screen and match. The same app also hosts **Earn**, a second,
 > parallel product where people film everyday physical tasks for pay to
 > produce robotics-AI training data, with its own applicant and ambassador
 > (referral) funnels. This repo is the marketing site, all three application
@@ -43,7 +43,7 @@
 ┌──────────────────┐   ┌─────────────────────┐   ┌────────────────────┐
 │  Marketing +     │   │    API Routes       │   │  Admin Dashboard   │
 │  Apply / Hire /  │   │    (/api/)          │   │    (/admin/)       │
-│  Partner           │   │    Node runtime     │   │    React client    │
+│  Earn           │   │    Node runtime     │   │    React client    │
 │  (React client)  │   │                      │   │                    │
 └────────┬─────────┘   └──────────┬──────────┘   └─────────┬──────────┘
          │                        │                        │
@@ -61,14 +61,14 @@
                       │            │  Vercel Analytics      │
                       │            └────────────────────────┘
                       ▼
-        student_applications          partner_applicants_qualified
-        company_briefs                partner_applicants_unqualified
-        candidate_ai_tags             partner_ambassadors
+        student_applications          earn_applicants_qualified
+        company_briefs                earn_applicants_unqualified
+        candidate_ai_tags             earn_ambassadors
 ```
 
 Three user-facing funnels feed Supabase: the original student/company pair
 (`student_applications`, `company_briefs`) and a second, parallel product —
-Partner, a robotics data-collection vertical layered onto the same app — which
+Earn, a robotics data-collection vertical layered onto the same app — which
 writes to three of its own tables via a separate persistence module (never the
 original one; see §4.6–4.7 and §12). An admin surface reads from all of them,
 runs AI semantic search over tagged candidates, and can stream resumes back to
@@ -76,7 +76,7 @@ the browser.
 
 `proxy.ts` (Next.js 16's renamed `middleware.ts`) sits in front of `/admin/*` and
 the two protected admin API routes, verifying the HMAC session cookie before any
-of them run. The two Partner API routes (`/api/partner/submit`, `/api/partner/refer`)
+of them run. The two Earn API routes (`/api/earn/submit`, `/api/earn/refer`)
 are public, like `/api/submit` — `proxy.ts` does not match them.
 
 ---
@@ -140,25 +140,25 @@ they should be uninstalled to keep the tree honest.
 │   │   ├── page.tsx                "/companies" wrapper
 │   │   └── HireFlow.tsx            4-step company wizard (client)
 │   │
-│   ├── partner/
+│   ├── earn/
 │   │   ├── apply/
-│   │   │   ├── page.tsx            "/partner/apply" wrapper
-│   │   │   └── PartnerApplyFlow.tsx  4-step applicant wizard (client)
+│   │   │   ├── page.tsx            "/earn/apply" wrapper
+│   │   │   └── EarnApplyFlow.tsx  4-step applicant wizard (client)
 │   │   ├── refer/
-│   │   │   ├── page.tsx            "/partner/refer" wrapper
+│   │   │   ├── page.tsx            "/earn/refer" wrapper
 │   │   │   └── AmbassadorFlow.tsx  1-step ambassador signup (client)
 │   │   └── info/
-│   │       └── page.tsx            "/partner/info" marketing page (server
+│   │       └── page.tsx            "/earn/info" marketing page (server
 │   │                               component; Hero/Pay/Devices/DoDont/
 │   │                               Steps/Tasks/Cta)
 │   │
 │   ├── admin/
 │   │   ├── page.tsx                Server component, force-dynamic; 5
 │   │   │                           parallel queries (students, briefs,
-│   │   │                           partner qualified/unqualified/ambassadors);
+│   │   │                           earn qualified/unqualified/ambassadors);
 │   │   │                           robots: noindex,nofollow on the subtree
 │   │   ├── AdminDashboard.tsx      Client dashboard: applications / briefs /
-│   │   │                           Partner / Search tabs
+│   │   │                           Earn / Search tabs
 │   │   └── login/
 │   │       └── page.tsx            Client login (Suspense-wrapped form;
 │   │                               honors ?from= with /admin allowlist;
@@ -168,7 +168,7 @@ they should be uninstalled to keep the tree honest.
 │       ├── submit/route.ts         POST — thin orchestrator:
 │       │                           parse → duplicate/verify check → save →
 │       │                           consume verification → notify (§4.8)
-│       ├── partner/
+│       ├── earn/
 │       │   ├── submit/route.ts     POST — applicant intake; inline
 │       │   │                       validation (no shared parse module)
 │       │   └── refer/route.ts      POST — ambassador signup; generates a
@@ -190,9 +190,9 @@ they should be uninstalled to keep the tree honest.
 │   │                               StepHeader, StepRail, Progress, NavButtons,
 │   │                               EmailVerify (§4.8), ease
 │   ├── Landing.tsx                 Homepage composed of internal sections
-│   │                               (includes the Partner promo section)
+│   │                               (includes the Earn promo section)
 │   ├── Nav.tsx                     Floating nav pill with scroll-collapse;
-│   │                               "Earn Now" (→ /partner/info) is now the
+│   │                               "Earn Now" (→ /earn/info) is now the
 │   │                               primary filled CTA
 │   ├── Footer.tsx                  Server component with brand wordmark
 │   ├── Mark.tsx                    Twin Lanterns logo (two panels + spark)
@@ -214,11 +214,11 @@ they should be uninstalled to keep the tree honest.
 │   │   ├── persistence.ts          Supabase inserts; throws
 │   │   │                           SubmissionConfigError (500) /
 │   │   │                           SubmissionSaveError (502)
-│   │   ├── partner-types.ts          PartnerApplicantPayload / PartnerAmbassadorPayload
-│   │   ├── partner-eligibility.ts    Device/task eligibility rules (see §4.6)
-│   │   └── partner-persistence.ts    Supabase inserts into the 3 partner_* tables;
-│   │                               throws PartnerConfigError (500) /
-│   │                               PartnerSaveError (502) — a separate class
+│   │   ├── earn-types.ts          EarnApplicantPayload / EarnAmbassadorPayload
+│   │   ├── earn-eligibility.ts    Device/task eligibility rules (see §4.6)
+│   │   └── earn-persistence.ts    Supabase inserts into the 3 earn_* tables;
+│   │                               throws EarnConfigError (500) /
+│   │                               EarnSaveError (502) — a separate class
 │   │                               hierarchy from Submission*Error (see §12)
 │   ├── verification/               Email OTP + duplicate prevention (§4.8),
 │   │   │                           shared by all three submission routes
@@ -235,9 +235,9 @@ they should be uninstalled to keep the tree honest.
 │       ├── templates.ts            HTML renderers + escapeHtml +
 │       │                           renderVerificationCode (§4.8)
 │       ├── submission-emails.ts    Internal notify + submitter confirmation
-│       ├── partner-templates.ts      Partner HTML renderers (reuses templates.ts
+│       ├── earn-templates.ts      Earn HTML renderers (reuses templates.ts
 │       │                           helpers)
-│       ├── partner-emails.ts         Partner internal notify + confirmation
+│       ├── earn-emails.ts         Earn internal notify + confirmation
 │       │                           (applicant + ambassador)
 │       └── verification-emails.ts  Sends the OTP code (§4.8) — the one email
 │                                   send in the app that's allowed to throw
@@ -249,8 +249,8 @@ they should be uninstalled to keep the tree honest.
 │   │                               prompt_version v5) → candidate_ai_tags
 │   ├── test-deepseek-api.ts        Interactive CLI chat against the proxy
 │   │                               (stale header comment says chat.ts)
-│   └── test-partner-eligibility.ts   Pure-logic smoke test for
-│                                   evaluatePartnerEligibility (no Supabase)
+│   └── test-earn-eligibility.ts   Pure-logic smoke test for
+│                                   evaluateEarnEligibility (no Supabase)
 │
 ├── public/
 │   ├── favicon.ico, favicon.svg,   icon.png also serves as the email logo
@@ -268,7 +268,7 @@ they should be uninstalled to keep the tree honest.
 │
 ├── proxy.ts                        Next.js 16 middleware — gates /admin/*
 │                                   and the two protected admin API routes
-│                                   (the two Partner API routes are public)
+│                                   (the two Earn API routes are public)
 ├── next.config.ts                  Empty (defaults)
 ├── tsconfig.json                   strict, @/* → ./*
 ├── eslint.config.mjs               Flat config (next core-web-vitals + TS)
@@ -565,29 +565,29 @@ NextResponse(new Uint8Array(buffer)) with headers:
   Cache-Control:       private, no-store
 ```
 
-### 4.6 Partner Applicant — `POST /api/partner/submit`
+### 4.6 Earn Applicant — `POST /api/earn/submit`
 
-Partner is a second, parallel product on the same app: people film everyday
+Earn is a second, parallel product on the same app: people film everyday
 physical tasks (cleaning, repair, warehouse, etc.) with a head-mounted phone to
-produce training data for robotics AI. `/partner/apply` is the applicant
-(filmer) funnel; `/partner/refer` (§4.7) is the ambassador/referral funnel.
+produce training data for robotics AI. `/earn/apply` is the applicant
+(filmer) funnel; `/earn/refer` (§4.7) is the ambassador/referral funnel.
 
 ```
-PartnerApplyFlow.tsx
-│  (localStorage draft: tl-partner-draft-v1)
+EarnApplyFlow.tsx
+│  (localStorage draft: tl-earn-draft-v1)
 │  4 steps: About you → Eligibility → Tasks → Finish (see §9.4 for the
 │  per-step validity rules)
 │  On mount: reads ?ref= from the URL, stores it to localStorage
-│  tl-partner-ref-code, and displays "Referred by {code}"; falls back to any
+│  tl-earn-ref-code, and displays "Referred by {code}"; falls back to any
 │  previously-stored code if the URL has none
 ▼
-POST /api/partner/submit
+POST /api/earn/submit
 │  body: { payload: { firstName, lastName?, email, phone?, location?,
 │    referredBy?, referrerCollege?, deviceOs, deviceModel, taskInterests[],
 │    filmingAck, consent, referredByCode } }
 │
-│  Validation is inline in the route handler — there is no partner-parse.ts;
-│  unlike /api/submit (§4.1, §12), Partner does not delegate to a shared parse
+│  Validation is inline in the route handler — there is no earn-parse.ts;
+│  unlike /api/submit (§4.1, §12), Earn does not delegate to a shared parse
 │  module.
 │    - 400 "Invalid JSON" on unparseable body
 │    - 400 "Missing fields" if body/payload isn't an object
@@ -598,48 +598,48 @@ POST /api/partner/submit
 │    - filmingAck / consent use a strict bool() helper — only the literal
 │      true passes ("false", 1, etc. all become false)
 ▼
-lib/submissions/partner-persistence.ts → savePartnerApplicant(payload)
-│  - Re-runs evaluatePartnerEligibility(payload) server-side — never trusts a
+lib/submissions/earn-persistence.ts → saveEarnApplicant(payload)
+│  - Re-runs evaluateEarnEligibility(payload) server-side — never trusts a
 │    client-supplied qualified flag
 │  - Inserts into one of two tables depending on the result:
-│    · partner_applicants_qualified   (qualified)
-│    · partner_applicants_unqualified (unqualified — same columns plus
+│    · earn_applicants_qualified   (qualified)
+│    · earn_applicants_unqualified (unqualified — same columns plus
 │      disqualified_reasons: text[])
 │  - Returns { id, table, qualified, reasons }
-│  - Throws PartnerConfigError | PartnerSaveError — a separate class hierarchy
+│  - Throws EarnConfigError | EarnSaveError — a separate class hierarchy
 │    from SubmissionConfigError/SubmissionSaveError (see §12)
 ▼
-lib/email/partner-emails.ts → sendPartnerApplicantEmails (best-effort, logged
+lib/email/earn-emails.ts → sendEarnApplicantEmails (best-effort, logged
 │  not thrown — same non-blocking pattern as §6.4)
-│  ├── internal notification to TL_NOTIFY_EMAIL: "New Partner applicant
+│  ├── internal notification to TL_NOTIFY_EMAIL: "New Earn applicant
 │  │   (qualified|unqualified) — {fullName}", includes qualified + reasons
-│  └── confirmation to the applicant: "You're in — Partner" (qualified) or
-│      "We've got your application — Partner" (unqualified)
+│  └── confirmation to the applicant: "You're in — Earn" (qualified) or
+│      "We've got your application — Earn" (unqualified)
 ▼
 { ok: true, qualified: boolean }
 ```
 
-**Eligibility rules** (`lib/submissions/partner-eligibility.ts`, sourced from an
+**Eligibility rules** (`lib/submissions/earn-eligibility.ts`, sourced from an
 external requirements doc):
 
-- `PARTNER_DEVICES.ios` — 24 explicit iPhone models (iPhone 12 through 17, all
-  variants); `PARTNER_DEVICES.android` — 20 explicit models (Galaxy S21–S24 +
+- `EARN_DEVICES.ios` — 24 explicit iPhone models (iPhone 12 through 17, all
+  variants); `EARN_DEVICES.android` — 20 explicit models (Galaxy S21–S24 +
   variants, Pixel 6–9 + Pro)
-- `PARTNER_EXCLUDED_MODELS = ["iPhone 16e", "iPhone 17e"]` — explicitly excluded
+- `EARN_EXCLUDED_MODELS = ["iPhone 16e", "iPhone 17e"]` — explicitly excluded
   despite prefix-matching a qualifying name
 - `isQualifyingDevice(os, model)` checks the excluded list first, then exact
   membership in the OS's list — no fuzzy/prefix matching
-- `PARTNER_TASK_CATEGORIES` — 15 fixed category strings (agriculture, auto
+- `EARN_TASK_CATEGORIES` — 15 fixed category strings (agriculture, auto
   service, construction, cleaning, food/kitchen, hospitality, carpentry, home
   maintenance, trades, warehouse, manufacturing, retail back-of-house,
   personal care, organization/storage)
-- `evaluatePartnerEligibility(input)` → `{ qualified, reasons }`, reason codes:
+- `evaluateEarnEligibility(input)` → `{ qualified, reasons }`, reason codes:
   `no_device_selected` (missing os or model), `unsupported_device`,
   `no_filming_ack`, `no_consent`. Choosing "Neither" for phone OS always
   yields `deviceOs: ""` downstream → always produces `no_device_selected`, so
   a "Neither" applicant can still complete and submit the wizard but is
   always unqualified.
-- Tested by `scripts/test-partner-eligibility.ts` (§10.5) — pure logic, no
+- Tested by `scripts/test-earn-eligibility.ts` (§10.5) — pure logic, no
   Supabase.
 
 **Failure modes**
@@ -649,47 +649,47 @@ external requirements doc):
 | Invalid JSON body | `400 "Invalid JSON"` |
 | Body/payload not an object | `400 "Missing fields"` |
 | `firstName` empty or `email` fails the regex | `400 "Missing or invalid name/email"` |
-| `PartnerConfigError` (Supabase env missing) | `500`, message is `err.message` in dev / `"Server Misconfigured"` in prod |
-| `PartnerSaveError` or any other error | `502`, message is `err.message` in dev / `"Save failed"` in prod |
+| `EarnConfigError` (Supabase env missing) | `500`, message is `err.message` in dev / `"Server Misconfigured"` in prod |
+| `EarnSaveError` or any other error | `502`, message is `err.message` in dev / `"Save failed"` in prod |
 | Email failure (any layer) | logged, never fails |
 
 > The dev-vs-prod error-message branching on `500`/`502` here is unique to
-> the Partner routes — `/api/submit` (§4.1) always returns the same generic
+> the Earn routes — `/api/submit` (§4.1) always returns the same generic
 > string regardless of environment. `"Server Misconfigured"` is also
 > capitalized inconsistently with the rest of the app's lowercase error
 > strings (e.g. `"Server misconfigured"` in §4.1/§4.4). Worth normalizing if
-> Partner's error handling is ever consolidated with the original submission
+> Earn's error handling is ever consolidated with the original submission
 > path.
 
-### 4.7 Partner Ambassador Referral — `POST /api/partner/refer`
+### 4.7 Earn Ambassador Referral — `POST /api/earn/refer`
 
 ```
 AmbassadorFlow.tsx
 │  1 step: name + email (valid = name.trim().length > 1 && email matches
 │  the same regex as above)
 ▼
-POST /api/partner/refer
+POST /api/earn/refer
 │  body: { name, email }   — flat, not wrapped in `payload`
 │  - 400 "Invalid JSON" / 400 "Missing or invalid name/email"
 ▼
-lib/submissions/partner-persistence.ts → savePartnerAmbassador(name, email)
-│  - Inserts into partner_ambassadors: name, email, code, raw_payload
+lib/submissions/earn-persistence.ts → saveEarnAmbassador(name, email)
+│  - Inserts into earn_ambassadors: name, email, code, raw_payload
 │  - code: 6 chars from alphabet ABCDEFGHJKLMNPQRSTUVWXYZ23456789 (no
 │    0/O/1/I — avoids visual ambiguity)
 │  - Retries up to 5× on Postgres 23505 unique_violation:
-│    · violated constraint is partner_ambassadors_email_key → throws
-│      PartnerSaveError("You're already an ambassador") immediately, no retry
+│    · violated constraint is earn_ambassadors_email_key → throws
+│      EarnSaveError("You're already an ambassador") immediately, no retry
 │    · any other unique violation → retries with a fresh random code
 │      (handles a `code` collision)
 │    · any non-23505 error bails immediately
 ▼
-referralUrl = getOrigin(req) + "/partner/apply?ref={code}"
+referralUrl = getOrigin(req) + "/earn/apply?ref={code}"
 │  getOrigin: NEXT_PUBLIC_SITE_URL env if set, else x-forwarded-proto /
 │  x-forwarded-host / host headers, else new URL(req.url).origin
 ▼
-lib/email/partner-emails.ts → sendPartnerAmbassadorEmails (best-effort)
-│  ├── internal notification: "New Partner ambassador — {name}"
-│  └── confirmation to the ambassador: "You're a Partner ambassador — here's
+lib/email/earn-emails.ts → sendEarnAmbassadorEmails (best-effort)
+│  ├── internal notification: "New Earn ambassador — {name}"
+│  └── confirmation to the ambassador: "You're a Earn ambassador — here's
 │      your link" (includes code + referralUrl)
 ▼
 { ok: true, code }
@@ -698,7 +698,7 @@ lib/email/partner-emails.ts → sendPartnerAmbassadorEmails (best-effort)
 The applicant wizard reads back `code` via the `?ref=` query param it was sent
 with (§4.6), so a referral is attributed by `referred_by_code` on the
 applicant row — there's no server-side join table, just a shared `code`
-string between `partner_ambassadors` and the two applicant tables.
+string between `earn_ambassadors` and the two applicant tables.
 
 **Failure modes**
 
@@ -706,8 +706,8 @@ string between `partner_ambassadors` and the two applicant tables.
 | --- | --- |
 | Invalid JSON body | `400 "Invalid JSON"` |
 | Body not an object, or `name`/`email` empty/invalid | `400 "Missing or invalid name/email"` |
-| `PartnerConfigError` | `500 { error: "Server misconfigured" }` |
-| `PartnerSaveError` or any other error | `502 { error: "Save failed" }` |
+| `EarnConfigError` | `500 { error: "Server misconfigured" }` |
+| `EarnSaveError` or any other error | `502 { error: "Save failed" }` |
 | Email failure (any layer) | logged, never fails |
 
 ---
@@ -715,15 +715,15 @@ string between `partner_ambassadors` and the two applicant tables.
 ### 4.8 Email Verification & Duplicate Prevention
 
 All four public funnels (`/api/submit` with `kind: "student"` or
-`"company"`, `/api/partner/submit`, `/api/partner/refer`) require the submitter's
+`"company"`, `/api/earn/submit`, `/api/earn/refer`) require the submitter's
 email to be verified via an inline 6-digit OTP, and reject a submission
 outright if that email already has a row in the relevant table(s). This
-lives outside the `submissions`/`partner-*` persistence modules, in
+lives outside the `submissions`/`earn-*` persistence modules, in
 `lib/verification/`, so it applies uniformly across both class hierarchies
-(`Submission*Error` and `Partner*Error`) without touching either.
+(`Submission*Error` and `Earn*Error`) without touching either.
 
 ```
-components/form.tsx → <EmailVerify purpose="student|company|partner_applicant|partner_ambassador">
+components/form.tsx → <EmailVerify purpose="student|company|earn_applicant|earn_ambassador">
 │  Renders inline under the email Field in each wizard's contact step.
 │  Owns its own fetch calls — no prop drilling through the wizard beyond
 │  `email` in / `verified` boolean out (same "self-contained widget" pattern
@@ -741,8 +741,8 @@ User continues the wizard and submits. The step's "Continue"/"Submit" button
 stays disabled until `verified` is true, same mechanism as every other
 per-step validity check in §9.4.
 ▼
-POST /api/submit | /api/partner/submit | /api/partner/refer
-│  Before calling saveSubmission / savePartnerApplicant / savePartnerAmbassador:
+POST /api/submit | /api/earn/submit | /api/earn/refer
+│  Before calling saveSubmission / saveEarnApplicant / saveEarnAmbassador:
 │  1. findDuplicateEmail again (closes the race between "send code" and
 │     "submit" — someone else may have taken that email in between)
 │  2. assertEmailVerified — re-reads the row; throws
@@ -760,7 +760,7 @@ repo, same as every other table)
 | --- | --- | --- |
 | `id` | uuid | PK |
 | `email` | text | lowercased + trimmed before every read/write in `store.ts` — the table itself has no `citext` |
-| `purpose` | text | one of `student` / `company` / `partner_applicant` / `partner_ambassador` |
+| `purpose` | text | one of `student` / `company` / `earn_applicant` / `earn_ambassador` |
 | `code` | text | 6 ASCII digits |
 | `attempts` | int | incremented on each wrong guess; 5 exhausts the code |
 | `verified` | boolean | |
@@ -779,8 +779,8 @@ feature existed. Instead, `findDuplicateEmail` does an app-level
 case-insensitive lookup (`ilike`, with `%`/`_` escaped so a literal one in
 an address can't broaden the match) before insert. This is a check-then-act
 race in theory; in practice, submission volume here is low enough that it's
-not worth the schema risk of a hard constraint. Partner applicants are the one
-purpose that checks two tables (`partner_applicants_qualified` and
+not worth the schema risk of a hard constraint. Earn applicants are the one
+purpose that checks two tables (`earn_applicants_qualified` and
 `_unqualified`) since eligibility decides which one a given applicant lands
 in — someone rejected once shouldn't be able to re-apply under the same
 email and land in the other table.
@@ -797,7 +797,7 @@ that check back.
 
 **Email delivery.** `lib/email/verification-emails.ts` reuses the same
 Resend transport and `templates.ts` helpers as `submission-emails.ts` /
-`partner-emails.ts`, but unlike those, a failed send is **not** swallowed —
+`earn-emails.ts`, but unlike those, a failed send is **not** swallowed —
 `issueVerificationCode` lets it throw, because the code is the applicant's
 only way to complete the OTP step (contrast with the internal/confirmation
 notification emails in §6.4, which are always best-effort). When
@@ -819,7 +819,7 @@ configured.
 
 The three submission routes surface the same `VerificationRequiredError` /
 duplicate check as a `400` / `409` on their own response shape (`{ error }`
-for `/api/submit`, `{ ok: false, error }` for the two Partner routes) rather
+for `/api/submit`, `{ ok: false, error }` for the two Earn routes) rather
 than re-exporting these types — see each route's own failure-mode table
 above.
 
@@ -893,7 +893,7 @@ matches exactly three surfaces:
 
 `/api/admin/login` and `/api/admin/logout` are deliberately **not** matched —
 login issues the cookie, logout clears it, neither needs a valid session first.
-`/api/submit` and both `/api/partner/*` routes are also unmatched — they're
+`/api/submit` and both `/api/earn/*` routes are also unmatched — they're
 public intake endpoints, not admin surfaces.
 
 Behavior:
@@ -1014,9 +1014,9 @@ that path after a successful login.
 > **Unique constraint:** `(student_id, prompt_version)` — the tagging script
 > upserts on this pair.
 
-**`partner_applicants_qualified`** / **`partner_applicants_unqualified`**
+**`earn_applicants_qualified`** / **`earn_applicants_unqualified`**
 
-Written by `savePartnerApplicant` (§4.6) — same columns in both; the
+Written by `saveEarnApplicant` (§4.6) — same columns in both; the
 unqualified table adds one extra column.
 
 | Column | Type | Notes |
@@ -1034,20 +1034,20 @@ unqualified table adds one extra column.
 | `task_interests` | text[] | |
 | `filming_ack` | boolean | |
 | `consent` | boolean | |
-| `referred_by_code` | text | nullable — ambassador code from `?ref=`, joins loosely to `partner_ambassadors.code` |
-| `disqualified_reasons` | text[] | **`partner_applicants_unqualified` only** — reason codes from `evaluatePartnerEligibility` |
+| `referred_by_code` | text | nullable — ambassador code from `?ref=`, joins loosely to `earn_ambassadors.code` |
+| `disqualified_reasons` | text[] | **`earn_applicants_unqualified` only** — reason codes from `evaluateEarnEligibility` |
 | `raw_payload` | jsonb | verbatim parsed payload |
 | `created_at` | timestamptz | |
 
-**`partner_ambassadors`**
+**`earn_ambassadors`**
 
-Written by `savePartnerAmbassador` (§4.7).
+Written by `saveEarnAmbassador` (§4.7).
 
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | uuid | PK |
 | `name` | text | |
-| `email` | text | unique (`partner_ambassadors_email_key`) |
+| `email` | text | unique (`earn_ambassadors_email_key`) |
 | `code` | text | unique, 6 chars, alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` |
 | `raw_payload` | jsonb | |
 | `created_at` | timestamptz | |
@@ -1097,11 +1097,11 @@ current codebase. The tagger is DeepSeek-only — see §6.2.
 
 ### 6.4 Resend (Email)
 
-Used by the original submission flow and by Partner (§6.4.1), and entirely
+Used by the original submission flow and by Earn (§6.4.1), and entirely
 non-blocking in both. The `/api/submit` route handler delegates to
 `lib/email/submission-emails.ts`; the transport (`resend.ts`) and base
 templating (`templates.ts`) are separate modules so the route stays an
-orchestrator, and Partner's own email module reuses that same transport and
+orchestrator, and Earn's own email module reuses that same transport and
 templating layer rather than introducing new infrastructure.
 
 | File | Responsibility |
@@ -1160,24 +1160,24 @@ interpolated payload value. It also converts `null` / `undefined` / empty
 string to an em-dash (`—`), so an empty field renders as a dash rather than
 blank.
 
-#### 6.4.1 Partner Emails
+#### 6.4.1 Earn Emails
 
-`lib/email/partner-emails.ts` mirrors `submission-emails.ts`'s shape exactly
+`lib/email/earn-emails.ts` mirrors `submission-emails.ts`'s shape exactly
 (swallow errors, log, never block the response) and reuses `resend.ts`
 (`getEmailConfig`, `sendResendEmail`) and `templates.ts`'s shared helpers
 (`COLOR`, `shell`, `brandHeader`, `title`, `escapeHtml`) — no new transport.
-Templates live in `lib/email/partner-templates.ts`: `renderPartnerApplicantInternal`,
-`renderPartnerApplicantConfirmation`, `renderPartnerAmbassadorInternal`,
-`renderPartnerAmbassadorConfirmation`.
+Templates live in `lib/email/earn-templates.ts`: `renderEarnApplicantInternal`,
+`renderEarnApplicantConfirmation`, `renderEarnAmbassadorInternal`,
+`renderEarnAmbassadorConfirmation`.
 
 | Function | Sends |
 | --- | --- |
-| `sendPartnerApplicantEmails` | (1) internal notification to `TL_NOTIFY_EMAIL` — `"New Partner applicant (qualified\|unqualified) — {fullName}"`, includes qualified + reasons; always attempted. (2) confirmation to the applicant — `"You're in — Partner"` (qualified) or `"We've got your application — Partner"` (unqualified). |
-| `sendPartnerAmbassadorEmails` | (1) internal notification — `"New Partner ambassador — {name}"`. (2) confirmation to the ambassador — `"You're a Partner ambassador — here's your link"`, includes `code` and `referralUrl`. |
+| `sendEarnApplicantEmails` | (1) internal notification to `TL_NOTIFY_EMAIL` — `"New Earn applicant (qualified\|unqualified) — {fullName}"`, includes qualified + reasons; always attempted. (2) confirmation to the applicant — `"You're in — Earn"` (qualified) or `"We've got your application — Earn"` (unqualified). |
+| `sendEarnAmbassadorEmails` | (1) internal notification — `"New Earn ambassador — {name}"`. (2) confirmation to the ambassador — `"You're a Earn ambassador — here's your link"`, includes `code` and `referralUrl`. |
 
 Both include the same `MARK_ATTACHMENT` (`icon.png` as `cid:mark`) pattern as
 `submission-emails.ts`. If `RESEND_API_KEY` / `TL_NOTIFY_EMAIL` are missing,
-Partner logs `[partner] applicant saved (qualified|unqualified) — no email
+Earn logs `[earn] applicant saved (qualified|unqualified) — no email
 configured` and returns, same fallback pattern as §6.4's main flow.
 
 ### 6.5 Vercel Analytics
@@ -1208,7 +1208,7 @@ carry no secret. Everything else in this table must never carry a
 | `RESEND_API_KEY` | `lib/email/resend` (optional) |
 | `TL_NOTIFY_EMAIL` | `lib/email/resend` |
 | `TL_FROM_EMAIL` | `lib/email/resend` (optional) |
-| `NEXT_PUBLIC_SITE_URL` | `api/partner/refer` — origin used to build the referral URL; falls back to request headers when unset (optional) |
+| `NEXT_PUBLIC_SITE_URL` | `api/earn/refer` — origin used to build the referral URL; falls back to request headers when unset (optional) |
 | `OLD_DATABASE_URL` | `scripts/migrate-lovable` |
 | `RESUME_DIR` | `scripts/migrate-resumes` |
 | `DEBUG` | `lib/deepseek`, `scripts/tag-resumes`, `scripts/test-deepseek-api` |
@@ -1226,8 +1226,8 @@ that runs **five queries in parallel** (`Promise.all`):
   `/api/admin/resume/[id]` so the dashboard stays light even with many resumes
   attached) and nested `candidate_ai_tags`
 - all `company_briefs` via `select("*")`, also ordered `created_at desc`
-- all `partner_ambassadors`, `partner_applicants_qualified`, and
-  `partner_applicants_unqualified`, each via `select("*")`, also ordered
+- all `earn_ambassadors`, `earn_applicants_qualified`, and
+  `earn_applicants_unqualified`, each via `select("*")`, also ordered
   `created_at desc`
 
 If any query errors, it renders a red error banner naming the failing
@@ -1242,17 +1242,17 @@ on the whole `/admin` subtree — see §11.1.
 | --- | --- |
 | **Student applications** | Table with `APPLICATION_COLUMNS` (`first_name`, `last_name`, `email`, `school`, `grad_year`, `location`, `hours_per_week`, `start_timing`, `created_at`) + 4 AI columns (`vibe_tags`, `soft_skills`, `hard_skills`, `ai_summary`) + resume download link |
 | **Company briefs** | Table with `BRIEF_COLUMNS` (`company`, `contact_name`, `contact_email`, `title`, `stage`, `city`, `timeline`, `created_at`) |
-| **Partner** (`{qualified.length + unqualified.length}`) | `<PartnerSection />` — three sub-tabs, see below |
+| **Earn** (`{qualified.length + unqualified.length}`) | `<EarnSection />` — three sub-tabs, see below |
 | **Search** | `<VibeSearch />` |
 
-Tab buttons display live counts for applications, briefs, and Partner.
+Tab buttons display live counts for applications, briefs, and Earn.
 `AdminDashboard.tsx`'s tab state type is
-`"applications" | "briefs" | "partner" | "vibe"`.
+`"applications" | "briefs" | "earn" | "vibe"`.
 
-**Partner tab** (`PartnerSection` component)
+**Earn tab** (`EarnSection` component)
 
 Three sub-tabs — Qualified, Unqualified, Ambassadors
-(`PartnerSubTab = "qualified" | "unqualified" | "ambassadors"`) — plus a
+(`EarnSubTab = "qualified" | "unqualified" | "ambassadors"`) — plus a
 "Referred by" dropdown filter (populated from all ambassadors, applies to the
 Qualified/Unqualified sub-tabs only) with a "Showing referrals from X · N
 qualified · M unqualified" banner and a "Clear filter" button when active.
@@ -1265,15 +1265,15 @@ qualified · M unqualified" banner and a "Clear filter" button when active.
   `qualified_referrals` / `unqualified_referrals` counts (client-side
   `.filter().length` per ambassador code), functioning as an implicit
   leaderboard
-- Column sets: `PARTNER_APPLICANT_COLUMNS` (`first_name`, `last_name`, `email`,
+- Column sets: `EARN_APPLICANT_COLUMNS` (`first_name`, `last_name`, `email`,
   `phone`, `location`, `device_os`, `device_model`, `task_interests`,
-  `referred_by_display`, `created_at`); `PARTNER_UNQUALIFIED_COLUMNS` — same,
-  plus `disqualified_reasons`; `PARTNER_AMBASSADOR_COLUMNS` (`name`, `email`,
+  `referred_by_display`, `created_at`); `EARN_UNQUALIFIED_COLUMNS` — same,
+  plus `disqualified_reasons`; `EARN_AMBASSADOR_COLUMNS` (`name`, `email`,
   `code`, `qualified_referrals`, `unqualified_referrals`, `created_at`)
 - All three sub-tabs render through the **same shared `Table` component**
   documented below (`showResumeColumn` / `showAIColumns` both default
   `false`) — free-text search, the "Show short answers" raw-payload
-  expansion, and the legacy/new schema badge all apply to Partner rows for
+  expansion, and the legacy/new schema badge all apply to Earn rows for
   free; no new table code was needed.
 
 **Table features** (internal to `AdminDashboard.tsx`'s `Table` component)
@@ -1354,7 +1354,7 @@ qualified · M unqualified" banner and a "Clear filter" button when active.
 ### 9.1 Form Primitives (`components/form.tsx`)
 
 All exported from one file. Used by `ApplyFlow.tsx` and `HireFlow.tsx`, and
-by the Partner wizards (`PartnerApplyFlow.tsx` uses `Pills` and `ChoiceCards`;
+by the Earn wizards (`EarnApplyFlow.tsx` uses `Pills` and `ChoiceCards`;
 `AmbassadorFlow.tsx` uses `Field`/`Input` only, being a single name+email
 step).
 
@@ -1380,7 +1380,7 @@ step).
 | **Shapes** (`components/Shapes.tsx`) | Six shapes total, but only two are procedural. `clover`, `hex`, `arch`, `squircle` are hardcoded path strings; `scallop` (14-point smooth ring) and `burst` (12-point sharp star) are generated by `ring(points, rOuter, rInner, sharp)`. The exported `shapePaths` record is consumed by `Landing.tsx` for morphing SVG decorations (`<path d={shapePaths[kind]} className="blob-morph" />`) and by the `Shape` component itself. `Shape` accepts `rotate`, `float`, and `delay` props. |
 | **Mark** (`components/Mark.tsx`) | The Twin Lanterns logo: two angled panels (opacity 0.92) plus a flickering spark filled with `--color-flame` (overridable via the `spark` prop). |
 | **Reveal** (`components/Reveal.tsx`) | Single motion primitive: fade up 12px, once, `amount: 0.25`, duration 0.5s. Accepts `as="div" \| "li" \| "section"`. Used by every Landing section **except Hero** (which uses inline `motion.div` for the typewriter and CSS transitions for the shapes). Both `ApplyFlow` and `HireFlow` use their own inline `motion.div` for their Success screens. Re-declares the ease value inline rather than importing `ease` from `form.tsx`. |
-| **Nav** (`components/Nav.tsx`) | Fixed floating pill, centered. After 40px of scroll it collapses to `w-max`; the brand text collapses via `text-[0px]` + `max-w-0` + `opacity-0`; CTAs move to a top-right corner cluster. The mobile hamburger appears as a plain conditional render (`{open && <div>...}`) — no AnimatePresence, no slide animation. The `#team` link is commented out in the `links` array. **CTA order/state (as of `a89925a`):** "I'm hiring" (`/companies`, bordered pill) → "Apply" (`/apply`, bordered pill — demoted from its previous filled-pill slot) → **"Earn Now"** (`/partner/info`, filled `bg-ink → hover:bg-flame` pill — now the nav's visually-primary CTA, replacing "Apply" in that slot). Mobile menu has 4 rows: How it works, Roles, FAQ, then a highlighted (`bg-lime font-semibold`) "Earn Now" → `/partner/info` row, then "I'm hiring" → `/companies`. |
+| **Nav** (`components/Nav.tsx`) | Fixed floating pill, centered. After 40px of scroll it collapses to `w-max`; the brand text collapses via `text-[0px]` + `max-w-0` + `opacity-0`; CTAs move to a top-right corner cluster. The mobile hamburger appears as a plain conditional render (`{open && <div>...}`) — no AnimatePresence, no slide animation. The `#team` link is commented out in the `links` array. **CTA order/state (as of `a89925a`):** "I'm hiring" (`/companies`, bordered pill) → "Apply" (`/apply`, bordered pill — demoted from its previous filled-pill slot) → **"Earn Now"** (`/earn/info`, filled `bg-ink → hover:bg-flame` pill — now the nav's visually-primary CTA, replacing "Apply" in that slot). Mobile menu has 4 rows: How it works, Roles, FAQ, then a highlighted (`bg-lime font-semibold`) "Earn Now" → `/earn/info` row, then "I'm hiring" → `/companies`. |
 | **Footer** (`components/Footer.tsx`) | Server component (no `"use client"`). Three link columns (Students / Companies / Company) plus a giant "Twin Lanterns" wordmark at `text-[13.3vw]`. The `#team` link is commented out in the Company column. Copyright year is dynamic. |
 
 - **Typography utilities:** `display`, `label`, `eyebrow`
@@ -1392,7 +1392,7 @@ step).
 Rendered in order:
 
 ```
-Hero → Stats → Partner → Split → Process → Statement → Roles → Faq → Cta
+Hero → Stats → Earn → Split → Process → Statement → Roles → Faq → Cta
 ```
 
 **Hero**
@@ -1421,20 +1421,20 @@ a horizontal row of 5 shapes (no `arch`) is shown instead.
 **Other sections**
 
 - **Stats** — 3 stat cards (`48 hrs`, `$0`, `100%`)
-- **Partner** (`id="partner"`) — full-bleed `bg-ink` two-column promo for the
-  Partner product (§4.6–4.7). Left: eyebrow ("Part Time Internship Program —
+- **Earn** (`id="earn"`) — full-bleed `bg-ink` two-column promo for the
+  Earn product (§4.6–4.7). Left: eyebrow ("Part Time Internship Program —
   Now Available"), H2 "Get paid to film how real work actually gets done.",
-  copy, 3 links — "Start earning" (`/partner/apply`; copy was "Apply to film"
+  copy, 3 links — "Start earning" (`/earn/apply`; copy was "Apply to film"
   before a later one-line fix in `59b05a7`), "Become an ambassador"
-  (`/partner/refer`), "More info" (`/partner/info`, `bg-lime`) — plus a 3-stat
-  `<dl>` (`partnerStats`: "Paid per clip", "Any modern phone", "No
-  experience"). Right: a "How it works" card with 3 numbered `partnerSteps`
-  (Apply → Get set up → Get paid) and a `partnerPoints` bullet list. Uses the
+  (`/earn/refer`), "More info" (`/earn/info`, `bg-lime`) — plus a 3-stat
+  `<dl>` (`earnStats`: "Paid per clip", "Any modern phone", "No
+  experience"). Right: a "How it works" card with 3 numbered `earnSteps`
+  (Apply → Get set up → Get paid) and a `earnPoints` bullet list. Uses the
   same floating-Shape decoration pattern as Hero (`arch`/`burst`/`hex`/
   `clover`, `lg:` only).
 
-  > **Copy inconsistency:** this section describes Partner's pay model as "Paid
-  > per clip, not by the hour," while `/partner/info`'s hero stat says
+  > **Copy inconsistency:** this section describes Earn's pay model as "Paid
+  > per clip, not by the hour," while `/earn/info`'s hero stat says
   > **"$10/hr for approved filming time."** Two different descriptions of the
   > same pay model live on two pages of the same funnel — reconcile before
   > treating either as authoritative.
@@ -1454,7 +1454,7 @@ Founders section.
 
 ### 9.4 Wizard Validation & Step Transitions
 
-All four wizards — `ApplyFlow`, `HireFlow`, `PartnerApplyFlow`, `AmbassadorFlow`
+All four wizards — `ApplyFlow`, `HireFlow`, `EarnApplyFlow`, `AmbassadorFlow`
 — gate the "Continue" / "Submit" button on a per-step validity check. When a
 step is invalid, `NavButtons.nextDisabled` is `true` and the button is inert.
 
@@ -1477,13 +1477,13 @@ step is invalid, `NavButtons.nextDisabled` is `true` and the button is inert.
 | 2 — Logistics | `setup` AND `commitment` AND `timeline` all set |
 | 3 — Review | always valid |
 
-**PartnerApplyFlow validation** (`STEPS = ["About you", "Eligibility", "Tasks", "Finish"]`)
+**EarnApplyFlow validation** (`STEPS = ["About you", "Eligibility", "Tasks", "Finish"]`)
 
 | Step | Condition |
 | --- | --- |
 | 0 — About you | `firstName.trim().length > 1` AND `email` matches the same regex |
-| 1 — Eligibility | `deviceReady && filmingAck !== "" && consent !== ""`, where `deviceReady = deviceOsLabel === "Neither" \|\| ((iOS \|\| Android) && Boolean(deviceModel))`. A live, non-blocking eligibility preview renders inline once all step-1 fields are filled but `evaluatePartnerEligibility` (§4.6) would return unqualified — the user can still submit. |
-| 2 — Tasks | `taskInterests.length > 0` (`ChoiceCards` multi-select over `PARTNER_TASK_CATEGORIES`, 15 categories, cycling through 6 Shape kinds/colors) |
+| 1 — Eligibility | `deviceReady && filmingAck !== "" && consent !== ""`, where `deviceReady = deviceOsLabel === "Neither" \|\| ((iOS \|\| Android) && Boolean(deviceModel))`. A live, non-blocking eligibility preview renders inline once all step-1 fields are filled but `evaluateEarnEligibility` (§4.6) would return unqualified — the user can still submit. |
+| 2 — Tasks | `taskInterests.length > 0` (`ChoiceCards` multi-select over `EARN_TASK_CATEGORIES`, 15 categories, cycling through 6 Shape kinds/colors) |
 | 3 — Finish | always valid — review only |
 
 **AmbassadorFlow validation** (single step)
@@ -1493,7 +1493,7 @@ step is invalid, `NavButtons.nextDisabled` is `true` and the button is inert.
 | 0 — only step | `name.trim().length > 1` AND `email` matches the same regex |
 
 On success, `AmbassadorFlow` shows a referral link
-(`${origin}/partner/apply?ref={code}`) with a copy-to-clipboard button
+(`${origin}/earn/apply?ref={code}`) with a copy-to-clipboard button
 (`navigator.clipboard.writeText`, 1500ms "Copied" state) instead of advancing
 to another step.
 
@@ -1507,11 +1507,11 @@ All four wizards:
   - HireFlow: 0.4s, `y` 18 → 0 → -12
 - Use the shared `ease` cubic bezier from `components/form.tsx`
 
-**Draft persistence.** `PartnerApplyFlow` uses `localStorage` key
-`tl-partner-draft-v1` (cleared on successful submit) — a third distinct key
+**Draft persistence.** `EarnApplyFlow` uses `localStorage` key
+`tl-earn-draft-v1` (cleared on successful submit) — a third distinct key
 alongside ApplyFlow's `tl-student-draft-v2` and HireFlow's `tl-company-draft`
 (§4.2). It separately persists any captured referral code to
-`tl-partner-ref-code` (§4.6). `AmbassadorFlow` has no draft persistence — it's a
+`tl-earn-ref-code` (§4.6). `AmbassadorFlow` has no draft persistence — it's a
 single step.
 
 ### 9.5 Global CSS (`app/globals.css`)
@@ -1728,21 +1728,21 @@ SYSTEM_PROMPT="You are a pirate." npx tsx --env-file=.env.local scripts/test-dee
 > The file header comment says `// scripts/chat.ts` — stale; the file is
 > `scripts/test-deepseek-api.ts`.
 
-### 10.5 `scripts/test-partner-eligibility.ts`
+### 10.5 `scripts/test-earn-eligibility.ts`
 
-Pure-logic smoke test for `evaluatePartnerEligibility` (§4.6) — no Supabase, no
+Pure-logic smoke test for `evaluateEarnEligibility` (§4.6) — no Supabase, no
 network calls, no `--commit` flag.
 
 ```bash
-npx tsx scripts/test-partner-eligibility.ts
+npx tsx scripts/test-earn-eligibility.ts
 ```
 
 Runs 7 hardcoded cases (qualifying device + ack + consent; unsupported
 device; excluded model; missing filming ack; missing consent; "Neither" OS;
-etc.) against `evaluatePartnerEligibility` and asserts the expected
+etc.) against `evaluateEarnEligibility` and asserts the expected
 `qualified`/`reasons` shape for each. Exits `1` on any failed case, so it can
 be wired into CI as a cheap regression check whenever the device lists or
-reason codes in `partner-eligibility.ts` change.
+reason codes in `earn-eligibility.ts` change.
 
 ---
 
@@ -1753,7 +1753,7 @@ reason codes in `partner-eligibility.ts` change.
 | File | Purpose |
 | --- | --- |
 | `app/robots.ts` | Generates `/robots.txt`: `userAgent: '*'`, `allow: '/'`, `disallow: '/admin/'`, `sitemap: 'https://twinlanterns.co/sitemap.xml'` |
-| `app/sitemap.ts` | Generates `/sitemap.xml`. Enumerates exactly three static routes — `''` (priority 1.0), `/apply`, `/companies` (priority 0.8 each) — `changeFrequency: 'weekly'`, `lastModified: new Date()` (recomputed on every request, not cached). **Does not include any `/partner/*` route** — a gap, not an intentional exclusion; keep in mind if Partner pages need indexing. |
+| `app/sitemap.ts` | Generates `/sitemap.xml`. Enumerates exactly three static routes — `''` (priority 1.0), `/apply`, `/companies` (priority 0.8 each) — `changeFrequency: 'weekly'`, `lastModified: new Date()` (recomputed on every request, not cached). **Does not include any `/earn/*` route** — a gap, not an intentional exclusion; keep in mind if Earn pages need indexing. |
 | `app/layout.tsx` | `alternates: { canonical: "/" }`; `verification.other["msvalidate.01"]` (Bing site-verification token, paired with `public/BingSiteAuth.xml`); `icons.icon` includes `/favicon.svg` alongside `.ico` and `icon.png`; a `jsonLd` constant — an Organization + WebSite `@graph` (name, legalName, alternateName, logo, description, `foundingDate: "2026"`, `sameAs` [LinkedIn, Instagram], `contactPoint` [hello@twinlanterns.co], LA address, `numberOfEmployees: 11`, and a WebSite entry with a `SearchAction` targeting `/search?q=...`) — injected via `<script type="application/ld+json">` at the end of `<body>`. |
 
 > **No `/search` route exists.** The JSON-LD `SearchAction` `potentialAction` is
@@ -1828,7 +1828,7 @@ Lovable legacy wrapper and renders a matching badge. New code should keep
 producing the flat shape.
 
 **Non-blocking side effects**
-Email is best-effort. `lib/email/submission-emails.ts` and `lib/email/partner-emails.ts` both swallow all failures and never block the DB write or fail the request.
+Email is best-effort. `lib/email/submission-emails.ts` and `lib/email/earn-emails.ts` both swallow all failures and never block the DB write or fail the request.
 
 **Single source of truth for the session cookie**
 `ADMIN_COOKIE_NAME` and `ADMIN_SESSION_MAX_AGE` live in `lib/admin-auth.ts`.
@@ -1850,21 +1850,21 @@ respond. Column mapping, payload validation, email transport, and email HTML
 live under `lib/submissions/*` and `lib/email/*`. New fields go into
 `lib/submissions/types.ts` + `persistence.ts`, not the route.
 
-> **Partner doesn't follow this convention.** `/api/partner/submit` and
-> `/api/partner/refer` (§4.6–4.7) validate and normalize their request bodies
-> inline in the route file — there's no `partner-parse.ts` mirroring
+> **Earn doesn't follow this convention.** `/api/earn/submit` and
+> `/api/earn/refer` (§4.6–4.7) validate and normalize their request bodies
+> inline in the route file — there's no `earn-parse.ts` mirroring
 > `lib/submissions/parse.ts`. Persistence and email are still cleanly split
-> out (`partner-persistence.ts`, `partner-emails.ts`), so it's only the parse step
-> that diverges. Don't assume a shared parse module exists for Partner when
+> out (`earn-persistence.ts`, `earn-emails.ts`), so it's only the parse step
+> that diverges. Don't assume a shared parse module exists for Earn when
 > extending it — either add one to match the original convention, or treat
-> the divergence as deliberate and keep it consistent within Partner's own
+> the divergence as deliberate and keep it consistent within Earn's own
 > routes.
 
-**Partner has its own error-class hierarchy**
-`PartnerConfigError` / `PartnerSaveError` (`lib/submissions/partner-persistence.ts`)
+**Earn has its own error-class hierarchy**
+`EarnConfigError` / `EarnSaveError` (`lib/submissions/earn-persistence.ts`)
 mirror `SubmissionConfigError` / `SubmissionSaveError` in name and in the
 500/502 status mapping, but are a **separate class hierarchy** — a `catch` on
-one won't match the other. `/api/partner/submit` also uniquely branches its
+one won't match the other. `/api/earn/submit` also uniquely branches its
 error message by `NODE_ENV` (raw `err.message` in dev, a generic string in
 prod) — the original `/api/submit` route always returns the same generic
 string regardless of environment (§4.1). Don't assume the two submission

@@ -13,9 +13,9 @@ const links = [
 ];
 
 const earnLinks = [
-  { href: "/partner/info", label: "Filming info" },
-  { href: "/partner/gopro", label: "GoPro home program" },
-  { href: "/partner/speech", label: "Speech program" },
+  { href: "/earn/info", label: "Filming info" },
+  { href: "/earn/gopro", label: "GoPro home program" },
+  { href: "/earn/speech", label: "Speech program" },
 ];
 
 export default function Nav() {
@@ -67,7 +67,7 @@ export default function Nav() {
       </Link>
       <div data-earn-menu className="group relative">
         <Link
-          href="/partner/info"
+          href="/earn/info"
           aria-haspopup="true"
           aria-expanded={earnOpen}
           onClick={(e) => {
@@ -206,9 +206,9 @@ export default function Nav() {
           <div className="pointer-events-auto mt-2 overflow-hidden rounded-[28px] border border-line bg-white md:hidden">
             {[
               ...links.map((l) => ({ ...l, pop: false })),
-              { href: "/partner/info", label: "Earn Now", pop: true },
-              { href: "/partner/gopro", label: "GoPro home program", pop: false },
-              { href: "/partner/speech", label: "Speech program", pop: false },
+              { href: "/earn/info", label: "Earn Now", pop: true },
+              { href: "/earn/gopro", label: "GoPro home program", pop: false },
+              { href: "/earn/speech", label: "Speech program", pop: false },
               { href: "/companies", label: "I'm hiring", pop: false },
             ].map((l) => (
               <Link

@@ -2,7 +2,7 @@
 //
 // Cross-checked before a code is even sent (fast rejection) and again right
 // before the row is saved (closes the race between "send code" and
-// "submit"). Partner applicants land in one of two tables depending on
+// "submit"). Earn applicants land in one of two tables depending on
 // eligibility, so that purpose checks both.
 
 import { getSupabaseServerClient } from "@/lib/supabase-server";
@@ -54,18 +54,18 @@ export async function findDuplicateEmail(
       return existsIn(supabase, "student_applications", "email", email);
     case "company":
       return existsIn(supabase, "company_briefs", "contact_email", email);
-    case "partner_applicant": {
+    case "earn_applicant": {
       const [qualified, unqualified] = await Promise.all([
-        existsIn(supabase, "partner_applicants_qualified", "email", email),
-        existsIn(supabase, "partner_applicants_unqualified", "email", email),
+        existsIn(supabase, "earn_applicants_qualified", "email", email),
+        existsIn(supabase, "earn_applicants_unqualified", "email", email),
       ]);
       return qualified || unqualified;
     }
-    case "partner_gopro":
-      return existsIn(supabase, "partner_gopro_applicants", "email", email);
-    case "partner_speech":
-      return existsIn(supabase, "partner_speech_participants", "email", email);
-    case "partner_ambassador":
-      return existsIn(supabase, "partner_ambassadors", "email", email);
+    case "earn_gopro":
+      return existsIn(supabase, "earn_gopro_applicants", "email", email);
+    case "earn_speech":
+      return existsIn(supabase, "earn_speech_participants", "email", email);
+    case "earn_ambassador":
+      return existsIn(supabase, "earn_ambassadors", "email", email);
   }
 }
