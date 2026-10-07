@@ -1,5 +1,6 @@
 import { parseJsonBody } from "@/lib/http";
 import { isValidEmail } from "@/lib/validation";
+import { TERMS_REQUIRED_MESSAGE, termsAcceptance } from "@/lib/legal";
 import type {
   EarnApplicantPayload,
   EarnAmbassadorPayload,
@@ -69,6 +70,10 @@ export async function parseEarnApplicantRequest(
     ? p.taskInterests.filter((x): x is string => typeof x === "string")
     : [];
 
+  if (p.acceptedTerms !== true) {
+    return { ok: false, status: 400, error: TERMS_REQUIRED_MESSAGE };
+  }
+
   const data: EarnApplicantPayload = {
     firstName,
     lastName: str(p.lastName)?.trim() || undefined,
@@ -83,6 +88,7 @@ export async function parseEarnApplicantRequest(
     filmingAck: bool(p.filmingAck),
     consent: bool(p.consent),
     referredByCode: str(p.referredByCode)?.trim() || null,
+    ...termsAcceptance(),
   };
 
   return { ok: true, data };
@@ -115,6 +121,10 @@ export async function parseEarnGoproRequest(
     return { ok: false, status: 400, error: "Missing or invalid name/email" };
   }
 
+  if (p.acceptedTerms !== true) {
+    return { ok: false, status: 400, error: TERMS_REQUIRED_MESSAGE };
+  }
+
   const data: EarnGoproPayload = {
     firstName,
     lastName: str(p.lastName)?.trim() || undefined,
@@ -129,6 +139,7 @@ export async function parseEarnGoproRequest(
     weeklyHoursOk: bool(p.weeklyHoursOk),
     consent: bool(p.consent),
     referredByCode: str(p.referredByCode)?.trim() || null,
+    ...termsAcceptance(),
   };
 
   return { ok: true, data };
@@ -166,6 +177,10 @@ export async function parseEarnSpeechRequest(
       ? p.age
       : null;
 
+  if (p.acceptedTerms !== true) {
+    return { ok: false, status: 400, error: TERMS_REQUIRED_MESSAGE };
+  }
+
   const data: EarnSpeechPayload = {
     firstName,
     lastName: str(p.lastName)?.trim() || undefined,
@@ -183,6 +198,7 @@ export async function parseEarnSpeechRequest(
     availabilityOk: bool(p.availabilityOk),
     consent: bool(p.consent),
     referredByCode: str(p.referredByCode)?.trim() || null,
+    ...termsAcceptance(),
   };
 
   return { ok: true, data };
@@ -201,7 +217,7 @@ export async function parseEarnReferRequest(
     return { ok: false, status: 400, error: "Missing or invalid name/email" };
   }
 
-  const { name, email } = body as Record<string, unknown>;
+  const { name, email, acceptedTerms } = body as Record<string, unknown>;
 
   const nameStr = typeof name === "string" ? name.trim() : "";
   const emailStr = typeof email === "string" ? email.trim() : "";
@@ -210,5 +226,12 @@ export async function parseEarnReferRequest(
     return { ok: false, status: 400, error: "Missing or invalid name/email" };
   }
 
-  return { ok: true, data: { name: nameStr, email: emailStr } };
+  if (acceptedTerms !== true) {
+    return { ok: false, status: 400, error: TERMS_REQUIRED_MESSAGE };
+  }
+
+  return {
+    ok: true,
+    data: { name: nameStr, email: emailStr, ...termsAcceptance() },
+  };
 }

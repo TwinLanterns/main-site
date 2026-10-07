@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Reorder, useDragControls } from "motion/react";
 import { isValidEmail } from "@/lib/validation";
 import Shape from "./Shapes";
@@ -615,5 +616,50 @@ export function NavButtons({
         {loading ? "Sending…" : nextLabel}
       </button>
     </div>
+  );
+}
+
+/* ------------------------------ terms acceptance ----------------------------- */
+
+export function TermsAgreement({
+  checked,
+  onChange,
+  className = "",
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  className?: string;
+}) {
+  return (
+    <label
+      className={`flex cursor-pointer items-start gap-3 text-[14px] leading-relaxed ${className}`}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-1 h-4 w-4 shrink-0 accent-ink"
+      />
+      <span className="text-muted">
+        I agree to the{" "}
+        <Link
+          href="/terms"
+          target="_blank"
+          className="text-ink underline underline-offset-4"
+        >
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link
+          href="/privacy"
+          target="_blank"
+          className="text-ink underline underline-offset-4"
+        >
+          Privacy Policy
+        </Link>
+        . I&apos;m 18 or older, or a parent or guardian has given me
+        permission.
+      </span>
+    </label>
   );
 }

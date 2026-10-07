@@ -1,8 +1,9 @@
 // lib/submissions/earn-types.ts
 
 import type { DeviceOs } from "./earn-eligibility";
+import type { TermsAcceptance } from "@/lib/legal";
 
-export interface EarnApplicantPayload {
+export interface EarnApplicantPayload extends TermsAcceptance {
   firstName: string;
   lastName?: string;
   email: string;
@@ -17,7 +18,7 @@ export interface EarnApplicantPayload {
   consent: boolean;
   referredByCode: string | null;
 }
-export interface EarnGoproPayload {
+export interface EarnGoproPayload extends TermsAcceptance {
   firstName: string;
   lastName?: string;
   email: string;
@@ -32,7 +33,7 @@ export interface EarnGoproPayload {
   consent: boolean;
   referredByCode: string | null;
 }
-export interface EarnSpeechPayload {
+export interface EarnSpeechPayload extends TermsAcceptance {
   firstName: string;
   lastName?: string;
   email: string;
@@ -50,7 +51,7 @@ export interface EarnSpeechPayload {
   consent: boolean;
   referredByCode: string | null;
 }
-export interface EarnAmbassadorPayload {
+export interface EarnAmbassadorPayload extends TermsAcceptance {
   name: string;
   email: string;
 }

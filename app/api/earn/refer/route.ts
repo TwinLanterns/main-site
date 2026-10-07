@@ -33,7 +33,8 @@ export async function POST(req: Request) {
     return badRequest(parsed.error);
   }
 
-  const { name, email } = parsed.data;
+  const payload = parsed.data;
+  const { email } = payload;
 
   const verifyError = await checkEmailVerification(
     "earn_ambassador",
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
   if (verifyError) return verifyError;
 
   try {
-    const { code } = await saveEarnAmbassador({ name, email });
+    const { code } = await saveEarnAmbassador(payload);
 
     try {
       await consumeVerification(email, "earn_ambassador");
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
 
     try {
       await sendEarnAmbassadorEmails({
-        payload: { name, email },
+        payload,
         code,
         referralUrl,
       });

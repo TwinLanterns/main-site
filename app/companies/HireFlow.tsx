@@ -8,6 +8,7 @@ import {
   Field,
   Input,
   NavButtons,
+  TermsAgreement,
   Pills,
   Progress,
   Select,
@@ -97,6 +98,8 @@ export default function HireFlow() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
+  // Deliberately not part of the persisted draft: consent is given fresh at submit.
+  const [accepted, setAccepted] = useState(false);
 
   const valid = useMemo(() => {
     switch (step) {
@@ -117,9 +120,9 @@ export default function HireFlow() {
       case 2:
         return !!data.setup && !!data.commitment && !!data.timeline;
       default:
-        return true;
+        return accepted;
     }
-  }, [step, data, emailVerified]);
+  }, [step, data, emailVerified, accepted]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,7 +138,10 @@ export default function HireFlow() {
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "company", payload: data }),
+        body: JSON.stringify({
+          kind: "company",
+          payload: { ...data, acceptedTerms: accepted },
+        }),
       });
       if (!res.ok) throw new Error("bad response");
       localStorage.removeItem(KEY);
@@ -389,6 +395,11 @@ export default function HireFlow() {
                       </div>
                     ))}
                   </dl>
+                  <TermsAgreement
+                    className="mt-6"
+                    checked={accepted}
+                    onChange={setAccepted}
+                  />
                   {error && (
                     <p className="mt-6 rounded-[16px] border border-flame/30 bg-flame/5 px-4 py-3 text-[13.5px] text-flame">
                       {error}

@@ -14,3 +14,21 @@ export const LEGAL = {
   /** Bumped whenever the text changes in a way users must re-accept. */
   version: "2026-10-07",
 } as const;
+
+export const TERMS_REQUIRED_MESSAGE =
+  "You must accept the Terms of Service and Privacy Policy to continue.";
+
+/** Server-stamped proof of acceptance, stored with each submission's raw payload. */
+export interface TermsAcceptance {
+  acceptedTerms: true;
+  acceptedTermsAt: string;
+  termsVersion: string;
+}
+
+export function termsAcceptance(): TermsAcceptance {
+  return {
+    acceptedTerms: true,
+    acceptedTermsAt: new Date().toISOString(),
+    termsVersion: LEGAL.version,
+  };
+}

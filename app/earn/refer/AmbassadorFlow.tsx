@@ -8,7 +8,14 @@
 
 import { useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { EmailVerify, Field, Input, NavButtons, ease } from "@/components/form";
+import {
+  EmailVerify,
+  Field,
+  Input,
+  NavButtons,
+  TermsAgreement,
+  ease,
+} from "@/components/form";
 
 export default function AmbassadorFlow() {
   const [name, setName] = useState("");
@@ -18,11 +25,13 @@ export default function AmbassadorFlow() {
   const [code, setCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [accepted, setAccepted] = useState(false);
 
   const valid =
     name.trim().length > 1 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) &&
-    emailVerified;
+    emailVerified &&
+    accepted;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -33,7 +42,7 @@ export default function AmbassadorFlow() {
       const res = await fetch("/api/earn/refer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ name, email, acceptedTerms: accepted }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error || "Something went wrong");
@@ -108,6 +117,7 @@ export default function AmbassadorFlow() {
               onVerified={setEmailVerified}
             />
           </Field>
+          <TermsAgreement checked={accepted} onChange={setAccepted} />
           {error && <p className="text-[13.5px] text-flame">{error}</p>}
         </div>
 

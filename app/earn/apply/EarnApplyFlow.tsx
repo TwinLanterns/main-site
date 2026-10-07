@@ -20,6 +20,7 @@ import {
   StepRail,
   Progress,
   NavButtons,
+  TermsAgreement,
   ease,
 } from "@/components/form";
 import {
@@ -99,6 +100,8 @@ export default function EarnApplyFlow() {
   const [result, setResult] = useState<{ qualified: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
+  // Deliberately not part of the persisted draft: consent is given fresh at submit.
+  const [accepted, setAccepted] = useState(false);
 
   useEffect(() => {
     try {
@@ -161,7 +164,7 @@ export default function EarnApplyFlow() {
     draft.firstName.trim().length > 1 && isValidEmail(draft.email) && emailVerified,
     deviceReady && draft.filmingAck !== "" && draft.consent !== "",
     draft.taskInterests.length > 0,
-    true,
+    accepted,
     ][step];
 
   async function handleSubmit() {
@@ -186,6 +189,7 @@ export default function EarnApplyFlow() {
             filmingAck: draft.filmingAck === "Yes",
             consent: draft.consent === "Yes",
             referredByCode: refCode,
+            acceptedTerms: accepted,
         },
         }),
       });
@@ -431,6 +435,11 @@ export default function EarnApplyFlow() {
                     {draft.referrerCollege || "—"}
                     </p>
                   </div>
+                  <TermsAgreement
+                    className="mt-6"
+                    checked={accepted}
+                    onChange={setAccepted}
+                  />
                   {error && (
                     <p className="mt-6 text-[13.5px] text-flame">{error}</p>
                   )}

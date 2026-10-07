@@ -1,4 +1,5 @@
 import { parseJsonBody } from "@/lib/http";
+import { TERMS_REQUIRED_MESSAGE, termsAcceptance } from "@/lib/legal";
 import type {
   CompanyPayload,
   StudentPayload,
@@ -46,6 +47,12 @@ export async function parseSubmissionRequest(
     return { ok: false, status: 400, error: "Invalid kind" };
   }
 
+  if ((payload as { acceptedTerms?: unknown }).acceptedTerms !== true) {
+    return { ok: false, status: 400, error: TERMS_REQUIRED_MESSAGE };
+  }
+  // Overwrite client-supplied values so the timestamp/version can't be forged.
+  const stampedPayload = { ...payload, ...termsAcceptance() };
+
   const normalizedAttachment = normalizeAttachment(attachment);
 
   if (kind === "student") {
@@ -53,7 +60,7 @@ export async function parseSubmissionRequest(
       ok: true,
       data: {
         kind: "student",
-        payload: payload as StudentPayload,
+        payload: stampedPayload as StudentPayload,
         attachment: normalizedAttachment,
       },
     };
@@ -63,7 +70,7 @@ export async function parseSubmissionRequest(
     ok: true,
     data: {
       kind: "company",
-      payload: payload as CompanyPayload,
+      payload: stampedPayload as CompanyPayload,
       attachment: normalizedAttachment,
     },
   };

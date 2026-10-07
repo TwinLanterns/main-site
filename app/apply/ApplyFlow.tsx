@@ -10,6 +10,7 @@ import {
   Field,
   Input,
   NavButtons,
+  TermsAgreement,
   Pills,
   Progress,
   RankList,
@@ -103,6 +104,8 @@ export default function ApplyFlow() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
+  // Deliberately not part of the persisted draft: consent is given fresh at submit.
+  const [accepted, setAccepted] = useState(false);
 
   const valid = useMemo(() => {
     switch (step) {
@@ -121,9 +124,9 @@ export default function ApplyFlow() {
           data.school.trim().length > 1
         );
       default:
-        return data.built.trim().length > 19;
+        return data.built.trim().length > 19 && accepted;
     }
-  }, [step, data, emailVerified]);
+  }, [step, data, emailVerified, accepted]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,6 +147,7 @@ export default function ApplyFlow() {
           kind: "student",
           payload: {
             ...data,
+            acceptedTerms: accepted,
             hours: data.hours >= 40 ? "Full time" : `${data.hours} hrs / week`,
             startWeeks:
               data.startWeeks === 0
@@ -441,6 +445,8 @@ export default function ApplyFlow() {
                           ))}
                       </ul>
                     </div>
+
+                    <TermsAgreement checked={accepted} onChange={setAccepted} />
 
                     {error && (
                       <p className="rounded-[16px] border border-flame/40 bg-flame/5 px-4 py-3 text-[14px] text-flame">

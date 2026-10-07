@@ -17,6 +17,7 @@ import {
   StepRail,
   Progress,
   NavButtons,
+  TermsAgreement,
   ease,
 } from "@/components/form";
 import {
@@ -88,6 +89,8 @@ export default function SpeechApplyFlow() {
   const [result, setResult] = useState<{ qualified: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
+  // Deliberately not part of the persisted draft: consent is given fresh at submit.
+  const [accepted, setAccepted] = useState(false);
 
   useEffect(() => {
     try {
@@ -157,7 +160,7 @@ export default function SpeechApplyFlow() {
       emailVerified,
     backgroundDone,
     participationDone,
-    true,
+    accepted,
   ][step];
 
   async function handleSubmit() {
@@ -185,6 +188,7 @@ export default function SpeechApplyFlow() {
             availabilityOk: draft.availabilityOk === "Yes",
             consent: draft.consent === "Yes",
             referredByCode: refCode,
+            acceptedTerms: accepted,
           },
         }),
       });
@@ -473,6 +477,11 @@ export default function SpeechApplyFlow() {
                       {draft.referrerCollege || "—"}
                     </p>
                   </div>
+                  <TermsAgreement
+                    className="mt-6"
+                    checked={accepted}
+                    onChange={setAccepted}
+                  />
                   {error && (
                     <p className="mt-6 text-[13.5px] text-flame">{error}</p>
                   )}
