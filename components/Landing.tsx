@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
 import { Reveal } from "./Reveal";
 import Shape from "./Shapes";
 import JobList from "./JobList";

@@ -24,10 +24,14 @@ export default function Nav() {
   const [earnOpen, setEarnOpen] = useState(false);
   const pathname = usePathname();
 
-  useEffect(() => {
+  // Close menus on navigation by adjusting state during render rather than
+  // in an effect (avoids an extra cascading render).
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
     setOpen(false);
     setEarnOpen(false);
-  }, [pathname]);
+  }
 
   // touch devices can't hover, so the earn menu opens on tap instead;
   // any tap outside it closes it again

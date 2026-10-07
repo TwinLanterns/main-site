@@ -429,7 +429,7 @@ function Success({ company }: { company: string }) {
           Brief received{company ? `, ${company}` : ""}.
         </h1>
         <p className="mx-auto mt-5 max-w-md text-[16px] leading-relaxed text-ink">
-          We'll confirm by email today and put a 30-minute intake call on the
+          We&apos;ll confirm by email today and put a 30-minute intake call on the
           calendar. First shortlist lands 48 hours after that call.
         </p>
         <div className="mt-9 flex flex-wrap justify-center gap-3">

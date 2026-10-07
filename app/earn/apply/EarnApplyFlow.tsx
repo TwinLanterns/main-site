@@ -103,6 +103,8 @@ export default function EarnApplyFlow() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
+      // Restoring from localStorage must happen after mount to avoid an SSR hydration mismatch.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved) setDraft({ ...EMPTY, ...JSON.parse(saved) });
     } catch {
       // ignore corrupt draft

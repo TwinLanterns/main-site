@@ -336,17 +336,18 @@ function ShortAnswerCell({ value }: { value: unknown }) {
   }
 
   if (typeof value === "object") {
+    let s: string;
     try {
-      const s = JSON.stringify(value);
-      const display = s.length > 80 ? s.slice(0, 80) + "…" : s;
-      return (
-        <span className="font-mono text-[10px] text-neutral-600" title={s}>
-          {display}
-        </span>
-      );
+      s = JSON.stringify(value);
     } catch {
       return <span className="text-[11px]">{String(value)}</span>;
     }
+    const display = s.length > 80 ? s.slice(0, 80) + "…" : s;
+    return (
+      <span className="font-mono text-[10px] text-neutral-600" title={s}>
+        {display}
+      </span>
+    );
   }
 
   const s = String(value);

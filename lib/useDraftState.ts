@@ -21,6 +21,8 @@ export function useDraftState<T extends object>(key: string, empty: T) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(key);
+      // localStorage is only readable after mount (SSR hydration safety).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setData({ ...empty, ...JSON.parse(raw) });
     } catch {}
     setHydrated(true);

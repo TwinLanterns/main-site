@@ -681,7 +681,7 @@ Instructions:
 
   try {
     return parseAIResponse(rawText);
-  } catch (e) {
+  } catch {
     console.error(
       "  ⚠ Ranking JSON parse failed, falling back to unranked order:",
       rawText,
