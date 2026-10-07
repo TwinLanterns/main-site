@@ -67,7 +67,18 @@ export default function Footer() {
           <p>
             © {new Date().getFullYear()} Twin Lanterns. All rights reserved.
           </p>
-          <p>Los Angeles, California</p>
+          <nav
+            aria-label="Legal"
+            className="flex flex-wrap items-center gap-x-5 gap-y-1"
+          >
+            <Link href="/privacy" className="transition-colors hover:text-ink">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-ink">
+              Terms
+            </Link>
+            <span>Los Angeles, California</span>
+          </nav>
         </div>
       </div>
 
