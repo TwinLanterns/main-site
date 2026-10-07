@@ -848,7 +848,7 @@ export default function Landing() {
       <Hero />
       <OpenRoles />
       <Stats />
-      <Earn />
+      {/*<Earn />*/}
       <Split />
       <Process />
       <Statement />
