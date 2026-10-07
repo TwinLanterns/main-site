@@ -63,6 +63,8 @@ export async function findDuplicateEmail(
     }
     case "partner_gopro":
       return existsIn(supabase, "partner_gopro_applicants", "email", email);
+    case "partner_speech":
+      return existsIn(supabase, "partner_speech_participants", "email", email);
     case "partner_ambassador":
       return existsIn(supabase, "partner_ambassadors", "email", email);
   }

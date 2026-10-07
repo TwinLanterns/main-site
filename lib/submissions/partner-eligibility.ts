@@ -129,6 +129,43 @@ export function evaluatePartnerGoproEligibility(
   return { qualified: reasons.length === 0, reasons };
 }
 
+// Speech-conversation program — criteria from app/partner/speech/page.tsx.
+export const PARTNER_SPEECH_SEX = ["Male", "Female"] as const;
+export const PARTNER_SPEECH_RACE = [
+  "African American",
+  "Caucasian",
+  "Hispanic/Latino",
+  "Asian",
+] as const;
+export const PARTNER_SPEECH_ACCENTS = [
+  "Western",
+  "Southern",
+  "Midland",
+  "New England",
+  "North Central",
+] as const;
+export const PARTNER_SPEECH_MIN_AGE = 16;
+
+export interface PartnerSpeechEligibilityInput {
+  age: number | null;
+  guardianConsent: boolean;
+  availabilityOk: boolean;
+  consent: boolean;
+}
+
+export function evaluatePartnerSpeechEligibility(
+  input: PartnerSpeechEligibilityInput,
+): PartnerEligibilityResult {
+  const reasons: string[] = [];
+  if (input.age === null) reasons.push("no_age");
+  else if (input.age < PARTNER_SPEECH_MIN_AGE) reasons.push("under_16");
+  else if (input.age < 18 && !input.guardianConsent)
+    reasons.push("no_guardian_consent");
+  if (!input.availabilityOk) reasons.push("availability_not_met");
+  if (!input.consent) reasons.push("no_consent");
+  return { qualified: reasons.length === 0, reasons };
+}
+
 export function evaluatePartnerEligibility(
   input: PartnerEligibilityInput,
 ): PartnerEligibilityResult {

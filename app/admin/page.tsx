@@ -27,6 +27,7 @@ export default async function AdminPage() {
     { data: partnerQualified, error: partnerQualifiedError },
     { data: partnerUnqualified, error: partnerUnqualifiedError },
     { data: partnerGopro, error: partnerGoproError },
+    { data: partnerSpeech, error: partnerSpeechError },
   ] = await Promise.all([
     supabase
       .from("student_applications")
@@ -81,6 +82,10 @@ export default async function AdminPage() {
       .from("partner_gopro_applicants")
       .select("*")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("partner_speech_participants")
+      .select("*")
+      .order("created_at", { ascending: false }),
   ]);
 
   if (
@@ -89,7 +94,8 @@ export default async function AdminPage() {
     partnerAmbassadorsError ||
     partnerQualifiedError ||
     partnerUnqualifiedError ||
-    partnerGoproError
+    partnerGoproError ||
+    partnerSpeechError
   ) {
     return (
       <div className="p-8 text-sm text-red-600">
@@ -99,7 +105,8 @@ export default async function AdminPage() {
           partnerAmbassadorsError?.message ||
           partnerQualifiedError?.message ||
           partnerUnqualifiedError?.message ||
-          partnerGoproError?.message}
+          partnerGoproError?.message ||
+          partnerSpeechError?.message}
       </div>
     );
   }
@@ -112,6 +119,7 @@ export default async function AdminPage() {
       partnerQualified={partnerQualified ?? []}
       partnerUnqualified={partnerUnqualified ?? []}
       partnerGopro={partnerGopro ?? []}
+      partnerSpeech={partnerSpeech ?? []}
     />
   );
 }

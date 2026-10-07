@@ -8,6 +8,7 @@ import type {
   PartnerApplicantPayload,
   PartnerAmbassadorPayload,
   PartnerGoproPayload,
+  PartnerSpeechPayload,
 } from "@/lib/submissions/partner-types";
 import { getEmailConfig, sendResendEmailSafely, MARK_ATTACHMENT } from "./resend";
 import {
@@ -15,6 +16,8 @@ import {
   renderPartnerApplicantConfirmation,
   renderPartnerGoproInternal,
   renderPartnerGoproConfirmation,
+  renderPartnerSpeechInternal,
+  renderPartnerSpeechConfirmation,
   renderPartnerAmbassadorInternal,
   renderPartnerAmbassadorConfirmation,
 } from "./partner-templates";
@@ -104,6 +107,50 @@ export async function sendPartnerGoproEmails(input: {
       attachments: [MARK_ATTACHMENT],
     },
     "partner gopro confirmation",
+  );
+}
+
+export async function sendPartnerSpeechEmails(input: {
+  payload: PartnerSpeechPayload;
+  qualified: boolean;
+  reasons: string[];
+}): Promise<void> {
+  const { configured, to } = getEmailConfig();
+  const { payload, qualified, reasons } = input;
+
+  if (!configured || !to) {
+    console.log(
+      `[partner] speech participant saved (${qualified ? "qualified" : "unqualified"}) — no email configured`,
+    );
+    return;
+  }
+
+  const fullName = [payload.firstName, payload.lastName]
+    .filter(Boolean)
+    .join(" ");
+
+  await sendResendEmailSafely(
+    {
+      to: [to],
+      subject: `New Partner speech sign-up (${qualified ? "qualified" : "unqualified"}) — ${fullName}`,
+      html: renderPartnerSpeechInternal(payload, { qualified, reasons }),
+      attachments: [MARK_ATTACHMENT],
+    },
+    "partner speech internal",
+  );
+
+  if (!payload.email) return;
+
+  await sendResendEmailSafely(
+    {
+      to: [payload.email],
+      subject: qualified
+        ? "You're on the list — Partner speech program"
+        : "We've got your sign-up — Partner speech program",
+      html: renderPartnerSpeechConfirmation(payload, { qualified }),
+      attachments: [MARK_ATTACHMENT],
+    },
+    "partner speech confirmation",
   );
 }
 

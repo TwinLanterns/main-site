@@ -15,6 +15,7 @@ const links = [
 const earnLinks = [
   { href: "/partner/info", label: "Filming info" },
   { href: "/partner/gopro", label: "GoPro home program" },
+  { href: "/partner/speech", label: "Speech program" },
 ];
 
 export default function Nav() {
@@ -207,6 +208,7 @@ export default function Nav() {
               ...links.map((l) => ({ ...l, pop: false })),
               { href: "/partner/info", label: "Earn Now", pop: true },
               { href: "/partner/gopro", label: "GoPro home program", pop: false },
+              { href: "/partner/speech", label: "Speech program", pop: false },
               { href: "/companies", label: "I'm hiring", pop: false },
             ].map((l) => (
               <Link

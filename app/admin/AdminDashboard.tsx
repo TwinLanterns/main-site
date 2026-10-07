@@ -96,6 +96,23 @@ const PARTNER_GOPRO_COLUMNS = [
   "created_at",
 ];
 
+const PARTNER_SPEECH_COLUMNS = [
+  "first_name",
+  "last_name",
+  "email",
+  "phone",
+  "age",
+  "sex",
+  "race_ethnicity",
+  "accent",
+  "region",
+  "first_language_english",
+  "qualified",
+  "disqualified_reasons",
+  "referred_by",
+  "created_at",
+];
+
 const PARTNER_AMBASSADOR_COLUMNS = [
   "name",
   "email",
@@ -1589,18 +1606,20 @@ function withReferralCounts(
   });
 }
 
-type PartnerSubTab = "qualified" | "unqualified" | "gopro" | "ambassadors";
+type PartnerSubTab = "qualified" | "unqualified" | "gopro" | "speech" | "ambassadors";
 
 function PartnerSection({
   ambassadors,
   qualified,
   unqualified,
   gopro,
+  speech,
 }: {
   ambassadors: Row[];
   qualified: Row[];
   unqualified: Row[];
   gopro: Row[];
+  speech: Row[];
 }) {
   const [subTab, setSubTab] = useState<PartnerSubTab>("qualified");
   const [referrerFilter, setReferrerFilter] = useState<string>("");
@@ -1635,6 +1654,7 @@ function PartnerSection({
     { key: "qualified", label: "Qualified", count: filteredQualified.length },
     { key: "unqualified", label: "Unqualified", count: filteredUnqualified.length },
     { key: "gopro", label: "GoPro", count: gopro.length },
+    { key: "speech", label: "Speech", count: speech.length },
     { key: "ambassadors", label: "Ambassadors", count: ambassadors.length },
   ];
 
@@ -1657,7 +1677,7 @@ function PartnerSection({
           ))}
         </div>
 
-        {subTab !== "ambassadors" && subTab !== "gopro" && (
+        {subTab !== "ambassadors" && subTab !== "gopro" && subTab !== "speech" && (
           <div className="flex items-center gap-2">
             <label className="text-xs font-medium text-neutral-500">
               Referred by
@@ -1678,7 +1698,7 @@ function PartnerSection({
         )}
       </div>
 
-      {selectedAmbassador && subTab !== "ambassadors" && subTab !== "gopro" && (
+      {selectedAmbassador && subTab !== "ambassadors" && subTab !== "gopro" && subTab !== "speech" && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2.5">
           <p className="text-sm text-neutral-700">
             Showing referrals from{" "}
@@ -1707,6 +1727,8 @@ function PartnerSection({
         <Table rows={filteredUnqualified} columns={PARTNER_UNQUALIFIED_COLUMNS} />
       ) : subTab === "gopro" ? (
         <Table rows={gopro} columns={PARTNER_GOPRO_COLUMNS} />
+      ) : subTab === "speech" ? (
+        <Table rows={speech} columns={PARTNER_SPEECH_COLUMNS} />
       ) : (
         <Table rows={ambassadorsWithCounts} columns={PARTNER_AMBASSADOR_COLUMNS} />
       )}
@@ -1725,6 +1747,7 @@ export default function AdminDashboard({
   partnerQualified = [],
   partnerUnqualified = [],
   partnerGopro = [],
+  partnerSpeech = [],
 }: {
   applications: Row[];
   briefs: Row[];
@@ -1732,6 +1755,7 @@ export default function AdminDashboard({
   partnerQualified?: Row[];
   partnerUnqualified?: Row[];
   partnerGopro?: Row[];
+  partnerSpeech?: Row[];
 }) {
   const [tab, setTab] = useState<
     "applications" | "briefs" | "partner" | "vibe"
@@ -1788,7 +1812,7 @@ export default function AdminDashboard({
                 : "text-neutral-500 hover:text-neutral-700"
             }`}
           >
-            Partner ({partnerQualified.length + partnerUnqualified.length + partnerGopro.length})
+            Partner ({partnerQualified.length + partnerUnqualified.length + partnerGopro.length + partnerSpeech.length})
           </button>
           <button
             onClick={() => setTab("vibe")}
@@ -1817,6 +1841,7 @@ export default function AdminDashboard({
             qualified={partnerQualified}
             unqualified={partnerUnqualified}
             gopro={partnerGopro}
+            speech={partnerSpeech}
           />
         ) : (
           <VibeSearch />

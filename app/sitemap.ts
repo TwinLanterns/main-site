@@ -13,6 +13,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/partner/refer',
     '/partner/gopro',
     '/partner/gopro/apply',
+    '/partner/speech',
+    '/partner/speech/apply',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),

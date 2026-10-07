@@ -4,6 +4,7 @@ import type {
   PartnerApplicantPayload,
   PartnerAmbassadorPayload,
   PartnerGoproPayload,
+  PartnerSpeechPayload,
 } from "./partner-types";
 import type { DeviceOs } from "./partner-eligibility";
 
@@ -13,6 +14,10 @@ export type ParsePartnerApplicantResult =
 
 export type ParsePartnerGoproResult =
   | { ok: true; data: PartnerGoproPayload }
+  | { ok: false; status: 400; error: string };
+
+export type ParsePartnerSpeechResult =
+  | { ok: true; data: PartnerSpeechPayload }
   | { ok: false; status: 400; error: string };
 
 export type ParsePartnerReferResult =
@@ -122,6 +127,60 @@ export async function parsePartnerGoproRequest(
     hasCoreAreas: bool(p.hasCoreAreas),
     canKeepOthersOut: bool(p.canKeepOthersOut),
     weeklyHoursOk: bool(p.weeklyHoursOk),
+    consent: bool(p.consent),
+    referredByCode: str(p.referredByCode)?.trim() || null,
+  };
+
+  return { ok: true, data };
+}
+
+export async function parsePartnerSpeechRequest(
+  req: Request,
+): Promise<ParsePartnerSpeechResult> {
+  const parsed = await parseJsonBody(req);
+  if (!parsed.ok) {
+    return { ok: false, status: 400, error: "Invalid JSON" };
+  }
+  const body = parsed.body;
+
+  if (typeof body !== "object" || body === null || !("payload" in body)) {
+    return { ok: false, status: 400, error: "Missing fields" };
+  }
+
+  const payload = (body as { payload: unknown }).payload;
+  if (typeof payload !== "object" || payload === null) {
+    return { ok: false, status: 400, error: "Missing fields" };
+  }
+
+  const p = payload as Record<string, unknown>;
+
+  const firstName = str(p.firstName)?.trim() ?? "";
+  const email = str(p.email)?.trim() ?? "";
+
+  if (!firstName || !email || !isValidEmail(email)) {
+    return { ok: false, status: 400, error: "Missing or invalid name/email" };
+  }
+
+  const age =
+    typeof p.age === "number" && Number.isInteger(p.age) && p.age > 0 && p.age < 120
+      ? p.age
+      : null;
+
+  const data: PartnerSpeechPayload = {
+    firstName,
+    lastName: str(p.lastName)?.trim() || undefined,
+    email,
+    phone: str(p.phone)?.trim() || undefined,
+    referredBy: str(p.referredBy)?.trim() || undefined,
+    referrerCollege: str(p.referrerCollege)?.trim() || undefined,
+    age,
+    sex: str(p.sex)?.trim() ?? "",
+    raceEthnicity: str(p.raceEthnicity)?.trim() ?? "",
+    accent: str(p.accent)?.trim() ?? "",
+    region: str(p.region)?.trim() || undefined,
+    firstLanguageEnglish: bool(p.firstLanguageEnglish),
+    guardianConsent: bool(p.guardianConsent),
+    availabilityOk: bool(p.availabilityOk),
     consent: bool(p.consent),
     referredByCode: str(p.referredByCode)?.trim() || null,
   };

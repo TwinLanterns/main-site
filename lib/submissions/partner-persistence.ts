@@ -9,11 +9,13 @@ import { getSupabaseOrThrow } from "@/lib/supabase-or-throw";
 import {
   evaluatePartnerEligibility,
   evaluatePartnerGoproEligibility,
+  evaluatePartnerSpeechEligibility,
 } from "./partner-eligibility";
 import type {
   PartnerApplicantPayload,
   PartnerAmbassadorPayload,
   PartnerGoproPayload,
+  PartnerSpeechPayload,
 } from "./partner-types";
 
 export class PartnerConfigError extends Error {}
@@ -132,6 +134,55 @@ export async function savePartnerGoproApplicant(
     console.error("supabase insert error (partner_gopro_applicants)", error);
     throw new PartnerSaveError(
       error?.message ?? "Insert into partner_gopro_applicants failed",
+    );
+  }
+
+  return { id: data.id as string, qualified, reasons };
+}
+
+export interface SavePartnerSpeechResult {
+  id: string;
+  qualified: boolean;
+  reasons: string[];
+}
+
+export async function savePartnerSpeechParticipant(
+  payload: PartnerSpeechPayload,
+): Promise<SavePartnerSpeechResult> {
+  const supabase = getSupabaseOrThrow(toPartnerConfigError);
+
+  const { qualified, reasons } = evaluatePartnerSpeechEligibility(payload);
+
+  const { data, error } = await supabase
+    .from("partner_speech_participants")
+    .insert({
+      first_name: payload.firstName,
+      last_name: payload.lastName ?? null,
+      email: payload.email,
+      phone: payload.phone ?? null,
+      qualified,
+      disqualified_reasons: qualified ? null : reasons,
+      age: payload.age,
+      sex: payload.sex || null,
+      race_ethnicity: payload.raceEthnicity || null,
+      accent: payload.accent || null,
+      region: payload.region ?? null,
+      first_language_english: payload.firstLanguageEnglish,
+      guardian_consent: payload.guardianConsent,
+      availability_ok: payload.availabilityOk,
+      consent: payload.consent,
+      referred_by: payload.referredBy ?? null,
+      referrer_college: payload.referrerCollege ?? null,
+      referred_by_code: payload.referredByCode || null,
+      raw_payload: payload,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    console.error("supabase insert error (partner_speech_participants)", error);
+    throw new PartnerSaveError(
+      error?.message ?? "Insert into partner_speech_participants failed",
     );
   }
 

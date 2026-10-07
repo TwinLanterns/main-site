@@ -65,7 +65,8 @@ export type VerificationPurpose =
   | "company"
   | "partner_applicant"
   | "partner_ambassador"
-  | "partner_gopro";
+  | "partner_gopro"
+  | "partner_speech";
 
 const RESEND_COOLDOWN = 30; // seconds — mirrors lib/verification/store.ts
 

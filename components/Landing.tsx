@@ -670,6 +670,25 @@ function Partner() {
               →
             </span>
           </Link>
+
+          <Link
+            href="/partner/speech"
+            className="group mt-4 flex items-center justify-between gap-5 rounded-[24px] bg-sky p-6 text-ink transition-colors hover:bg-white sm:px-8"
+          >
+            <div>
+              <p className="label !text-ink/60">New — Speech program</p>
+              <p className="mt-2 text-[15px] leading-relaxed">
+                Have natural two-person conversations on a body camera we
+                supply, to help train fairer speech-recognition models.
+              </p>
+            </div>
+            <span
+              aria-hidden
+              className="shrink-0 text-[22px] transition-transform group-hover:translate-x-1"
+            >
+              →
+            </span>
+          </Link>
         </Reveal>
       </div>
     </section>

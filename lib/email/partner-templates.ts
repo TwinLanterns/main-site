@@ -8,6 +8,7 @@ import type {
   PartnerApplicantPayload,
   PartnerAmbassadorPayload,
   PartnerGoproPayload,
+  PartnerSpeechPayload,
 } from "@/lib/submissions/partner-types";
 import {
   COLOR,
@@ -163,6 +164,83 @@ export function renderPartnerGoproConfirmation(
   const body = status.qualified
     ? "Thanks for signing up for the Partner GoPro home program. Your home looks like a fit — we'll email you next steps, including equipment and scheduling, within a couple of days."
     : "Thanks for signing up for the Partner GoPro home program. Your home or availability doesn't match what we need for this round — but we keep every sign-up on file and will reach out if that changes.";
+
+  const inner = `
+    ${brandHeader()}
+    ${title(escapeHtml(heading))}
+    <p style="margin:0;font-size:15px;line-height:1.6;color:${COLOR.ink}">${escapeHtml(
+      body,
+    )}</p>
+    <p style="margin:26px 0 0;font-size:15px;line-height:1.6;color:${COLOR.muted}">— Twin Lanterns</p>
+  `;
+
+  return shell(inner, {
+    preheader: status.qualified
+      ? "You're on the list — here's what happens next."
+      : "We got your sign-up — here's what happens next.",
+    footer: PARTNER_FOOTER,
+  });
+}
+
+// ---------- Speech participant ----------
+
+export function renderPartnerSpeechInternal(
+  payload: PartnerSpeechPayload,
+  status: { qualified: boolean; reasons: string[] },
+): string {
+  const fullName = [payload.firstName, payload.lastName]
+    .filter(Boolean)
+    .join(" ");
+
+  const items: [string, string][] = [
+    ["Name", fullName],
+    ["Email", payload.email],
+    ["Phone", payload.phone ?? ""],
+    ["Age", payload.age === null ? "" : String(payload.age)],
+    ["Sex", payload.sex],
+    ["Race/ethnicity", payload.raceEthnicity],
+    ["Accent", payload.accent],
+    ["Region", payload.region ?? ""],
+    ["First language English", yn(payload.firstLanguageEnglish)],
+    ["Guardian consent", yn(payload.guardianConsent)],
+    ["Available for multiple sessions", yn(payload.availabilityOk)],
+    ["Consent to audio/video recording", yn(payload.consent)],
+    ["Referred by", payload.referredByCode ?? ""],
+    [
+      "Qualified",
+      status.qualified
+        ? "Yes"
+        : `No — ${status.reasons.join(", ") || "unknown"}`,
+    ],
+  ];
+
+  const heading = status.qualified
+    ? "New speech sign-up — qualified"
+    : "New speech sign-up — unqualified";
+
+  const inner = `
+    ${brandHeader()}
+    ${pill(status.qualified ? "Qualified" : "Unqualified")}
+    ${title(heading)}
+    ${rows(items)}
+  `;
+
+  return shell(inner, { preheader: heading, footer: PARTNER_FOOTER });
+}
+
+export function renderPartnerSpeechConfirmation(
+  payload: PartnerSpeechPayload,
+  status: { qualified: boolean },
+): string {
+  const firstName = payload.firstName?.trim() || "there";
+
+  const heading = status.qualified
+    ? `You're on the list, ${firstName}.`
+    : `Thanks for signing up, ${firstName}.`;
+
+  const body = status.qualified
+    ? "Thanks for signing up for the Partner speech program. We'll email you next steps — including consent paperwork, scheduling and compensation details — as soon as the next group opens."
+    : "Thanks for signing up for the Partner speech program. Your sign-up doesn't match what we need for this round — but we keep every sign-up on file and will reach out if that changes.";
 
   const inner = `
     ${brandHeader()}

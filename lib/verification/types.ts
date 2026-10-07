@@ -5,7 +5,8 @@ export type VerificationPurpose =
   | "company"
   | "partner_applicant"
   | "partner_ambassador"
-  | "partner_gopro";
+  | "partner_gopro"
+  | "partner_speech";
 
 export const VERIFICATION_PURPOSES: readonly VerificationPurpose[] = [
   "student",
@@ -13,4 +14,5 @@ export const VERIFICATION_PURPOSES: readonly VerificationPurpose[] = [
   "partner_applicant",
   "partner_ambassador",
   "partner_gopro",
+  "partner_speech",
 ];
