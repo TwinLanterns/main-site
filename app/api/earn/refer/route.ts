@@ -10,6 +10,7 @@ import { sendEarnAmbassadorEmails } from "@/lib/email/earn-emails";
 import { badRequest } from "@/lib/http";
 import { checkEmailVerification } from "@/lib/verification/check";
 import { consumeVerification } from "@/lib/verification/store";
+import { rateLimit } from "@/lib/rate-limit";
 
 function getOrigin(req: Request): string {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -24,6 +25,9 @@ function getOrigin(req: Request): string {
 }
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "submit", 10, 60 * 60 * 1000);
+  if (limited) return limited;
+
   const parsed = await parseEarnReferRequest(req);
   if (!parsed.ok) {
     return badRequest(parsed.error);

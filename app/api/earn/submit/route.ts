@@ -10,8 +10,12 @@ import { sendEarnApplicantEmails } from "@/lib/email/earn-emails";
 import { badRequest } from "@/lib/http";
 import { checkEmailVerification } from "@/lib/verification/check";
 import { consumeVerification } from "@/lib/verification/store";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "submit", 10, 60 * 60 * 1000);
+  if (limited) return limited;
+
   const parsed = await parseEarnApplicantRequest(req);
   if (!parsed.ok) {
     return badRequest(parsed.error);

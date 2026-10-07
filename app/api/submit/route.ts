@@ -7,6 +7,7 @@ import {
 import { sendSubmissionEmails } from "@/lib/email/submission-emails";
 import { checkEmailVerification } from "@/lib/verification/check";
 import { consumeVerification } from "@/lib/verification/store";
+import { rateLimit } from "@/lib/rate-limit";
 
 const DUPLICATE_MESSAGE: Record<"student" | "company", string> = {
   student: "You've already applied with this email.",
@@ -14,6 +15,9 @@ const DUPLICATE_MESSAGE: Record<"student" | "company", string> = {
 };
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "submit", 10, 60 * 60 * 1000);
+  if (limited) return limited;
+
   const parsed = await parseSubmissionRequest(req);
 
   if (!parsed.ok) {

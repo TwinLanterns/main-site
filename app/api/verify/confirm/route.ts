@@ -12,8 +12,12 @@ import {
   VERIFICATION_PURPOSES,
   type VerificationPurpose,
 } from "@/lib/verification/types";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "verify-confirm", 30, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const parsed = await parseJsonBody(req);
   if (!parsed.ok) {
     return badRequest("Invalid JSON");

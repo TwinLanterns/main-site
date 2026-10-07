@@ -13,6 +13,7 @@ import {
   VERIFICATION_PURPOSES,
   type VerificationPurpose,
 } from "@/lib/verification/types";
+import { rateLimit } from "@/lib/rate-limit";
 
 const DUPLICATE_MESSAGE: Record<VerificationPurpose, string> = {
   student: "You've already applied with this email.",
@@ -24,6 +25,9 @@ const DUPLICATE_MESSAGE: Record<VerificationPurpose, string> = {
 };
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "verify-send", 10, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const parsed = await parseJsonBody(req);
   if (!parsed.ok) {
     return badRequest("Invalid JSON");
