@@ -5,6 +5,7 @@
 // save until `assertEmailVerified` confirms it. Keyed on (email, purpose) —
 // there's one row per address per funnel, upserted on resend.
 
+import { randomInt, timingSafeEqual } from "crypto";
 import { getSupabaseOrThrow } from "@/lib/supabase-or-throw";
 import { sendVerificationCodeEmail } from "@/lib/email/verification-emails";
 import type { VerificationPurpose } from "./types";
@@ -43,7 +44,13 @@ function normalize(email: string): string {
 }
 
 function generateCode(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(randomInt(100000, 1000000));
+}
+
+function codesMatch(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
 }
 
 function client() {
@@ -144,11 +151,30 @@ export async function confirmVerificationCode(
     throw new VerificationRequestError("Too many attempts — send a new code.");
   }
 
-  if (data.code !== code) {
-    await supabase
-      .from("email_verifications")
-      .update({ attempts: data.attempts + 1 })
-      .eq("id", data.id);
+  // Claim an attempt slot atomically (compare-and-swap on `attempts`) before
+  // checking the code, so parallel guesses can't all slip under MAX_ATTEMPTS.
+  const { data: claimed, error: claimError } = await supabase
+    .from("email_verifications")
+    .update({ attempts: data.attempts + 1 })
+    .eq("id", data.id)
+    .eq("attempts", data.attempts)
+    .select("id");
+
+  if (claimError) {
+    console.error("verification attempt error", claimError);
+    throw new VerificationRequestError(
+      "Could not confirm that code — try again.",
+    );
+  }
+
+  if (!claimed || claimed.length === 0) {
+    throw new VerificationRequestError(
+      "Too many simultaneous attempts — try again.",
+      429,
+    );
+  }
+
+  if (!codesMatch(data.code, code)) {
     throw new VerificationRequestError("That code doesn't match.");
   }
 
