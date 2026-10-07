@@ -685,7 +685,7 @@ function Earn() {
             className="group mt-4 flex items-center justify-between gap-5 rounded-[24px] bg-lime p-6 text-ink transition-colors hover:bg-white sm:px-8"
           >
             <div>
-              <p className="label !text-ink/60">New — GoPro home program</p>
+              <p className="label !text-ink/60">New — GoPro home program (Los Angeles only)</p>
               <p className="mt-2 text-[15px] leading-relaxed">
                 Record first-person video of tidying and organizing in your own
                 home with a head-mounted GoPro we supply.
@@ -704,7 +704,7 @@ function Earn() {
             className="group mt-4 flex items-center justify-between gap-5 rounded-[24px] bg-sky p-6 text-ink transition-colors hover:bg-white sm:px-8"
           >
             <div>
-              <p className="label !text-ink/60">New — Speech program</p>
+              <p className="label !text-ink/60">New — Speech program (Los Angeles only)</p>
               <p className="mt-2 text-[15px] leading-relaxed">
                 Have natural two-person conversations on a body camera we
                 supply, to help train fairer speech-recognition models.
