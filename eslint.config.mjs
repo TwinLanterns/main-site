@@ -13,6 +13,16 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    // These files shuttle untyped JSON (LLM output, Supabase raw_payload
+    // blobs, legacy-DB rows) whose shape isn't statically known.
+    files: [
+      "scripts/**",
+      "app/admin/AdminDashboard.tsx",
+      "app/api/admin/vibe-search/route.ts",
+    ],
+    rules: { "@typescript-eslint/no-explicit-any": "off" },
+  },
 ]);
 
 export default eslintConfig;

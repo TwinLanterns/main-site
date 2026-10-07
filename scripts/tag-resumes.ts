@@ -293,7 +293,6 @@ ${JSON.stringify(rawPayload, null, 2)}
 async function tagResume(
   resumeText: string,
   rawPayload: any,
-  _studentName: string,
 ): Promise<AITags> {
   const raw = await callDeepSeek(
     SYSTEM_PROMPT,
@@ -405,7 +404,7 @@ async function main() {
       }
 
       if (COMMIT) {
-        const tags = await tagResume(resumeText, student.raw_payload, fullName);
+        const tags = await tagResume(resumeText, student.raw_payload);
 
         const { error: upsertError } = await supabase
           .from("candidate_ai_tags")
