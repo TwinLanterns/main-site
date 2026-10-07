@@ -77,13 +77,21 @@ export async function GET(
     );
   }
 
-  const filename = String(data.resume_name).replace(/"/g, "");
+  // Strip control chars and header-breaking characters for the ASCII
+  // fallback; the RFC 5987 `filename*` carries the real (encoded) name.
+  const filename = String(data.resume_name).replace(/[\x00-\x1f\x7f"\\]/g, "");
+  const asciiName = filename.replace(/[^\x20-\x7e]/g, "_") || "resume";
+  const encodedName = encodeURIComponent(filename || "resume").replace(
+    /['()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
   const uint8Array = new Uint8Array(buffer);
 
   return new NextResponse(uint8Array, {
     headers: {
       "Content-Type": guessMimeType(filename),
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "X-Content-Type-Options": "nosniff",
+      "Content-Disposition": `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`,
       "Content-Length": String(buffer.length),
       "Cache-Control": "private, no-store",
     },
