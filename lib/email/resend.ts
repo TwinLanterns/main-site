@@ -16,9 +16,13 @@ export const MARK_ATTACHMENT: ResendAttachment = {
   content_type: "image/png",
 };
 
+// Internal notifications go here unless TL_NOTIFY_EMAIL overrides it, so a
+// missing env var can never silently swallow every founder notification.
+const DEFAULT_NOTIFY_EMAIL = "twin.lanterns.business@gmail.com";
+
 export function getEmailConfig() {
   const key = process.env.RESEND_API_KEY;
-  const to = process.env.TL_NOTIFY_EMAIL;
+  const to = process.env.TL_NOTIFY_EMAIL?.trim() || DEFAULT_NOTIFY_EMAIL;
   const from =
     process.env.TL_FROM_EMAIL ?? "Twin Lanterns <onboarding@resend.dev>";
 
@@ -26,7 +30,7 @@ export function getEmailConfig() {
     key,
     to,
     from,
-    configured: Boolean(key && to),
+    configured: Boolean(key),
   };
 }
 
@@ -38,7 +42,10 @@ export async function sendResendEmail(args: {
 }): Promise<void> {
   const { key, from } = getEmailConfig();
 
-  if (!key) return;
+  if (!key) {
+    console.error("resend not configured: RESEND_API_KEY is missing", args.subject);
+    return;
+  }
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
