@@ -19,9 +19,11 @@ export async function proxy(req: NextRequest) {
   const secret = process.env.ADMIN_SESSION_SECRET;
   if (!secret) {
     console.error("ADMIN_SESSION_SECRET is not set — blocking access.");
+    // Fail loudly for pages too: redirecting to the login page would hide
+    // the misconfiguration (login can't succeed without the secret either).
     return isApi
       ? NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
-      : NextResponse.redirect(new URL(LOGIN_PATH, req.url));
+      : new NextResponse("Server misconfigured", { status: 500 });
   }
 
   const token = req.cookies.get(ADMIN_COOKIE_NAME)?.value ?? "";
