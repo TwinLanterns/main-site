@@ -1737,6 +1737,91 @@ function EarnSection({
 }
 
 /* ------------------------------------------------------------------ */
+/* Job signups: every applicant across the three listings               */
+/* ------------------------------------------------------------------ */
+
+const JOB_SIGNUP_COLUMNS = [
+  "role",
+  "name",
+  "email",
+  "phone",
+  "qualified",
+  "referred_by",
+  "created_at",
+];
+
+function JobSignups({
+  filming,
+  gopro,
+  speech,
+}: {
+  filming: Row[];
+  gopro: Row[];
+  speech: Row[];
+}) {
+  const [role, setRole] = useState<string>("");
+
+  const all = useMemo(() => {
+    const tag = (rows: Row[], label: string, qualified?: boolean): Row[] =>
+      rows.map((r) => ({
+        ...r,
+        role: label,
+        name: [r.first_name, r.last_name].filter(Boolean).join(" "),
+        qualified: qualified ?? r.qualified,
+      }));
+    return [
+      ...tag(filming, "Task filmer"),
+      ...tag(gopro, "GoPro home"),
+      ...tag(speech, "Speech"),
+    ].sort((a, b) =>
+      String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")),
+    );
+  }, [filming, gopro, speech]);
+
+  const [weekAgo] = useState(() => Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const roles = ["Task filmer", "GoPro home", "Speech"];
+  const stats = roles.map((label) => {
+    const rows = all.filter((r) => r.role === label);
+    return {
+      label,
+      total: rows.length,
+      week: rows.filter((r) => new Date(String(r.created_at)).getTime() > weekAgo)
+        .length,
+      qualified: rows.filter((r) => r.qualified === true).length,
+    };
+  });
+
+  const shown = role ? all.filter((r) => r.role === role) : all;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        {stats.map((s) => (
+          <button
+            key={s.label}
+            onClick={() => setRole(role === s.label ? "" : s.label)}
+            className={`rounded-lg border bg-white p-4 text-left transition-colors ${
+              role === s.label
+                ? "border-neutral-900"
+                : "border-neutral-200 hover:border-neutral-400"
+            }`}
+          >
+            <p className="text-xs font-medium text-neutral-500">{s.label}</p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums text-neutral-900">
+              {s.total}
+            </p>
+            <p className="mt-1 text-xs text-neutral-500">
+              +{s.week} this week · {s.qualified} qualified
+            </p>
+          </button>
+        ))}
+      </div>
+      <Table rows={shown} columns={JOB_SIGNUP_COLUMNS} />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Dashboard shell                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -1758,8 +1843,8 @@ export default function AdminDashboard({
   earnSpeech?: Row[];
 }) {
   const [tab, setTab] = useState<
-    "applications" | "briefs" | "earn" | "vibe"
-  >("applications");
+    "jobs" | "applications" | "briefs" | "earn" | "vibe"
+  >("jobs");
   const router = useRouter();
 
   async function handleLogout() {
@@ -1784,6 +1869,16 @@ export default function AdminDashboard({
         </div>
 
         <div className="flex gap-2 border-b border-neutral-200">
+          <button
+            onClick={() => setTab("jobs")}
+            className={`px-3 py-2 text-sm font-medium ${
+              tab === "jobs"
+                ? "border-b-2 border-neutral-900 text-neutral-900"
+                : "text-neutral-500 hover:text-neutral-700"
+            }`}
+          >
+            Job signups ({earnQualified.length + earnUnqualified.length + earnGopro.length + earnSpeech.length})
+          </button>
           <button
             onClick={() => setTab("applications")}
             className={`px-3 py-2 text-sm font-medium ${
@@ -1826,7 +1921,16 @@ export default function AdminDashboard({
           </button>
         </div>
 
-        {tab === "applications" ? (
+        {tab === "jobs" ? (
+          <JobSignups
+            filming={[...earnQualified, ...earnUnqualified].map((r) => ({
+              ...r,
+              qualified: earnQualified.includes(r),
+            }))}
+            gopro={earnGopro}
+            speech={earnSpeech}
+          />
+        ) : tab === "applications" ? (
           <Table
             rows={applications}
             columns={APPLICATION_COLUMNS}

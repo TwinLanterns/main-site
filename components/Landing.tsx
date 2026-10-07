@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Reveal } from "./Reveal";
 import Shape from "./Shapes";
+import JobList from "./JobList";
 
 const wrap = "mx-auto w-full max-w-[1240px] px-5";
 const btn =
@@ -145,10 +146,10 @@ function Hero() {
 
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <Link
-            href="/apply"
+            href="/jobs"
             className={`${btn} bg-ink text-white hover:bg-flame`}
           >
-            Apply as a student
+            See open roles
           </Link>
           <Link
             href="/companies"
@@ -171,6 +172,34 @@ function Hero() {
             ),
           )}
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------ jobs --------------------------------- */
+
+function OpenRoles() {
+  return (
+    <section id="jobs" className="py-16 sm:py-20">
+      <div className={wrap}>
+        <Reveal>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="label">Open roles</p>
+              <h2 className="display mt-4 text-[clamp(2rem,4.4vw,3.2rem)]">
+                Hiring now.
+              </h2>
+            </div>
+            <Link
+              href="/jobs"
+              className="text-[15px] text-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
+            >
+              View all
+            </Link>
+          </div>
+          <JobList className="mt-10" />
+        </Reveal>
       </div>
     </section>
   );
@@ -818,6 +847,7 @@ export default function Landing() {
   return (
     <>
       <Hero />
+      <OpenRoles />
       <Stats />
       <Earn />
       <Split />

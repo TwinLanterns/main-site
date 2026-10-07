@@ -6,6 +6,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Define your static routes
   const routes = [
     '',
+    '/jobs',
     '/apply',
     '/companies',
     '/earn/info',

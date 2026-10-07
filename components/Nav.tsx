@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Mark from "./Mark";
+import { JOBS } from "@/lib/jobs";
 
 const links = [
   { href: "/#how", label: "How it works" },
@@ -13,9 +14,8 @@ const links = [
 ];
 
 const earnLinks = [
-  { href: "/earn/info", label: "Filming info" },
-  { href: "/earn/gopro", label: "GoPro home program" },
-  { href: "/earn/speech", label: "Speech program" },
+  { href: "/jobs", label: "All open roles" },
+  ...JOBS.map((j) => ({ href: j.applyHref, label: j.title })),
 ];
 
 export default function Nav() {
@@ -67,7 +67,7 @@ export default function Nav() {
       </Link>
       <div data-earn-menu className="group relative">
         <Link
-          href="/earn/info"
+          href="/jobs"
           aria-haspopup="true"
           aria-expanded={earnOpen}
           onClick={(e) => {
@@ -79,7 +79,7 @@ export default function Nav() {
             earnOpen ? "bg-flame" : "bg-ink"
           } ${compact ? "px-4 py-2" : "px-5 py-2.5"}`}
         >
-          Earn Now
+          Open roles
         </Link>
         {/* pt-2 bridges the gap so the menu stays open while the cursor moves down */}
         <div
@@ -206,9 +206,12 @@ export default function Nav() {
           <div className="pointer-events-auto mt-2 overflow-hidden rounded-[28px] border border-line bg-white md:hidden">
             {[
               ...links.map((l) => ({ ...l, pop: false })),
-              { href: "/earn/info", label: "Earn Now", pop: true },
-              { href: "/earn/gopro", label: "GoPro home program", pop: false },
-              { href: "/earn/speech", label: "Speech program", pop: false },
+              { href: "/jobs", label: "Open roles", pop: true },
+              ...JOBS.map((j) => ({
+                href: j.applyHref,
+                label: j.title,
+                pop: false,
+              })),
               { href: "/companies", label: "I'm hiring", pop: false },
             ].map((l) => (
               <Link
