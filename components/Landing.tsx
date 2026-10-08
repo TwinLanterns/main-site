@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Reveal } from "./Reveal";
 import Shape from "./Shapes";
-import JobList from "./JobList";
+import { PROGRAMS } from "@/lib/programs";
 
 const wrap = "mx-auto w-full max-w-[1240px] px-5";
 const btn =
@@ -69,7 +69,7 @@ function Hero() {
   const spin = (i: number) => (i % 2 === 0 ? phase * 25 : phase * -25);
 
   return (
-    <section className="relative overflow-hidden pb-16 pt-36 sm:pb-24 sm:pt-44">
+    <section className="relative overflow-hidden pb-10 pt-36 sm:pb-14 sm:pt-44">
       {/* shape cluster, left */}
       <div className="pointer-events-none absolute inset-0 hidden lg:block">
         <Shape
@@ -116,6 +116,18 @@ function Hero() {
       </div>
 
       <div className={`${wrap} relative text-center`}>
+        <a
+          href="#programs"
+          className="label mb-8 inline-flex items-center gap-3 rounded-full border border-ink/15 px-4 py-2 transition-colors hover:border-ink"
+        >
+          <span className="flex -space-x-1">
+            {PROGRAMS.map((p) => (
+              <span key={p.slug} className={`h-2.5 w-2.5 rounded-full ring-2 ring-white ${p.dot}`} />
+            ))}
+          </span>
+          Three programs open now · paid roles at $10/hr
+          <span aria-hidden>↓</span>
+        </a>
         <h1 className="display mx-auto min-h-[2em] max-w-[17ch] text-[clamp(2.4rem,6.6vw,5.2rem)]">
           <span>{full.slice(0, Math.min(n, p.pre.length))}</span>
           <span className={p.tone}>
@@ -144,12 +156,12 @@ function Hero() {
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-3">
-          <Link
-            href="/jobs"
+          <a
+            href="#programs"
             className={`${btn} bg-ink text-white hover:bg-flame`}
           >
-            See open roles
-          </Link>
+            See open programs
+          </a>
           <Link
             href="/companies"
             className={`${btn} border border-ink/20 hover:border-ink`}
@@ -176,29 +188,270 @@ function Hero() {
   );
 }
 
-/* ------------------------------------ jobs --------------------------------- */
+/* --------------------------------- programs -------------------------------- */
 
-function OpenRoles() {
+const programs = PROGRAMS;
+
+// Time each program holds the spotlight, and how strongly the motion slows
+// while a card is centred (0 = constant speed; <1 means it never fully stops).
+const CYCLE_MS = 4200;
+const SLOW = 0.85;
+const MANUAL_MS = 700;
+
+// Eased position within one step. Slope is (1 - SLOW) while a card sits
+// centred and spikes to ~2.4x average speed mid-transition, so it always
+// moves but whips between cards. (Integral of the slope over a step is 1.)
+const glide = (u: number) => {
+  const th = 2 * Math.PI * u;
+  const burst = u - (Math.sin(th) / Math.PI - Math.sin(2 * th) / (8 * Math.PI)) / 1.5;
+  return (1 - SLOW) * u + SLOW * burst;
+};
+const smooth = (t: number) => t * t * (3 - 2 * t);
+
+function Programs() {
+  const n = programs.length;
+  const pausedRef = useRef(false);
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const veilRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const dotRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const clock = useRef({
+    base: 0,
+    u: 0,
+    pos: 0,
+    tween: null as null | { from: number; to: number; t: number },
+  });
+  const activeRef = useRef(-1);
+  const dotRef = useRef(-1);
+  const reduced = useRef(false);
+
+  const paint = () => {
+    const { pos } = clock.current;
+    slideRefs.current.forEach((el, i) => {
+      if (!el) return;
+      let d = (((i - pos) % n) + n) % n;
+      if (d > n / 2) d -= n;
+      const a = Math.min(Math.abs(d), 1);
+      el.style.transform = `translate3d(calc(${d} * (100% + 14px)), 0, 0) scale(${1 - 0.08 * a})`;
+      el.style.opacity = String(1 - 0.28 * a);
+      el.style.zIndex = Math.abs(d) < 0.5 ? "10" : "0";
+    });
+
+    // the dot for the card nearest the centre widens as soon as focus changes
+    const near = ((Math.round(pos) % n) + n) % n;
+    if (near !== dotRef.current) {
+      dotRef.current = near;
+      dotRefs.current.forEach((el, i) => {
+        if (el) el.dataset.on = String(i === near);
+      });
+    }
+
+    // whichever card is centred is the interactive one; only swap once it has
+    // settled, so the DOM/accessibility update never lands mid-slide
+    const focus = ((Math.round(pos) % n) + n) % n;
+    if (focus !== activeRef.current && Math.abs(pos - Math.round(pos)) < 0.04) {
+      activeRef.current = focus;
+      cardRefs.current.forEach((el, i) => {
+        if (!el) return;
+        el.inert = i !== focus;
+        el.setAttribute("aria-hidden", String(i !== focus));
+        const veil = veilRefs.current[i];
+        if (veil) veil.style.display = i === focus ? "none" : "block";
+        dotRefs.current[i]?.setAttribute("aria-current", String(i === focus));
+      });
+    }
+  };
+
+  useEffect(() => {
+    reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(now - last, 64);
+      last = now;
+      const c = clock.current;
+      if (c.tween) {
+        c.tween.t = Math.min(1, c.tween.t + dt / MANUAL_MS);
+        c.pos = c.tween.from + (c.tween.to - c.tween.from) * smooth(c.tween.t);
+        if (c.tween.t >= 1) {
+          c.base = c.tween.to;
+          c.u = 0;
+          c.pos = c.base;
+          c.tween = null;
+        }
+      } else if (!reduced.current) {
+        // hovering holds the carousel, but only once a card is centred — a
+        // slide already under way finishes first instead of freezing mid-air
+        const hold = pausedRef.current && c.u < 0.12;
+        if (!hold) {
+          c.u += dt / CYCLE_MS;
+          while (c.u >= 1) {
+            c.u -= 1;
+            c.base += 1;
+            if (pausedRef.current) c.u = 0;
+          }
+          c.pos = c.base + glide(c.u);
+        }
+      }
+      paint();
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const goTo = (target: number) => {
+    const c = clock.current;
+    c.tween = { from: c.pos, to: target, t: 0 };
+  };
+  const step = (dir: number) => goTo(Math.round(clock.current.pos) + dir);
+  const jump = (i: number) => {
+    // shortest way round to program i
+    const cur = Math.round(clock.current.pos);
+    let d = (((i - cur) % n) + n) % n;
+    if (d > n / 2) d -= n;
+    goTo(cur + d);
+  };
+
   return (
-    <section id="jobs" className="py-16 sm:py-20">
-      <div className={wrap}>
-        <Reveal>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="label">Open roles</p>
-              <h2 className="display mt-4 text-[clamp(2rem,4.4vw,3.2rem)]">
-                Hiring now.
-              </h2>
-            </div>
-            <Link
-              href="/jobs"
-              className="text-[15px] text-muted underline-offset-4 transition-colors hover:text-ink hover:underline"
+    <section
+      id="programs"
+      className={`${wrap} scroll-mt-24 pb-10 sm:pb-16`}
+      onMouseEnter={() => (pausedRef.current = true)}
+      onMouseLeave={() => (pausedRef.current = false)}
+      onFocus={() => (pausedRef.current = true)}
+      onBlur={() => (pausedRef.current = false)}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
+        <p className="label">Programs · open now</p>
+        <div className="flex items-center gap-2">
+          {programs.map((p, i) => (
+            <button
+              key={p.slug}
+              type="button"
+              aria-label={`Show ${p.name}`}
+              ref={(el) => {
+                dotRefs.current[i] = el;
+              }}
+              onClick={() => jump(i)}
+              data-on={i === 0}
+              className="group relative h-2 w-2 overflow-hidden rounded-full bg-ink/15 transition-all duration-500 ease-out hover:bg-ink/30 data-[on=true]:w-10"
             >
-              View all
-            </Link>
-          </div>
-          <JobList className="mt-10" />
-        </Reveal>
+              <span
+                className={`absolute inset-0 opacity-0 transition-opacity duration-500 group-data-[on=true]:opacity-100 ${p.dot}`}
+              />
+            </button>
+          ))}
+          <button
+            type="button"
+            aria-label="Previous program"
+            onClick={() => step(-1)}
+            className="ml-3 flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 transition-colors hover:bg-ink hover:text-white"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            aria-label="Next program"
+            onClick={() => step(1)}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/15 transition-colors hover:bg-ink hover:text-white"
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      {/* slides share one grid cell (keeps the tallest height); neighbours peek in from the sides */}
+      <div className="-mx-1 grid overflow-hidden px-1 pb-12 -mb-6">
+        {programs.map((p, i) => {
+          return (
+            <div
+              key={p.slug}
+              ref={(el) => {
+                slideRefs.current[i] = el;
+              }}
+              className="relative col-start-1 row-start-1 mx-[7%] will-change-transform"
+            >
+              <div
+                ref={(el) => {
+                  cardRefs.current[i] = el;
+                }}
+                className="relative grid h-full gap-10 overflow-hidden rounded-[36px] bg-ink p-8 text-white shadow-[0_30px_60px_-20px_rgba(13,13,13,0.55)] ring-1 ring-white/10 sm:p-14 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center"
+              >
+                <div className={`absolute inset-x-0 top-0 h-1.5 ${p.dot}`} />
+                <Shape
+                  kind={p.shape}
+                  className={`pointer-events-none absolute -right-14 -top-14 w-64 opacity-50 ${p.shapeTone}`}
+                  rotate={16 + i * 10}
+                  float
+                  delay={i * 0.7}
+                />
+                <div className="relative">
+                  <span className="label inline-flex items-center gap-2.5 rounded-full border border-white/20 px-4 py-2 !text-white/80">
+                    <span className={`h-1.5 w-1.5 rounded-full ${p.dot}`} />
+                    {p.tag}
+                  </span>
+                  <h2 className="display mt-7 max-w-[18ch] text-[clamp(2.2rem,4.8vw,3.8rem)]">
+                    {p.title}
+                  </h2>
+                  <p className="mt-6 max-w-[50ch] text-[17px] leading-relaxed text-white/70">
+                    {p.body}
+                  </p>
+                  <div className="mt-9 flex flex-wrap gap-3">
+                    <Link href={p.apply} className={`${btn} ${p.primary}`}>
+                      Start earning
+                    </Link>
+                    <Link
+                      href={p.more}
+                      className={`${btn} border border-white/25 hover:border-white`}
+                    >
+                      See more
+                    </Link>
+                    {p.ambassador && (
+                      <Link
+                        href="/earn/refer"
+                        className={`${btn} text-white/70 underline-offset-4 hover:text-white hover:underline`}
+                      >
+                        Become an ambassador
+                      </Link>
+                    )}
+                  </div>
+                </div>
+
+                <dl className="relative rounded-[28px] border border-white/10 bg-white/[0.04] p-7 sm:p-9">
+                  {p.facts.map(([k, v]) => (
+                    <div
+                      key={k}
+                      className="border-b border-white/10 py-5 first:pt-0 last:border-0 last:pb-0"
+                    >
+                      <dt className="display text-[clamp(1.5rem,2.6vw,2.1rem)]">{k}</dt>
+                      <dd className="mt-1.5 text-[14.5px] text-white/60">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <button
+                type="button"
+                aria-label={`Show ${p.name}`}
+                onClick={() => jump(i)}
+                ref={(el) => {
+                  veilRefs.current[i] = el;
+                }}
+                className="absolute inset-0 cursor-pointer rounded-[36px]"
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 flex justify-center">
+        <Link
+          href="/programs"
+          className={`${btn} border border-ink/20 hover:bg-ink hover:text-white`}
+        >
+          See all programs →
+        </Link>
       </div>
     </section>
   );
@@ -525,204 +778,6 @@ function Roles() {
   );
 }
 
-/* ----------------------------------- earn ---------------------------------- */
-
-const earnStats = [
-  ["$10/hr", "for approved filming time"],
-  ["Any modern phone", "iPhone 12 or later, recent Galaxy S / Pixel"],
-  ["No experience", "a ten-minute setup is the whole bar"],
-];
-
-const earnSteps = [
-  {
-    n: "01",
-    t: "Apply",
-    b: "Two minutes. Tell us what you can film and roughly where you are.",
-  },
-  {
-    n: "02",
-    t: "Get set up",
-    b: "We send the head mount and a shot list. You film on your own schedule.",
-  },
-  {
-    n: "03",
-    t: "Get paid",
-    b: "Upload clips, get paid $10/hr for approved footage. No invoices, no chasing hours.",
-  },
-];
-
-const earnPoints = [
-  "Film everyday tasks with a head-mounted phone — no experience required",
-  "Shoot whenever it suits you; there are no shifts to sign up for",
-  "Refer someone you trust and earn when they qualify",
-];
-
-function Earn() {
-  return (
-    <section
-      id="earn"
-      className="relative overflow-hidden bg-ink py-20 text-white sm:py-28"
-    >
-      {/* shape cluster */}
-      <div className="pointer-events-none absolute inset-0 hidden lg:block">
-        <Shape
-          kind="arch"
-          className="absolute -left-12 top-[16%] w-44 text-sky/25"
-          rotate={-12}
-          float
-        />
-        <Shape
-          kind="burst"
-          className="absolute -right-10 bottom-[10%] w-40 text-lilac/25"
-          rotate={14}
-          float
-          delay={1.3}
-        />
-        <Shape
-          kind="hex"
-          className="absolute right-[7%] top-[8%] w-20 text-lemon/20"
-          rotate={18}
-          float
-          delay={0.6}
-        />
-        <Shape
-          kind="clover"
-          className="absolute bottom-[6%] left-[8%] w-24 text-flame/20"
-          rotate={-8}
-          float
-          delay={1.9}
-        />
-      </div>
-
-      <div
-        className={`${wrap} relative grid gap-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center`}
-      >
-        <Reveal>
-          <span className="label inline-flex items-center gap-2.5 rounded-full border border-white/20 px-4 py-2 !text-white/70">
-            <span className="h-1.5 w-1.5 rounded-full bg-lime" />
-            Part Time Internship Program — Now Available
-          </span>
-
-          <h2 className="display mt-7 max-w-[16ch] text-[clamp(2.4rem,5.6vw,4.2rem)]">
-            Get paid to film how real work actually gets done.
-          </h2>
-
-          <p className="mt-6 max-w-[50ch] text-[17px] leading-relaxed text-white/65">
-            You film everyday tasks — cleaning, repair, warehouse, the 
-            physical stuff — to help train robotics AI. No résumé, 
-            no interview panel, no experience required.
-          </p>
-
-          <div className="mt-9 flex flex-wrap gap-3">
-            <Link
-              href="/earn/apply"
-              className={`${btn} bg-white text-ink hover:bg-flame hover:text-white`}
-            >
-              Start earning
-            </Link>
-            <Link
-              href="/earn/refer"
-              className={`${btn} border border-white/25 text-white hover:border-white`}
-            >
-              Become an ambassador
-            </Link>
-            <Link
-              href="/earn/info"
-              className={`${btn} bg-lime text-ink hover:bg-white`}
-            >
-              More info
-            </Link>
-          </div>
-
-          <dl className="mt-12 grid gap-7 border-t border-white/15 pt-8 sm:grid-cols-3">
-            {earnStats.map(([k, v]) => (
-              <div key={v}>
-                <dt className="display text-[clamp(1.4rem,2.4vw,1.9rem)]">
-                  {k}
-                </dt>
-                <dd className="mt-2 text-[14px] leading-relaxed text-white/55">
-                  {v}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </Reveal>
-
-        <Reveal delay={0.08}>
-          <div className="rounded-[32px] border border-white/15 bg-white/[0.04] p-7 sm:p-10">
-            <p className="label !text-white/50">How it works</p>
-            <ol className="mt-8 space-y-7">
-              {earnSteps.map((s) => (
-                <li key={s.n} className="flex gap-5">
-                  <span className="display pt-0.5 text-[15px] text-white/40">
-                    {s.n}
-                  </span>
-                  <div className="border-l border-white/15 pl-5">
-                    <h3 className="text-[17px] font-medium">{s.t}</h3>
-                    <p className="mt-2 text-[15px] leading-relaxed text-white/60">
-                      {s.b}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-
-            <ul className="mt-10 space-y-4 border-t border-white/15 pt-8">
-              {earnPoints.map((pt) => (
-                <li
-                  key={pt}
-                  className="flex gap-3.5 text-[14.5px] leading-relaxed text-white/70"
-                >
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-lime" />
-                  {pt}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <Link
-            href="/earn/gopro"
-            className="group mt-4 flex items-center justify-between gap-5 rounded-[24px] bg-lime p-6 text-ink transition-colors hover:bg-white sm:px-8"
-          >
-            <div>
-              <p className="label !text-ink/60">New — GoPro home program (Los Angeles only)</p>
-              <p className="mt-2 text-[15px] leading-relaxed">
-                Record first-person video of tidying and organizing in your own
-                home with a head-mounted GoPro we supply.
-              </p>
-            </div>
-            <span
-              aria-hidden
-              className="shrink-0 text-[22px] transition-transform group-hover:translate-x-1"
-            >
-              →
-            </span>
-          </Link>
-
-          <Link
-            href="/earn/speech"
-            className="group mt-4 flex items-center justify-between gap-5 rounded-[24px] bg-sky p-6 text-ink transition-colors hover:bg-white sm:px-8"
-          >
-            <div>
-              <p className="label !text-ink/60">New — Speech program (Los Angeles only)</p>
-              <p className="mt-2 text-[15px] leading-relaxed">
-                Have natural two-person conversations on a body camera we
-                supply, to help train fairer speech-recognition models.
-              </p>
-            </div>
-            <span
-              aria-hidden
-              className="shrink-0 text-[22px] transition-transform group-hover:translate-x-1"
-            >
-              →
-            </span>
-          </Link>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
 /* ------------------------------------ faq ----------------------------------- */
 
 const faqs = [
@@ -824,10 +879,10 @@ function Cta() {
           </h2>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
-              href="/apply"
+              href="/#programs"
               className={`${btn} bg-ink text-white hover:bg-flame`}
             >
-              Apply as a student
+              See open programs
             </Link>
             <Link
               href="/companies"
@@ -846,11 +901,10 @@ export default function Landing() {
   return (
     <>
       <Hero />
-      <OpenRoles />
+      <Programs />
       <Stats />
-      {/*<Earn />*/}
-      <Split />
       <Process />
+      <Split />
       <Statement />
       <Roles />
       <Faq />
