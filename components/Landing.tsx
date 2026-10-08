@@ -293,8 +293,9 @@ function Programs() {
       const dt = Math.min(now - last, 64);
       last = now;
       const c = clock.current;
-      if (drag.current?.axis === "x") {
-        // the finger owns the position while swiping
+      if (drag.current) {
+        // a finger on the carousel owns the position: it holds still under a
+        // press and follows a swipe
       } else if (c.tween) {
         const { from, to, dur, v } = c.tween;
         const t = (c.tween.t = Math.min(1, c.tween.t + dt / dur));
@@ -345,12 +346,17 @@ function Programs() {
     if (e.pointerType === "mouse" || drag.current) return;
     const slide = slideRefs.current[0];
     if (!slide) return;
-    swiped.current = false;
+    // touching catches the carousel wherever it is, even mid-glide or
+    // mid-fling. If it was moving, the catch shouldn't also tap whatever is
+    // under the finger.
+    const c = clock.current;
+    swiped.current = !!c.tween || Math.abs(c.pos - Math.round(c.pos)) > 0.03;
+    c.tween = null;
     drag.current = {
       id: e.pointerId,
       x: e.clientX,
       y: e.clientY,
-      pos: clock.current.pos,
+      pos: c.pos,
       w: slide.offsetWidth + 14,
       axis: null,
       lastX: e.clientX,
@@ -368,15 +374,13 @@ function Programs() {
       if (Math.hypot(dx, dy) < 8) return;
       d.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
       if (d.axis === "y") {
-        drag.current = null;
+        // the page is scrolling; let go of the carousel
+        release(d, e.timeStamp);
         return;
       }
       e.currentTarget.setPointerCapture(e.pointerId);
       swiped.current = true;
-      // grab the carousel wherever it is, even mid-glide
-      const c = clock.current;
-      c.tween = null;
-      d.pos = c.pos;
+      // measure from here so the carousel doesn't jump by the lock distance
       d.x = e.clientX;
     }
     const dt = e.timeStamp - d.lastT;
@@ -388,17 +392,21 @@ function Programs() {
 
   const onPointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
     const d = drag.current;
-    if (!d || d.id !== e.pointerId) return;
+    if (d && d.id === e.pointerId) release(d, e.timeStamp);
+  };
+
+  // finger lifted (or handed off to page scroll): coast on whatever momentum
+  // the swipe had, or just settle onto the nearest card after a press
+  const release = (d: NonNullable<typeof drag.current>, now: number) => {
     drag.current = null;
-    if (d.axis !== "x") return;
     const pos = clock.current.pos;
     const moved = pos - d.pos;
     const from = Math.round(d.pos);
     // finger velocity in cards/ms; a finger that paused before lifting has none
-    const v = e.timeStamp - d.lastT > 80 ? 0 : -d.v / d.w;
+    const v = d.axis !== "x" || now - d.lastT > 80 ? 0 : -d.v / d.w;
     // land on the card nearest where momentum would carry it
     let target = Math.round(pos + v * COAST_MS);
-    if (target === from) {
+    if (target === from && d.axis === "x") {
       if (moved > SWIPE_FRACTION || d.v < -FLICK_SPEED) target = from + 1;
       else if (moved < -SWIPE_FRACTION || d.v > FLICK_SPEED) target = from - 1;
     }
