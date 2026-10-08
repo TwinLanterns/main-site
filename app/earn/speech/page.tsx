@@ -6,7 +6,7 @@ import Shape from "@/components/Shapes";
 export const metadata: Metadata = {
   title: "Earn — Speech conversation program",
   description:
-    "Record natural two-person conversations, indoors and outdoors, on a chest-mounted body camera to help train fairer speech-recognition models.",
+    "Just talk: pair up for easy two-person conversations, indoors and out around Los Angeles, on a body camera we supply. A few sessions and you're done. Ages 16+.",
 };
 
 const wrap = "mx-auto w-full max-w-[1240px] px-5";
@@ -16,7 +16,7 @@ const btn =
 /* ----------------------------------- data ----------------------------------- */
 
 const heroStats = [
-  ["200 people", "taking part"],
+  ["200 spots", "open to participants"],
   ["~30 min", "of your speech each"],
   ["50 / 50", "indoor and outdoor"],
 ];
@@ -131,18 +131,19 @@ function Hero() {
         <Reveal>
           <span className="label inline-flex items-center gap-2.5 rounded-full border border-white/20 px-4 py-2 !text-white/70">
             <span className="h-1.5 w-1.5 rounded-full bg-lime" />
-            Earn — Speech conversation program
+            New · Speech program · Los Angeles
           </span>
 
           <h1 className="display mx-auto mt-7 max-w-[18ch] text-[clamp(2.4rem,6vw,4.6rem)]">
-            Talk. Get recorded. Help speech AI hear everyone.
+            Just talk. Help tech hear every voice.
           </h1>
 
           <p className="mx-auto mt-6 max-w-[56ch] text-[17px] leading-relaxed text-white/65 sm:text-[18px]">
-            Have natural two-person conversations, indoors and outdoors, on a
-            chest-mounted body camera we supply. The audio helps train
-            speech-recognition models to work well for people of every
-            background and accent.
+            Pair up for easy two-person conversations — some from a short
+            script, some free-flowing — indoors and out around town. We supply
+            the body camera and every script and prompt. A few sessions and
+            you&apos;re done, and voice technology works better for people of
+            every background, age and accent.
           </p>
 
           <div className="mt-9 flex flex-wrap justify-center gap-3">
@@ -150,7 +151,7 @@ function Hero() {
               href="/earn/speech/apply"
               className={`${btn} bg-lime text-ink hover:bg-white`}
             >
-              Sign up for the speech program
+              Sign up now
             </Link>
           </div>
 
@@ -353,13 +354,13 @@ function Cta() {
               href="/earn/speech/apply"
               className={`${btn} bg-lime text-ink hover:bg-white`}
             >
-              Sign up for the speech program
+              Sign up now
             </Link>
             <Link
-              href="/earn/info"
+              href="/programs"
               className={`${btn} border border-white/25 text-white hover:border-white`}
             >
-              Other Earn programs
+              See all programs
             </Link>
           </div>
         </Reveal>

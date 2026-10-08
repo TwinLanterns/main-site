@@ -4,9 +4,9 @@ import { Reveal } from "@/components/Reveal";
 import Shape from "@/components/Shapes";
 
 export const metadata: Metadata = {
-  title: "Earn — GoPro home collection SOP",
+  title: "Earn — Get paid to tidy your own home",
   description:
-    "Standard operating procedure for Earn's GoPro home-environment egocentric video collection: recruitment, logistics, capture standards, and quality acceptance.",
+    "Earn $10 for every approved hour — up to $500 — recording yourself tidying your own home on a GoPro we supply. Los Angeles, 18+, from 5 hours a week.",
 };
 
 const wrap = "mx-auto w-full max-w-[1240px] px-5";
@@ -16,115 +16,97 @@ const btn =
 /* ----------------------------------- data ----------------------------------- */
 
 const heroStats = [
-  ["1,500–2,500 hrs", "total collection target"],
-  ["30–50 households", "planned coverage"],
-  ["20–30 days", "target completion window"],
+  ["Up to $500", "per home, paid on approved hours"],
+  ["$10/hr", "for every approved hour you record"],
+  ["From 5 hrs/week", "on your own time, at home"],
 ];
 
-const householdMath = [
-  ["5", "scenes per household"],
-  ["10 hrs", "per scene"],
-  ["50 hrs", "per household"],
-  ["5 hrs/week", "minimum commitment"],
+const perks = [
+  ["GoPro supplied", "head-mounted camera and SD cards, at no cost to you"],
+  ["Zero commute", "you record in the rooms you already live in"],
+  ["We collect the footage", "we pick up your SD cards or swap in fresh ones"],
+  ["Fast feedback", "every video reviewed within 24 hours"],
 ];
 
-const recruitment = [
-  {
-    label: "Screening criteria",
-    kind: "clover" as const,
-    color: "text-flame",
-    points: [
-      "Age 18 or older",
-      "Consents to being recorded inside their own residence for AI-training purposes",
-      "Home has five core areas: kitchen, bedroom, living room, laundry room and dining room",
-      "Can keep other people — children in particular — out of frame for the full recording",
-      "Screened against the provided criteria and home-suitability questionnaire",
-    ],
-  },
-  {
-    label: "Training & certification",
-    kind: "hex" as const,
-    color: "text-sky",
-    points: [
-      "Every operator must pass certification before entering live production",
-      "Maintain a backfill pipeline to absorb attrition during certification and production, so the schedule is never interrupted",
-    ],
-  },
-  {
-    label: "Scheduling & batches",
-    kind: "scallop" as const,
-    color: "text-lilac",
-    points: [
-      "Schedule operators against the weekly ramp plan",
-      "Just 5 hours per household per week minimum — households can record more if they choose",
-      "Once a household reaches its 50-hour target, manage batch handover and transition cleanly",
-    ],
-  },
+const whoCanJoin = [
+  "18 or older and living in Los Angeles",
+  "Your home has a kitchen, bedroom, living room, laundry room and dining room",
+  "You can keep other people — especially kids — out of frame while you record",
+  "You're comfortable with your footage being used to train AI and robotics systems",
 ];
 
-const logistics = [
+const steps = [
   {
     n: "01",
-    t: "Device issuance & tracking",
-    b: "The project supplies up to 300 GoPro units for concurrent use. Distribute devices and SD cards to households at the start of each batch and recover them at batch close. Maintain chain of custody end to end, keep a device ledger, and report damage or loss accurately.",
+    t: "Sign up",
+    b: "Tell us a little about you and your home. If it's a fit, we'll reach out.",
   },
   {
     n: "02",
-    t: "SD card collection",
-    b: "Physically collect recorded SD cards from participating households on a fixed daily cadence — or run a card-swap system (pull the full card, insert an empty one) so recording is never interrupted.",
+    t: "Get certified",
+    b: "A quick training shows you exactly how to record footage that gets approved. Pass it and you're in.",
   },
   {
     n: "03",
-    t: "Upload within 24 hours",
-    b: "Each day's recorded video must be uploaded to the designated storage location within 24 hours of capture. QA turnaround and SLA are counted from the capture date, so late uploads compress the review window.",
+    t: "Get your GoPro",
+    b: "We get a head-mounted GoPro and SD cards to you. Nothing to buy.",
   },
   {
     n: "04",
-    t: "Data security & privacy",
-    b: "Footage shows the interior of private homes. SD cards and video files may be handled only by authorized personnel, with no copying or viewing beyond what upload verification strictly requires. All data is handled under the applicable confidentiality terms.",
+    t: "Tidy and record",
+    b: "Work room by room — dishes into the sink, clothes into the basket, toys into bins. At least 5 hours a week, more if you want.",
+  },
+  {
+    n: "05",
+    t: "We pick up your footage",
+    b: "We collect your recorded SD cards on a regular schedule, or swap in an empty one so you never have to stop.",
+  },
+  {
+    n: "06",
+    t: "Get paid",
+    b: "Every video is reviewed within 24 hours. You earn $10 for every approved hour, up to 50 hours per home.",
   },
 ];
 
+const recordTips = [
+  "Off camera, set each room up in its messy starting state",
+  "Keep your hands in frame the whole time",
+  "Pick up or move one object at a time",
+  "Move at a steady, controlled pace",
+  "Spread your time across rooms — each one counts for up to 10 hours",
+];
+
+const privacySweep = [
+  "Do a quick privacy check before every take",
+  "Make sure nobody else is in frame",
+  "Kids must never appear in or near the frame",
+  "Hide anything personal — mail, screens, documents",
+];
+
 const dressCode = [
-  "Hair tied back and secured",
+  "Hair tied back",
   "Sleeves up",
   "Closed-toe shoes",
   "No gloves",
   "No hats",
 ];
 
-const captureRules = [
-  "Off camera, stage each room into the specified initial cluttered state",
-  "Perform the specified tidying tasks — dishes into the sink or dishwasher, clothes into the laundry basket, toys into bins, parcels organized at the entryway",
-  "Keep hands visible in frame at all times",
-  "Pick up or move only one object at a time",
-  "Keep movement speed strictly controlled",
-  "Record in the core areas; bathrooms and other areas may be used as supplementary",
-];
-
-const privacySweep = [
-  "Run a privacy check before every single take",
-  "Confirm no other person is in frame",
-  "Children must never appear in or near the frame",
-  "Confirm no personal or sensitive information is visible anywhere",
-];
-
-const qaRules = [
+const payRules = [
   {
-    t: "100% review",
-    b: "Every uploaded video is reviewed — not sampled — by the QA team within 24 hours, across 11 dimensions including scene authenticity, task execution, motion speed, lighting, device setup, and privacy/compliance.",
+    t: "Every video gets a look",
+    b: "Our QA team reviews 100% of your footage within 24 hours, checking things like task execution, motion speed, lighting, camera setup and privacy.",
   },
   {
     t: "Pass or fail, per video",
-    b: "Each recorded video is adjudicated as a whole: full pass or full reject, with no partial credit. Only video rated Perfect or Medium counts toward valid approved hours.",
+    b: "Each video is judged as a whole. Videos rated Perfect or Medium count toward your paid hours.",
   },
   {
-    t: "Only approved hours settle",
-    b: "Hours worked, raw recorded duration, and rejected video don't count toward delivery. Only QA-approved video hours are counted and paid.",
+    t: "You're paid on approved hours",
+    b: "Payment is based on approved video hours — not time spent or raw footage — so clean takes are money in your pocket.",
   },
   {
-    t: "Daily feedback & coaching",
-    b: "A daily QA report breaks down approved hours, rejected hours, and specific rejection reasons by operator and date. Use it to coach and correct operators promptly.",
+    t: "Daily feedback",
+    b: "You'll hear what passed, what didn't and why, so you can fix it on the next take and keep your approval rate high.",
   },
 ];
 
@@ -167,18 +149,18 @@ function Hero() {
         <Reveal>
           <span className="label inline-flex items-center gap-2.5 rounded-full border border-white/20 px-4 py-2 !text-white/70">
             <span className="h-1.5 w-1.5 rounded-full bg-lime" />
-            Earn — Standard Operating Procedure
+            New · GoPro home program · Los Angeles
           </span>
 
-          <h1 className="display mx-auto mt-7 max-w-[18ch] text-[clamp(2.4rem,6vw,4.6rem)]">
-            GoPro home-environment video collection.
+          <h1 className="display mx-auto mt-7 max-w-[16ch] text-[clamp(2.4rem,6vw,4.6rem)]">
+            Get paid to tidy up your own home.
           </h1>
 
           <p className="mx-auto mt-6 max-w-[56ch] text-[17px] leading-relaxed text-white/65 sm:text-[18px]">
-            Participants wear a head-mounted GoPro and record first-person
-            video of themselves tidying and organizing inside their own homes.
-            Here&apos;s how recruitment, logistics, capture and quality review
-            work.
+            Put on a GoPro we supply, tidy and organize the rooms you already
+            live in, and earn $10 for every approved hour — up to $500. No
+            commute, no boss over your shoulder, just your own space on your
+            own time.
           </p>
 
           <div className="mt-9 flex flex-wrap justify-center gap-3">
@@ -186,8 +168,14 @@ function Hero() {
               href="/earn/gopro/apply"
               className={`${btn} bg-lime text-ink hover:bg-white`}
             >
-              Sign up for the GoPro program
+              Start earning
             </Link>
+            <a
+              href="#how"
+              className={`${btn} border border-white/25 hover:border-white`}
+            >
+              How it works
+            </a>
           </div>
 
           <dl className="mx-auto mt-12 grid max-w-3xl gap-7 border-t border-white/15 pt-8 sm:grid-cols-3">
@@ -217,35 +205,42 @@ function Overview() {
               className="pointer-events-none absolute -right-10 -top-10 w-40 text-ink/10"
               rotate={18}
             />
-            <p className="label">Budget</p>
+            <p className="label">What you earn</p>
             <p className="display mt-6 text-[clamp(3rem,6vw,4.5rem)]">
-              $10<span className="text-[0.4em] text-muted">/valid hr</span>
+              $10<span className="text-[0.4em] text-muted">/approved hr</span>
             </p>
             <p className="mt-6 max-w-[42ch] text-[15.5px] leading-relaxed text-muted">
-              10 USD per valid hour, inclusive of recruitment, participant
-              incentives, management overhead, and shipping to each household.
-              Payment is calculated on QA-approved video hours only.
+              Each home records up to 50 hours across five rooms — that&apos;s
+              up to $500 for tidying the place you live in anyway. The camera
+              and SD cards are on us.
             </p>
+            <dl className="mt-auto grid grid-cols-2 gap-x-6 gap-y-6 border-t border-line pt-8">
+              {[
+                ["5 rooms", "kitchen to dining room"],
+                ["10 hrs", "max per room"],
+                ["50 hrs", "per home"],
+                ["$500", "max earnings"],
+              ].map(([k, v]) => (
+                <div key={v}>
+                  <dt className="display text-[clamp(1.4rem,2.2vw,1.8rem)]">{k}</dt>
+                  <dd className="mt-1.5 text-[14px] text-muted">{v}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </Reveal>
 
         <Reveal delay={0.08}>
           <div className="flex h-full flex-col rounded-[32px] border border-white/15 bg-white/[0.03] p-8 sm:p-12">
-            <p className="label !text-white/50">Per household</p>
+            <p className="label !text-white/50">What you get</p>
             <h2 className="display mt-4 max-w-[16ch] text-[clamp(1.7rem,2.6vw,2.2rem)]">
-              Five scenes, fifty hours.
+              We handle the gear. You handle the mess.
             </h2>
-            <p className="mt-4 max-w-[46ch] text-[15px] leading-relaxed text-white/65">
-              All capture takes place in private residences. If 30–50
-              households doesn&apos;t fit, propose an alternative plan you
-              consider workable.
-            </p>
-
-            <dl className="mt-9 grid grid-cols-2 gap-x-6 gap-y-7 border-t border-white/10 pt-8">
-              {householdMath.map(([k, v]) => (
-                <div key={v}>
-                  <dt className="display text-[clamp(1.4rem,2.2vw,1.8rem)]">{k}</dt>
-                  <dd className="mt-1.5 text-[14px] text-white/55">{v}</dd>
+            <dl className="mt-9 space-y-6 border-t border-white/10 pt-8">
+              {perks.map(([k, v]) => (
+                <div key={k}>
+                  <dt className="text-[17px] font-medium">{k}</dt>
+                  <dd className="mt-1 text-[14.5px] text-white/55">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -256,65 +251,64 @@ function Overview() {
   );
 }
 
-/* ---------------------------------- recruitment -------------------------------- */
+/* ---------------------------------- who can join -------------------------------- */
 
-function Recruitment() {
+function WhoCanJoin() {
   return (
     <section className="border-t border-white/10 bg-ink py-20 text-white sm:py-28">
-      <div className={wrap}>
-        <Reveal className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:items-end">
-          <h2 className="display max-w-[14ch] text-[clamp(2rem,4.6vw,3.2rem)]">
-            Recruitment and workforce.
+      <div className={`${wrap} grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start`}>
+        <Reveal>
+          <p className="label !text-white/50">Who can join</p>
+          <h2 className="display mt-4 max-w-[14ch] text-[clamp(2rem,4.6vw,3.2rem)]">
+            If this sounds like you, you&apos;re in.
           </h2>
-          <p className="max-w-md text-[15.5px] leading-relaxed text-white/60 lg:pb-2">
-            Who can take part, how they get certified, and how batches are
-            scheduled.
+          <p className="mt-5 max-w-md text-[15.5px] leading-relaxed text-white/60">
+            No experience, résumé or interview needed. You just need the right
+            kind of home and a few hours a week.
           </p>
         </Reveal>
 
-        <div className="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-3">
-          {recruitment.map((r, i) => (
-            <Reveal key={r.label} delay={i * 0.06}>
-              <div className="flex items-center gap-3 border-b border-white/25 pb-3">
-                <Shape kind={r.kind} className={`h-5 w-5 ${r.color}`} />
-                <h3 className="text-[15px] font-medium">{r.label}</h3>
-              </div>
-              <ul className="mt-5 space-y-3">
-                {r.points.map((p) => (
-                  <li key={p} className="text-[15px] leading-relaxed text-white/55">
-                    {p}
-                  </li>
-                ))}
-              </ul>
-            </Reveal>
-          ))}
-        </div>
+        <Reveal delay={0.06}>
+          <ul className="space-y-4">
+            {whoCanJoin.map((p) => (
+              <li
+                key={p}
+                className="flex gap-4 rounded-[20px] border border-white/10 bg-white/[0.03] p-5 text-[15.5px] leading-relaxed text-white/75"
+              >
+                <span className="mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-lime text-[11px] text-ink">
+                  ✓
+                </span>
+                {p}
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </div>
     </section>
   );
 }
 
-/* ---------------------------------- logistics ---------------------------------- */
+/* ---------------------------------- how it works -------------------------------- */
 
-function Logistics() {
+function HowItWorks() {
   return (
-    <section className="border-t border-white/10 bg-ink py-20 text-white sm:py-28">
+    <section id="how" className="scroll-mt-24 border-t border-white/10 bg-ink py-20 text-white sm:py-28">
       <div className={wrap}>
         <Reveal className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:items-end">
           <h2 className="display max-w-[14ch] text-[clamp(2rem,4.6vw,3.2rem)]">
-            Equipment and data logistics.
+            From sign-up to payday.
           </h2>
           <p className="max-w-md text-[15.5px] leading-relaxed text-white/60 lg:pb-2">
-            From handing out cameras to getting footage uploaded — and keeping
-            it private the whole way.
+            Six simple steps. We ship the gear, collect the footage and review
+            it fast — you just tidy up.
           </p>
         </Reveal>
 
         <ol className="mt-14 border-t border-white/10">
-          {logistics.map((s, i) => (
+          {steps.map((s, i) => (
             <Reveal as="li" key={s.n} delay={i * 0.04}>
               <div className="group grid items-start gap-4 border-b border-white/10 py-8 sm:grid-cols-[64px_minmax(0,1fr)] sm:gap-8 lg:grid-cols-[64px_minmax(0,260px)_minmax(0,1fr)]">
-                <span className="display text-[clamp(1.6rem,2.4vw,2rem)] text-white/40">
+                <span className="display text-[clamp(1.6rem,2.4vw,2rem)] text-lime">
                   {s.n}
                 </span>
                 <h3 className="text-[17px] font-medium">{s.t}</h3>
@@ -330,9 +324,9 @@ function Logistics() {
   );
 }
 
-/* ----------------------------------- capture ----------------------------------- */
+/* ----------------------------------- recording ---------------------------------- */
 
-function Capture() {
+function Recording() {
   return (
     <section className="relative overflow-hidden bg-white py-20 text-ink sm:py-28">
       <div className="pointer-events-none absolute inset-0 hidden lg:block">
@@ -353,10 +347,13 @@ function Capture() {
 
       <div className={`${wrap} relative`}>
         <Reveal className="mx-auto max-w-[46ch] text-center">
-          <p className="label">On-site capture</p>
+          <p className="label">Recording tips</p>
           <h2 className="display mt-4 text-[clamp(2rem,4.6vw,3.4rem)]">
-            How every take should be set up and shot.
+            Get every hour approved.
           </h2>
+          <p className="mt-5 text-[16px] leading-relaxed text-muted">
+            Follow these and your footage sails through review.
+          </p>
         </Reveal>
 
         <div className="mt-14 grid gap-5 lg:grid-cols-2">
@@ -364,10 +361,10 @@ function Capture() {
             <div className="h-full rounded-[32px] border border-lime/40 bg-lime/10 p-8 sm:p-10">
               <span className="label inline-flex items-center gap-2 rounded-full border border-ink/15 bg-white px-3.5 py-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-lime" />
-                Scene & task execution
+                While you record
               </span>
               <ul className="mt-6 space-y-4">
-                {captureRules.map((pt) => (
+                {recordTips.map((pt) => (
                   <li key={pt} className="flex gap-3.5 text-[15px] leading-relaxed text-ink/75">
                     <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-lime" />
                     {pt}
@@ -381,7 +378,7 @@ function Capture() {
             <div className="h-full rounded-[32px] border border-flame/35 bg-flame/10 p-8 sm:p-10">
               <span className="label inline-flex items-center gap-2 rounded-full border border-ink/15 bg-white px-3.5 py-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-flame" />
-                Privacy sweep
+                Privacy check
               </span>
               <ul className="mt-6 space-y-4">
                 {privacySweep.map((pt) => (
@@ -398,7 +395,7 @@ function Capture() {
         <Reveal delay={0.12}>
           <div className="mt-8 grid gap-8 rounded-[24px] border border-line bg-shell p-7 sm:p-8 lg:grid-cols-2">
             <div>
-              <p className="label">Dress & appearance</p>
+              <p className="label">What to wear</p>
               <ul className="mt-5 flex flex-wrap gap-2.5">
                 {dressCode.map((d) => (
                   <li
@@ -411,11 +408,11 @@ function Capture() {
               </ul>
             </div>
             <div>
-              <p className="label">Area rules</p>
+              <p className="label">Where to record</p>
               <p className="mt-5 text-[14.5px] leading-relaxed text-muted">
-                Core areas are the kitchen, bedroom, living room, laundry room
-                and dining room. Cumulative recording in any single area is
-                capped at 10 hours.
+                Your kitchen, bedroom, living room, laundry room and dining
+                room, plus bathrooms and other spaces as extras. Each room
+                counts for up to 10 hours.
               </p>
             </div>
           </div>
@@ -425,24 +422,23 @@ function Capture() {
   );
 }
 
-/* ------------------------------------- qa -------------------------------------- */
+/* ------------------------------------- pay -------------------------------------- */
 
-function Quality() {
+function Pay() {
   return (
     <section className="bg-ink py-20 text-white sm:py-28">
       <div className={wrap}>
         <Reveal className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:items-end">
           <h2 className="display max-w-[15ch] text-[clamp(2rem,4.6vw,3.2rem)]">
-            Quality review and acceptance.
+            How you get paid.
           </h2>
           <p className="max-w-md text-[15.5px] leading-relaxed text-white/60 lg:pb-2">
-            Every video is checked against the quality rubric, and only
-            approved hours count.
+            Simple and transparent: approved hours times $10.
           </p>
         </Reveal>
 
         <div className="mt-14 grid gap-5 sm:grid-cols-2">
-          {qaRules.map((r, i) => (
+          {payRules.map((r, i) => (
             <Reveal key={r.t} delay={i * 0.05}>
               <div className="h-full rounded-[28px] border border-white/15 bg-white/[0.03] p-8">
                 <h3 className="text-[17px] font-medium">{r.t}</h3>
@@ -477,15 +473,25 @@ function Cta() {
       />
       <div className={`${wrap} relative text-center`}>
         <Reveal>
-          <h2 className="display mx-auto max-w-[18ch] text-[clamp(2.2rem,5.6vw,4rem)]">
-            Looking for the phone-based program?
+          <h2 className="display mx-auto max-w-[16ch] text-[clamp(2.2rem,5.6vw,4rem)]">
+            Your home. Your hours. Up to $500.
           </h2>
+          <p className="mx-auto mt-6 max-w-[48ch] text-[17px] leading-relaxed text-white/60">
+            Spots are limited to a set number of Los Angeles homes. Sign up now
+            and we&apos;ll be in touch.
+          </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
-              href="/earn/info"
+              href="/earn/gopro/apply"
+              className={`${btn} bg-lime text-ink hover:bg-white`}
+            >
+              Start earning
+            </Link>
+            <Link
+              href="/programs"
               className={`${btn} border border-white/25 text-white hover:border-white`}
             >
-              Earn filming info
+              See all programs
             </Link>
           </div>
         </Reveal>
@@ -501,10 +507,10 @@ export default function EarnGoProPage() {
     <>
       <Hero />
       <Overview />
-      <Recruitment />
-      <Logistics />
-      <Capture />
-      <Quality />
+      <WhoCanJoin />
+      <HowItWorks />
+      <Recording />
+      <Pay />
       <Cta />
     </>
   );

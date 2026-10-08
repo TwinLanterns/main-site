@@ -17,7 +17,7 @@ const btn =
 
 const heroStats = [
   ["$10/hr", "for approved filming time"],
-  ["Any modern phone", "iPhone 12+ or a recent Pixel / Galaxy S"],
+  ["Your own phone", "iPhone 12–17, Pixel 6–9 or Galaxy S21–S24"],
   ["~10 minutes", "to get set up and start"],
 ];
 
@@ -212,18 +212,19 @@ function Hero() {
         <Reveal>
           <span className="label inline-flex items-center gap-2.5 rounded-full border border-white/20 px-4 py-2 !text-white/70">
             <span className="h-1.5 w-1.5 rounded-full bg-lime" />
-            Earn — Part Time Internship Program
+            Part-time internship · Hiring now
           </span>
 
           <h1 className="display mx-auto mt-7 max-w-[18ch] text-[clamp(2.4rem,6vw,4.6rem)]">
-            Pay, payouts and everything you need to film.
+            Get paid $10 an hour to film the work you already do.
           </h1>
 
           <p className="mx-auto mt-6 max-w-[54ch] text-[17px] leading-relaxed text-white/65 sm:text-[18px]">
-            Earn pays you to film everyday work — cleaning, repair, warehouse,
-            the physical stuff — to help train robotics AI. Here&apos;s the
-            pay, the gear you need, and exactly how to shoot footage that gets
-            approved.
+            Strap your phone to the head mount we provide, film real hands-on
+            work — repair, warehouse, kitchen prep, car care — and get paid for
+            every approved hour while helping build the next generation of
+            robots. No résumé, no interview, no experience. Here&apos;s the
+            pay, the gear and exactly how to get your footage approved.
           </p>
 
           <div className="mt-9 flex flex-wrap justify-center gap-3">
@@ -331,7 +332,7 @@ function Devices() {
       <div className={wrap}>
         <Reveal className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:items-end">
           <h2 className="display max-w-[13ch] text-[clamp(2rem,4.6vw,3.2rem)]">
-            Any of these phones will work.
+            Got one of these? You&apos;re ready.
           </h2>
           <p className="max-w-md text-[15.5px] leading-relaxed text-white/60 lg:pb-2">
             You just need a supported phone, a steady internet connection, and
