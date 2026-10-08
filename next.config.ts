@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/partner", destination: "/earn/info", permanent: true },
       { source: "/partner/:path*", destination: "/earn/:path*", permanent: true },
+      // /jobs was folded into the searchable /programs page.
+      { source: "/jobs", destination: "/programs", permanent: true },
     ];
   },
 };

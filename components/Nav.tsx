@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Mark from "./Mark";
-import { JOBS } from "@/lib/jobs";
+import { PROGRAMS } from "@/lib/programs";
 
 const links = [
   { href: "/#how", label: "How it works" },
@@ -14,8 +14,8 @@ const links = [
 ];
 
 const earnLinks = [
-  { href: "/jobs", label: "All open roles" },
-  ...JOBS.map((j) => ({ href: j.applyHref, label: j.title })),
+  { href: "/programs", label: "All open roles" },
+  ...PROGRAMS.map((p) => ({ href: p.apply, label: p.name })),
 ];
 
 export default function Nav() {
@@ -71,7 +71,7 @@ export default function Nav() {
       </Link>
       <div data-earn-menu className="group relative">
         <Link
-          href="/jobs"
+          href="/programs"
           aria-haspopup="true"
           aria-expanded={earnOpen}
           onClick={(e) => {
@@ -210,10 +210,10 @@ export default function Nav() {
           <div className="pointer-events-auto mt-2 overflow-hidden rounded-[28px] border border-line bg-white md:hidden">
             {[
               ...links.map((l) => ({ ...l, pop: false })),
-              { href: "/jobs", label: "Open roles", pop: true },
-              ...JOBS.map((j) => ({
-                href: j.applyHref,
-                label: j.title,
+              { href: "/programs", label: "Open roles", pop: true },
+              ...PROGRAMS.map((p) => ({
+                href: p.apply,
+                label: p.name,
                 pop: false,
               })),
               { href: "/companies", label: "I'm hiring", pop: false },
