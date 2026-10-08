@@ -200,6 +200,10 @@ const MANUAL_MS = 700;
 // A swipe past this fraction of a card (or a quick flick) moves to the next one.
 const SWIPE_FRACTION = 0.18;
 const FLICK_SPEED = 0.35; // px per ms
+// Momentum after a swipe: the card keeps travelling as if decaying with this
+// time constant (ms), so a hard fling can carry past several cards.
+const COAST_MS = 325;
+const MAX_FLING = 3;
 
 // Eased position within one step. Slope is (1 - SLOW) while a card sits
 // centred and spikes to ~2.4x average speed mid-transition, so it always
@@ -222,7 +226,9 @@ function Programs() {
     base: 0,
     u: 0,
     pos: 0,
-    tween: null as null | { from: number; to: number; t: number },
+    // cubic ease from `from` to `to` over `dur` ms, leaving at velocity `v`
+    // (cards per ms) so a release carries the swipe's momentum into the glide
+    tween: null as null | { from: number; to: number; t: number; dur: number; v: number },
   });
   // touch swipe in progress; axis locks once the finger has moved far enough
   // to tell a horizontal swipe from a vertical page scroll
@@ -290,8 +296,10 @@ function Programs() {
       if (drag.current?.axis === "x") {
         // the finger owns the position while swiping
       } else if (c.tween) {
-        c.tween.t = Math.min(1, c.tween.t + dt / MANUAL_MS);
-        c.pos = c.tween.from + (c.tween.to - c.tween.from) * smooth(c.tween.t);
+        const { from, to, dur, v } = c.tween;
+        const t = (c.tween.t = Math.min(1, c.tween.t + dt / dur));
+        // Hermite curve: ends at rest on `to`, starts with slope `v`
+        c.pos = from + (to - from) * smooth(t) + v * dur * (t * (1 - t) * (1 - t));
         if (c.tween.t >= 1) {
           c.base = c.tween.to;
           c.u = 0;
@@ -320,9 +328,9 @@ function Programs() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const goTo = (target: number) => {
+  const goTo = (target: number, v = 0, dur = MANUAL_MS) => {
     const c = clock.current;
-    c.tween = { from: c.pos, to: target, t: 0 };
+    c.tween = { from: c.pos, to: target, t: 0, dur, v };
   };
   const step = (dir: number) => goTo(Math.round(clock.current.pos) + dir);
   const jump = (i: number) => {
@@ -383,14 +391,30 @@ function Programs() {
     if (!d || d.id !== e.pointerId) return;
     drag.current = null;
     if (d.axis !== "x") return;
-    const moved = clock.current.pos - d.pos;
+    const pos = clock.current.pos;
+    const moved = pos - d.pos;
     const from = Math.round(d.pos);
-    let target = Math.round(clock.current.pos);
+    // finger velocity in cards/ms; a finger that paused before lifting has none
+    const v = e.timeStamp - d.lastT > 80 ? 0 : -d.v / d.w;
+    // land on the card nearest where momentum would carry it
+    let target = Math.round(pos + v * COAST_MS);
     if (target === from) {
       if (moved > SWIPE_FRACTION || d.v < -FLICK_SPEED) target = from + 1;
       else if (moved < -SWIPE_FRACTION || d.v > FLICK_SPEED) target = from - 1;
     }
-    goTo(target);
+    target = Math.max(from - MAX_FLING, Math.min(from + MAX_FLING, target));
+
+    const dist = target - pos;
+    // only keep velocity heading toward the target, and stretch the glide so
+    // that velocity can't overshoot it (slope <= 3x average keeps it monotonic)
+    let carry = Math.sign(v) === Math.sign(dist) ? v : 0;
+    let dur = Math.min(1100, 420 + 220 * Math.abs(dist));
+    if (carry) {
+      dur = Math.max(260, Math.min(dur, (3 * dist) / carry));
+      // a fling faster than even the shortest glide can absorb gets capped
+      if (Math.abs(carry * dur) > Math.abs(3 * dist)) carry = (3 * dist) / dur;
+    }
+    goTo(target, carry, dur);
   };
 
   return (
