@@ -8,6 +8,8 @@ export interface EarnSignupPayload extends TermsAcceptance {
   lastName: string;
   email: string;
   phone: string;
+  referredBy?: string;
+  referrerCollege?: string;
   referredByCode: string | null;
 }
 export type EarnApplicantPayload = EarnSignupPayload;

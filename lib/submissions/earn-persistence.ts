@@ -50,6 +50,8 @@ async function insertSignup(
       last_name: payload.lastName,
       email: payload.email,
       phone: payload.phone,
+      referred_by: payload.referredBy ?? null,
+      referrer_college: payload.referrerCollege ?? null,
       referred_by_code: payload.referredByCode || null,
       raw_payload: payload,
       ...extra,

@@ -61,6 +61,8 @@ export async function parseEarnSignupRequest(
     lastName,
     email,
     phone,
+    referredBy: str(p.referredBy)?.trim() || undefined,
+    referrerCollege: str(p.referrerCollege)?.trim() || undefined,
     referredByCode: str(p.referredByCode)?.trim() || null,
     ...termsAcceptance(),
   };

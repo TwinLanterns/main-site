@@ -31,6 +31,8 @@ interface Draft {
   lastName: string;
   email: string;
   phone: string;
+  referredBy: string;
+  referrerCollege: string;
 }
 
 const EMPTY: Draft = {
@@ -38,6 +40,8 @@ const EMPTY: Draft = {
   lastName: "",
   email: "",
   phone: "",
+  referredBy: "",
+  referrerCollege: "",
 };
 
 function isValidPhone(raw: string): boolean {
@@ -115,6 +119,8 @@ export default function GoproApplyFlow() {
             lastName: draft.lastName,
             email: draft.email,
             phone: draft.phone,
+            referredBy: draft.referredBy || undefined,
+            referrerCollege: draft.referrerCollege || undefined,
             referredByCode: refCode,
             acceptedTerms: accepted,
           },
@@ -237,6 +243,18 @@ export default function GoproApplyFlow() {
                         onChange={(e) => update("phone", e.target.value)}
                       />
                     </Field>
+                    <Field label="Who referred you" hint="Optional" className="sm:col-span-2">
+                      <Input
+                        value={draft.referredBy}
+                        onChange={(e) => update("referredBy", e.target.value)}
+                      />
+                    </Field>
+                    <Field label="Their college" hint="Optional" className="sm:col-span-2">
+                      <Input
+                        value={draft.referrerCollege}
+                        onChange={(e) => update("referrerCollege", e.target.value)}
+                      />
+                    </Field>
                   </div>
                 </>
               )}
@@ -253,6 +271,10 @@ export default function GoproApplyFlow() {
                     <p>
                       {draft.firstName} {draft.lastName} · {draft.email} ·{" "}
                       {draft.phone}
+                    </p>
+                    <p>
+                      Referred by: {draft.referredBy || "—"} · College:{" "}
+                      {draft.referrerCollege || "—"}
                     </p>
                   </div>
                   <TermsAgreement
