@@ -199,7 +199,7 @@ export default function HireFlow() {
                     blurb="Enough to know the environment a student would be walking into."
                   />
                   <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                    <Field label="Company">
+                    <Field label="Company" required>
                       <Input
                         value={data.company}
                         onChange={(e) => set("company", e.target.value)}
@@ -213,7 +213,7 @@ export default function HireFlow() {
                         placeholder="northlight.co"
                       />
                     </Field>
-                    <Field label="Your name">
+                    <Field label="Your name" required>
                       <Input
                         value={data.name}
                         onChange={(e) => set("name", e.target.value)}
@@ -221,7 +221,7 @@ export default function HireFlow() {
                         autoComplete="name"
                       />
                     </Field>
-                    <Field label="Work email">
+                    <Field label="Work email" required>
                       <Input
                         type="email"
                         value={data.email}
@@ -236,7 +236,7 @@ export default function HireFlow() {
                         onVerified={setEmailVerified}
                       />
                     </Field>
-                    <Field label="Stage" className="sm:col-span-2">
+                    <Field label="Stage" required className="sm:col-span-2">
                       <Pills
                         options={stages}
                         value={data.stage}
@@ -272,14 +272,14 @@ export default function HireFlow() {
                     blurb="You don't need a job description. Describe the problem and we'll write one."
                   />
                   <div className="mt-8 space-y-6">
-                    <Field label="Function">
+                    <Field label="Function" required>
                       <Pills
                         options={functions}
                         value={data.fn}
                         onChange={(v) => set("fn", v as string)}
                       />
                     </Field>
-                    <Field label="Working title">
+                    <Field label="Working title" required>
                       <Input
                         value={data.title}
                         onChange={(e) => set("title", e.target.value)}
@@ -288,6 +288,7 @@ export default function HireFlow() {
                     </Field>
                     <Field
                       label="What should be true in three months?"
+                      required
                       hint={`${data.outcome.trim().length} characters — the outcome, not the tasks.`}
                     >
                       <Textarea
@@ -311,7 +312,7 @@ export default function HireFlow() {
                   />
                   <div className="mt-8 space-y-6">
                     <div className="grid gap-6 sm:grid-cols-2">
-                      <Field label="Setup">
+                      <Field label="Setup" required>
                         <Pills
                           options={setups}
                           value={data.setup}
@@ -326,7 +327,7 @@ export default function HireFlow() {
                         />
                       </Field>
                     </div>
-                    <Field label="Commitment">
+                    <Field label="Commitment" required>
                       <Pills
                         options={commitments}
                         value={data.commitment}
@@ -341,7 +342,7 @@ export default function HireFlow() {
                           placeholder="$22 / hr"
                         />
                       </Field>
-                      <Field label="When do you want someone starting?">
+                      <Field label="When do you want someone starting?" required>
                         <Pills
                           options={timelines}
                           value={data.timeline}

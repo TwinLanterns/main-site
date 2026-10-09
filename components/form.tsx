@@ -12,17 +12,26 @@ export const ease = [0.22, 1, 0.36, 1] as const;
 export function Field({
   label,
   hint,
+  required = false,
   children,
   className = "",
 }: {
   label: string;
   hint?: string;
+  required?: boolean;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-2 block text-[14px]">{label}</span>
+      <span className="mb-2 block text-[14px]">
+        {label}
+        {required && (
+          <span aria-hidden className="ml-0.5 text-flame">
+            *
+          </span>
+        )}
+      </span>
       {children}
       {hint ? (
         <span className="mt-2 block text-[13px] text-muted">{hint}</span>
@@ -493,11 +502,13 @@ export function StepHeader({
   total,
   title,
   blurb,
+  required = false,
 }: {
   index: number;
   total: number;
   title: string;
   blurb: string;
+  required?: boolean;
 }) {
   return (
     <div>
@@ -506,6 +517,11 @@ export function StepHeader({
       </p>
       <h2 className="display mt-3 text-[clamp(1.8rem,3.4vw,2.5rem)]">
         {title}
+        {required && (
+          <span aria-hidden className="ml-1 text-flame">
+            *
+          </span>
+        )}
       </h2>
       <p className="mt-3 max-w-md text-[15.5px] leading-relaxed text-muted">
         {blurb}
@@ -659,6 +675,9 @@ export function TermsAgreement({
         </Link>
         . I&apos;m 18 or older, or a parent or guardian has given me
         permission.
+        <span aria-hidden className="ml-0.5 text-flame">
+          *
+        </span>
       </span>
     </label>
   );

@@ -62,6 +62,9 @@ function LoginForm() {
             htmlFor="username"
           >
             Username
+            <span aria-hidden className="ml-0.5 text-flame">
+              *
+            </span>
           </label>
           <input
             id="username"
@@ -81,6 +84,9 @@ function LoginForm() {
             htmlFor="password"
           >
             Password
+            <span aria-hidden className="ml-0.5 text-flame">
+              *
+            </span>
           </label>
           <input
             id="password"

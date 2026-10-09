@@ -98,10 +98,10 @@ export default function AmbassadorFlow() {
 
       <form onSubmit={handleSubmit} className="mt-12">
         <div className="space-y-6">
-          <Field label="Your name">
+          <Field label="Your name" required>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
-          <Field label="Your email">
+          <Field label="Your email" required>
             <Input
               type="email"
               autoComplete="email"

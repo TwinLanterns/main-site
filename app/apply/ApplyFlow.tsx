@@ -212,6 +212,7 @@ export default function ApplyFlow() {
                     index={0}
                     total={steps.length}
                     title="What kind of work pulls you in?"
+                    required
                     blurb="Tap everything that appeals. We'd rather over-match than miss you."
                   />
                   <div className="mt-8">
@@ -266,7 +267,7 @@ export default function ApplyFlow() {
                         ticks={["Now", "4 weeks", "8 weeks", "12 weeks"]}
                       />
                     </div>
-                    <Field label="Where you'd work">
+                    <Field label="Where you'd work" required>
                       <Pills
                         options={setups}
                         value={data.setup}
@@ -303,7 +304,7 @@ export default function ApplyFlow() {
                     blurb="No account, no password. Just enough to reach you."
                   />
                   <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                    <Field label="First name">
+                    <Field label="First name" required>
                       <Input
                         value={data.firstName}
                         onChange={(e) => set("firstName", e.target.value)}
@@ -319,7 +320,7 @@ export default function ApplyFlow() {
                         autoComplete="family-name"
                       />
                     </Field>
-                    <Field label="Email">
+                    <Field label="Email" required>
                       <Input
                         type="email"
                         value={data.email}
@@ -346,14 +347,14 @@ export default function ApplyFlow() {
                         autoComplete="tel"
                       />
                     </Field>
-                    <Field label="Level" className="sm:col-span-2">
+                    <Field label="Level" required className="sm:col-span-2">
                       <Pills
                         options={levels}
                         value={data.level}
                         onChange={(v) => set("level", v as string)}
                       />
                     </Field>
-                    <Field label="School">
+                    <Field label="School" required>
                       <Input
                         value={data.school}
                         onChange={(e) => set("school", e.target.value)}
@@ -399,6 +400,7 @@ export default function ApplyFlow() {
                   <div className="mt-8 space-y-7">
                     <Field
                       label="Something you built, ran or fixed"
+                      required
                       hint={`${data.built.trim().length} characters — a few sentences is plenty. At least 20 characters.`}
                     >
                       <Textarea

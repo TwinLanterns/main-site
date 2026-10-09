@@ -202,19 +202,19 @@ export default function SpeechApplyFlow() {
                     blurb="Who's signing up for the speech program."
                   />
                   <div className="mt-8 grid gap-5 sm:grid-cols-2 sm:gap-6">
-                    <Field label="First name">
+                    <Field label="First name" required>
                       <Input
                         value={draft.firstName}
                         onChange={(e) => update("firstName", e.target.value)}
                       />
                     </Field>
-                    <Field label="Last name">
+                    <Field label="Last name" required>
                       <Input
                         value={draft.lastName}
                         onChange={(e) => update("lastName", e.target.value)}
                       />
                     </Field>
-                    <Field label="Email">
+                    <Field label="Email" required>
                       <Input
                         type="email"
                         autoComplete="email"
@@ -230,7 +230,7 @@ export default function SpeechApplyFlow() {
                         onVerified={setEmailVerified}
                       />
                     </Field>
-                    <Field label="Phone">
+                    <Field label="Phone" required>
                       <Input
                         type="tel"
                         autoComplete="tel"
