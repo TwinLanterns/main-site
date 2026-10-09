@@ -1,56 +1,18 @@
 // lib/submissions/earn-types.ts
 
-import type { DeviceOs } from "./earn-eligibility";
 import type { TermsAcceptance } from "@/lib/legal";
 
-export interface EarnApplicantPayload extends TermsAcceptance {
+// All three program sign-ups collect the same contact-only payload.
+export interface EarnSignupPayload extends TermsAcceptance {
   firstName: string;
-  lastName?: string;
+  lastName: string;
   email: string;
-  phone?: string;
-  location?: string;
-  referredBy?: string;        // NEW
-  referrerCollege?: string;   // NEW
-  deviceOs: DeviceOs | "";
-  deviceModel: string;
-  taskInterests: string[];
-  filmingAck: boolean;
-  consent: boolean;
+  phone: string;
   referredByCode: string | null;
 }
-export interface EarnGoproPayload extends TermsAcceptance {
-  firstName: string;
-  lastName?: string;
-  email: string;
-  phone?: string;
-  location?: string;
-  referredBy?: string;
-  referrerCollege?: string;
-  isAdult: boolean;
-  hasCoreAreas: boolean;
-  canKeepOthersOut: boolean;
-  weeklyHoursOk: boolean;
-  consent: boolean;
-  referredByCode: string | null;
-}
-export interface EarnSpeechPayload extends TermsAcceptance {
-  firstName: string;
-  lastName?: string;
-  email: string;
-  phone?: string;
-  referredBy?: string;
-  referrerCollege?: string;
-  age: number | null;
-  sex: string;
-  raceEthnicity: string;
-  accent: string;
-  region?: string;
-  firstLanguageEnglish: boolean;
-  guardianConsent: boolean;
-  availabilityOk: boolean;
-  consent: boolean;
-  referredByCode: string | null;
-}
+export type EarnApplicantPayload = EarnSignupPayload;
+export type EarnGoproPayload = EarnSignupPayload;
+export type EarnSpeechPayload = EarnSignupPayload;
 export interface EarnAmbassadorPayload extends TermsAcceptance {
   name: string;
   email: string;

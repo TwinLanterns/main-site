@@ -5,7 +5,7 @@ import {
   saveEarnApplicant,
   earnErrorResponse,
 } from "@/lib/submissions/earn-persistence";
-import { parseEarnApplicantRequest } from "@/lib/submissions/earn-parse";
+import { parseEarnSignupRequest } from "@/lib/submissions/earn-parse";
 import { sendEarnApplicantEmails } from "@/lib/email/earn-emails";
 import { badRequest } from "@/lib/http";
 import { checkEmailVerification } from "@/lib/verification/check";
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   const limited = rateLimit(req, "submit", 10, 60 * 60 * 1000);
   if (limited) return limited;
 
-  const parsed = await parseEarnApplicantRequest(req);
+  const parsed = await parseEarnSignupRequest(req);
   if (!parsed.ok) {
     return badRequest(parsed.error);
   }

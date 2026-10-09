@@ -23,12 +23,6 @@ import {
 const EARN_FOOTER = `Earn · Twin Lanterns  · Real-world task data.<br />
 <a href="https://twinlanterns.co/earn" style="color:${COLOR.muted};text-decoration:underline">twinlanterns.co/earn</a>`;
 
-function deviceLabel(os: EarnApplicantPayload["deviceOs"]): string {
-  if (os === "ios") return "iOS";
-  if (os === "android") return "Android";
-  return "";
-}
-
 // ---------- Applicant ----------
 
 export function renderEarnApplicantInternal(
@@ -39,19 +33,11 @@ export function renderEarnApplicantInternal(
     .filter(Boolean)
     .join(" ");
 
-  const device = [deviceLabel(payload.deviceOs), payload.deviceModel]
-    .filter(Boolean)
-    .join(" · ");
 
   const items: [string, string][] = [
     ["Name", fullName],
     ["Email", payload.email],
-    ["Phone", payload.phone ?? ""],
-    ["Location", payload.location ?? ""],
-    ["Device", device],
-    ["Filming head-mounted", payload.filmingAck ? "Yes" : "No"],
-    ["Consent to be filmed", payload.consent ? "Yes" : "No"],
-    ["Task interests", payload.taskInterests.join(", ")],
+    ["Phone", payload.phone],
     ["Referred by", payload.referredByCode ?? ""],
     [
       "Qualified",
@@ -86,7 +72,7 @@ export function renderEarnApplicantConfirmation(
     : `Thanks for applying, ${firstName}.`;
 
   const body = status.qualified
-    ? "We've reviewed your application and you're a fit for Twin Lanterns. We'll email you the next steps for recording your first task within a couple of days."
+    ? "Thanks for applying to Twin Lanterns. We'll email you the next steps for recording your first task within a couple of days."
     : "Thanks for applying to Twin Lanterns. Your device or setup doesn't match what we need for this round — but we keep every application on file and will reach out if that changes.";
 
   const inner = `
@@ -108,8 +94,6 @@ export function renderEarnApplicantConfirmation(
 
 // ---------- GoPro applicant ----------
 
-const yn = (v: boolean) => (v ? "Yes" : "No");
-
 export function renderEarnGoproInternal(
   payload: EarnGoproPayload,
   status: { qualified: boolean; reasons: string[] },
@@ -121,13 +105,7 @@ export function renderEarnGoproInternal(
   const items: [string, string][] = [
     ["Name", fullName],
     ["Email", payload.email],
-    ["Phone", payload.phone ?? ""],
-    ["Location", payload.location ?? ""],
-    ["18 or older", yn(payload.isAdult)],
-    ["Has all five core areas", yn(payload.hasCoreAreas)],
-    ["Can keep others out of frame", yn(payload.canKeepOthersOut)],
-    ["5+ hrs/week", yn(payload.weeklyHoursOk)],
-    ["Consent to home recording", yn(payload.consent)],
+    ["Phone", payload.phone],
     ["Referred by", payload.referredByCode ?? ""],
     [
       "Qualified",
@@ -162,8 +140,8 @@ export function renderEarnGoproConfirmation(
     : `Thanks for signing up, ${firstName}.`;
 
   const body = status.qualified
-    ? "Thanks for signing up for the Earn GoPro home program. Your home looks like a fit — we'll email you next steps, including equipment and scheduling, within a couple of days."
-    : "Thanks for signing up for the Earn GoPro home program. Your home or availability doesn't match what we need for this round — but we keep every sign-up on file and will reach out if that changes.";
+    ? "Thanks for signing up for the Earn GoPro home program. We'll email you next steps, including equipment and scheduling, within a couple of days."
+    : "Thanks for signing up for the Earn GoPro home program. Your sign-up doesn't match what we need for this round — but we keep every sign-up on file and will reach out if that changes.";
 
   const inner = `
     ${brandHeader()}
@@ -195,16 +173,7 @@ export function renderEarnSpeechInternal(
   const items: [string, string][] = [
     ["Name", fullName],
     ["Email", payload.email],
-    ["Phone", payload.phone ?? ""],
-    ["Age", payload.age === null ? "" : String(payload.age)],
-    ["Sex", payload.sex],
-    ["Race/ethnicity", payload.raceEthnicity],
-    ["Accent", payload.accent],
-    ["Region", payload.region ?? ""],
-    ["First language English", yn(payload.firstLanguageEnglish)],
-    ["Guardian consent", yn(payload.guardianConsent)],
-    ["Available for multiple sessions", yn(payload.availabilityOk)],
-    ["Consent to audio/video recording", yn(payload.consent)],
+    ["Phone", payload.phone],
     ["Referred by", payload.referredByCode ?? ""],
     [
       "Qualified",

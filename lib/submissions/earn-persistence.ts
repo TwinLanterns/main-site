@@ -6,17 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { getSupabaseOrThrow } from "@/lib/supabase-or-throw";
-import {
-  evaluateEarnEligibility,
-  evaluateEarnGoproEligibility,
-  evaluateEarnSpeechEligibility,
-} from "./earn-eligibility";
-import type {
-  EarnApplicantPayload,
-  EarnAmbassadorPayload,
-  EarnGoproPayload,
-  EarnSpeechPayload,
-} from "./earn-types";
+import type { EarnSignupPayload, EarnAmbassadorPayload } from "./earn-types";
 
 export class EarnConfigError extends Error {}
 export class EarnSaveError extends Error {}
@@ -32,9 +22,10 @@ function generateCode(): string {
   return code;
 }
 
-export interface SaveEarnApplicantResult {
+// The sign-up forms only collect contact details, so there's nothing to
+// screen on: every sign-up is saved as qualified.
+export interface SaveEarnSignupResult {
   id: string;
-  table: "earn_applicants_qualified" | "earn_applicants_unqualified";
   qualified: boolean;
   reasons: string[];
 }
@@ -45,148 +36,55 @@ function toEarnConfigError(err: unknown): EarnConfigError {
   );
 }
 
-export async function saveEarnApplicant(
-  payload: EarnApplicantPayload,
-): Promise<SaveEarnApplicantResult> {
+async function insertSignup(
+  table: string,
+  payload: EarnSignupPayload,
+  extra: Record<string, unknown>,
+): Promise<SaveEarnSignupResult> {
   const supabase = getSupabaseOrThrow(toEarnConfigError);
-
-  const { qualified, reasons } = evaluateEarnEligibility({
-    deviceOs: payload.deviceOs,
-    deviceModel: payload.deviceModel,
-    filmingAck: payload.filmingAck,
-    consent: payload.consent,
-  });
-
-  const shared = {
-    first_name: payload.firstName,
-    last_name: payload.lastName ?? null,
-    email: payload.email,
-    phone: payload.phone ?? null,
-    location: payload.location ?? null,
-    device_os: payload.deviceOs || null,
-    referred_by: payload.referredBy ?? null,
-    referrer_college: payload.referrerCollege ?? null,
-    device_model: payload.deviceModel || null,
-    task_interests: payload.taskInterests,
-    filming_ack: payload.filmingAck,
-    consent: payload.consent,
-    referred_by_code: payload.referredByCode || null,
-    raw_payload: payload,
-  };
-
-  const table = qualified
-    ? "earn_applicants_qualified"
-    : "earn_applicants_unqualified";
-
-  const row = qualified ? shared : { ...shared, disqualified_reasons: reasons };
 
   const { data, error } = await supabase
     .from(table)
-    .insert(row)
-    .select("id")
-    .single();
-
-    if (error || !data) {
-        console.error(`supabase insert error (${table})`, error);
-        throw new EarnSaveError(error?.message ?? `Insert into ${table} failed`);
-    }
-
-  return { id: data.id as string, table, qualified, reasons };
-}
-
-export interface SaveEarnGoproResult {
-  id: string;
-  qualified: boolean;
-  reasons: string[];
-}
-
-export async function saveEarnGoproApplicant(
-  payload: EarnGoproPayload,
-): Promise<SaveEarnGoproResult> {
-  const supabase = getSupabaseOrThrow(toEarnConfigError);
-
-  const { qualified, reasons } = evaluateEarnGoproEligibility(payload);
-
-  const { data, error } = await supabase
-    .from("earn_gopro_applicants")
     .insert({
       first_name: payload.firstName,
-      last_name: payload.lastName ?? null,
+      last_name: payload.lastName,
       email: payload.email,
-      phone: payload.phone ?? null,
-      location: payload.location ?? null,
-      qualified,
-      disqualified_reasons: qualified ? null : reasons,
-      is_adult: payload.isAdult,
-      has_core_areas: payload.hasCoreAreas,
-      can_keep_others_out: payload.canKeepOthersOut,
-      weekly_hours_ok: payload.weeklyHoursOk,
-      consent: payload.consent,
-      referred_by: payload.referredBy ?? null,
-      referrer_college: payload.referrerCollege ?? null,
+      phone: payload.phone,
       referred_by_code: payload.referredByCode || null,
       raw_payload: payload,
+      ...extra,
     })
     .select("id")
     .single();
 
   if (error || !data) {
-    console.error("supabase insert error (earn_gopro_applicants)", error);
-    throw new EarnSaveError(
-      error?.message ?? "Insert into earn_gopro_applicants failed",
-    );
+    console.error(`supabase insert error (${table})`, error);
+    throw new EarnSaveError(error?.message ?? `Insert into ${table} failed`);
   }
 
-  return { id: data.id as string, qualified, reasons };
+  return { id: data.id as string, qualified: true, reasons: [] };
 }
 
-export interface SaveEarnSpeechResult {
-  id: string;
-  qualified: boolean;
-  reasons: string[];
+export function saveEarnApplicant(
+  payload: EarnSignupPayload,
+): Promise<SaveEarnSignupResult> {
+  return insertSignup("earn_applicants_qualified", payload, {
+    task_interests: [],
+    filming_ack: false,
+    consent: false,
+  });
 }
 
-export async function saveEarnSpeechParticipant(
-  payload: EarnSpeechPayload,
-): Promise<SaveEarnSpeechResult> {
-  const supabase = getSupabaseOrThrow(toEarnConfigError);
+export function saveEarnGoproApplicant(
+  payload: EarnSignupPayload,
+): Promise<SaveEarnSignupResult> {
+  return insertSignup("earn_gopro_applicants", payload, { qualified: true });
+}
 
-  const { qualified, reasons } = evaluateEarnSpeechEligibility(payload);
-
-  const { data, error } = await supabase
-    .from("earn_speech_participants")
-    .insert({
-      first_name: payload.firstName,
-      last_name: payload.lastName ?? null,
-      email: payload.email,
-      phone: payload.phone ?? null,
-      qualified,
-      disqualified_reasons: qualified ? null : reasons,
-      age: payload.age,
-      sex: payload.sex || null,
-      race_ethnicity: payload.raceEthnicity || null,
-      accent: payload.accent || null,
-      region: payload.region ?? null,
-      first_language_english: payload.firstLanguageEnglish,
-      guardian_consent: payload.guardianConsent,
-      availability_ok: payload.availabilityOk,
-      consent: payload.consent,
-      referred_by: payload.referredBy ?? null,
-      referrer_college: payload.referrerCollege ?? null,
-      referred_by_code: payload.referredByCode || null,
-      raw_payload: payload,
-    })
-    .select("id")
-    .single();
-
-  if (error || !data) {
-    console.error("supabase insert error (earn_speech_participants)", error);
-    throw new EarnSaveError(
-      error?.message ?? "Insert into earn_speech_participants failed",
-    );
-  }
-
-  return { id: data.id as string, qualified, reasons };
+export function saveEarnSpeechParticipant(
+  payload: EarnSignupPayload,
+): Promise<SaveEarnSignupResult> {
+  return insertSignup("earn_speech_participants", payload, { qualified: true });
 }
 
 export interface SaveEarnAmbassadorResult {

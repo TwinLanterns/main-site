@@ -3,16 +3,15 @@
 // app/earn/gopro/apply/GoproApplyFlow.tsx
 //
 // GoPro home-program sign-up. Same shape as app/earn/apply/EarnApplyFlow.tsx
-// (one <form>, stepper advances/submits via onSubmit) but with the home-
-// screening questions from the GoPro SOP instead of phone/task questions.
+// (one <form>, stepper advances/submits via onSubmit) but contact details
+// only — no screening questions.
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   EmailVerify,
   Field,
   Input,
-  Pills,
   StepHeader,
   StepRail,
   Progress,
@@ -20,29 +19,18 @@ import {
   TermsAgreement,
   ease,
 } from "@/components/form";
-import { evaluateEarnGoproEligibility } from "@/lib/submissions/earn-eligibility";
 import { isValidEmail } from "@/lib/validation";
 
 const DRAFT_KEY = "tl-earn-gopro-draft-v1";
 const REF_KEY = "tl-earn-ref-code";
 
-const STEPS = ["About you", "Your home", "Finish"] as const;
-
-type YesNo = "" | "Yes" | "No";
+const STEPS = ["About you", "Finish"] as const;
 
 interface Draft {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  location: string;
-  referredBy: string;
-  referrerCollege: string;
-  isAdult: YesNo;
-  hasCoreAreas: YesNo;
-  canKeepOthersOut: YesNo;
-  weeklyHoursOk: YesNo;
-  consent: YesNo;
 }
 
 const EMPTY: Draft = {
@@ -50,15 +38,12 @@ const EMPTY: Draft = {
   lastName: "",
   email: "",
   phone: "",
-  location: "",
-  referredBy: "",
-  referrerCollege: "",
-  isAdult: "",
-  hasCoreAreas: "",
-  canKeepOthersOut: "",
-  weeklyHoursOk: "",
-  consent: "",
 };
+
+function isValidPhone(raw: string): boolean {
+  const digits = raw.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 15;
+}
 
 export default function GoproApplyFlow() {
   const [step, setStep] = useState(0);
@@ -108,30 +93,12 @@ export default function GoproApplyFlow() {
     setDraft((d) => ({ ...d, [key]: value }));
   }
 
-  const eligibility = useMemo(
-    () =>
-      evaluateEarnGoproEligibility({
-        isAdult: draft.isAdult === "Yes",
-        hasCoreAreas: draft.hasCoreAreas === "Yes",
-        canKeepOthersOut: draft.canKeepOthersOut === "Yes",
-        weeklyHoursOk: draft.weeklyHoursOk === "Yes",
-        consent: draft.consent === "Yes",
-      }),
-    [draft],
-  );
-
-  const homeAnswered =
-    draft.isAdult !== "" &&
-    draft.hasCoreAreas !== "" &&
-    draft.canKeepOthersOut !== "" &&
-    draft.weeklyHoursOk !== "" &&
-    draft.consent !== "";
-
   const stepValid = [
     draft.firstName.trim().length > 1 &&
+      draft.lastName.trim().length > 0 &&
       isValidEmail(draft.email) &&
-      emailVerified,
-    homeAnswered,
+      emailVerified &&
+      isValidPhone(draft.phone),
     accepted,
   ][step];
 
@@ -145,17 +112,9 @@ export default function GoproApplyFlow() {
         body: JSON.stringify({
           payload: {
             firstName: draft.firstName,
-            lastName: draft.lastName || undefined,
+            lastName: draft.lastName,
             email: draft.email,
-            phone: draft.phone || undefined,
-            location: draft.location || undefined,
-            referredBy: draft.referredBy || undefined,
-            referrerCollege: draft.referrerCollege || undefined,
-            isAdult: draft.isAdult === "Yes",
-            hasCoreAreas: draft.hasCoreAreas === "Yes",
-            canKeepOthersOut: draft.canKeepOthersOut === "Yes",
-            weeklyHoursOk: draft.weeklyHoursOk === "Yes",
-            consent: draft.consent === "Yes",
+            phone: draft.phone,
             referredByCode: refCode,
             acceptedTerms: accepted,
           },
@@ -204,8 +163,8 @@ export default function GoproApplyFlow() {
             <p className="label mb-4 text-muted">Thanks for signing up</p>
             <h1 className="display text-5xl md:text-6xl">We&apos;ll be in touch.</h1>
             <p className="mx-auto mt-6 max-w-md text-lg text-muted">
-              Your home or availability doesn&apos;t match what we need for
-              this round — we&apos;ll reach out if that changes.
+              Your sign-up doesn&apos;t match what we need for this
+              round — we&apos;ll reach out if that changes.
             </p>
           </>
         )}
@@ -248,7 +207,7 @@ export default function GoproApplyFlow() {
                         onChange={(e) => update("firstName", e.target.value)}
                       />
                     </Field>
-                    <Field label="Last name" hint="Optional">
+                    <Field label="Last name">
                       <Input
                         value={draft.lastName}
                         onChange={(e) => update("lastName", e.target.value)}
@@ -270,28 +229,12 @@ export default function GoproApplyFlow() {
                         onVerified={setEmailVerified}
                       />
                     </Field>
-                    <Field label="Phone" hint="Optional">
+                    <Field label="Phone">
                       <Input
+                        type="tel"
+                        autoComplete="tel"
                         value={draft.phone}
                         onChange={(e) => update("phone", e.target.value)}
-                      />
-                    </Field>
-                    <Field label="Location" hint="City, state" className="sm:col-span-2">
-                      <Input
-                        value={draft.location}
-                        onChange={(e) => update("location", e.target.value)}
-                      />
-                    </Field>
-                    <Field label="Who referred you" hint="Optional" className="sm:col-span-2">
-                      <Input
-                        value={draft.referredBy}
-                        onChange={(e) => update("referredBy", e.target.value)}
-                      />
-                    </Field>
-                    <Field label="Their college" hint="Optional" className="sm:col-span-2">
-                      <Input
-                        value={draft.referrerCollege}
-                        onChange={(e) => update("referrerCollege", e.target.value)}
                       />
                     </Field>
                   </div>
@@ -303,82 +246,13 @@ export default function GoproApplyFlow() {
                   <StepHeader
                     index={1}
                     total={STEPS.length}
-                    title="Your home"
-                    blurb="You'd wear a head-mounted GoPro and record yourself tidying inside your own home. A few quick checks first."
-                  />
-                  <div className="mt-8 space-y-8">
-                    <Field label="Are you 18 or older?">
-                      <Pills
-                        options={["Yes", "No"]}
-                        value={draft.isAdult}
-                        onChange={(v) => update("isAdult", v as YesNo)}
-                      />
-                    </Field>
-
-                    <Field
-                      label="Does your home have a kitchen, bedroom, living room, laundry room and dining room?"
-                      hint="All five areas are needed."
-                    >
-                      <Pills
-                        options={["Yes", "No"]}
-                        value={draft.hasCoreAreas}
-                        onChange={(v) => update("hasCoreAreas", v as YesNo)}
-                      />
-                    </Field>
-
-                    <Field
-                      label="Can you keep other people — children in particular — out of frame for every recording?"
-                    >
-                      <Pills
-                        options={["Yes", "No"]}
-                        value={draft.canKeepOthersOut}
-                        onChange={(v) => update("canKeepOthersOut", v as YesNo)}
-                      />
-                    </Field>
-
-                    <Field label="Can you record at least 5 hours per week?">
-                      <Pills
-                        options={["Yes", "No"]}
-                        value={draft.weeklyHoursOk}
-                        onChange={(v) => update("weeklyHoursOk", v as YesNo)}
-                      />
-                    </Field>
-
-                    <Field label="Do you consent to being recorded inside your own residence for AI-training purposes?">
-                      <Pills
-                        options={["Yes", "No"]}
-                        value={draft.consent}
-                        onChange={(v) => update("consent", v as YesNo)}
-                      />
-                    </Field>
-
-                    {homeAnswered && !eligibility.qualified && (
-                      <p className="text-[13.5px] leading-relaxed text-muted">
-                        Heads up — based on your answers this sign-up may not
-                        qualify. You can still submit; we keep every sign-up
-                        on file.
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {step === 2 && (
-                <>
-                  <StepHeader
-                    index={2}
-                    total={STEPS.length}
                     title="Finish"
                     blurb="Review and submit."
                   />
                   <div className="mt-8 space-y-3 text-[14.5px] leading-relaxed text-muted">
                     <p>
-                      {draft.firstName} {draft.lastName} · {draft.email}
-                    </p>
-                    <p>{draft.location || "No location given"}</p>
-                    <p>
-                      Referred by: {draft.referredBy || "—"} · College:{" "}
-                      {draft.referrerCollege || "—"}
+                      {draft.firstName} {draft.lastName} · {draft.email} ·{" "}
+                      {draft.phone}
                     </p>
                   </div>
                   <TermsAgreement
