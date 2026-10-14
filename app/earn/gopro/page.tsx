@@ -6,7 +6,7 @@ import Shape from "@/components/Shapes";
 export const metadata: Metadata = {
   title: "Earn — Get paid to tidy your own home",
   description:
-    "Earn $10 for every approved hour — up to $500 — recording yourself tidying your own home on a GoPro we supply. Los Angeles, 18+, from 5 hours a week.",
+    "Earn $10 for every approved hour — $500+ per home — recording yourself tidying your own home on a GoPro we supply. 18+, 50+ hours over 40 days.",
 };
 
 const wrap = "mx-auto w-full max-w-[1240px] px-5";
@@ -16,21 +16,22 @@ const btn =
 /* ----------------------------------- data ----------------------------------- */
 
 const heroStats = [
-  ["Up to $500", "per home, paid on approved hours"],
+  ["$500+", "per home, paid on approved hours"],
   ["$10/hr", "for every approved hour you record"],
-  ["From 5 hrs/week", "on your own time, at home"],
+  ["50+ hrs in 40 days", "on your own schedule, at home"],
 ];
 
 const perks = [
   ["GoPro supplied", "head-mounted camera and SD cards, at no cost to you"],
   ["Zero commute", "you record in the rooms you already live in"],
-  ["We collect the footage", "we pick up your SD cards or swap in fresh ones"],
+  ["We collect the footage", "we collect your SD cards and send fresh ones"],
   ["Fast feedback", "every video reviewed within 24 hours"],
 ];
 
 const whoCanJoin = [
-  "18 or older and living in Los Angeles",
-  "Your home has a kitchen, bedroom, living room, laundry room and dining room",
+  "18 or older",
+  "Your home has a few rooms to tidy — a kitchen, bedroom, living room or similar",
+  "You can record 50+ hours within 40 days, whenever suits you",
   "You can keep other people — especially kids — out of frame while you record",
   "You're comfortable with your footage being used to train AI and robotics systems",
 ];
@@ -54,17 +55,17 @@ const steps = [
   {
     n: "04",
     t: "Tidy and record",
-    b: "Work room by room — dishes into the sink, clothes into the basket, toys into bins. At least 5 hours a week, more if you want.",
+    b: "Work room by room — dishes into the sink, clothes into the basket, toys into bins. Fit it in whenever works for you — 50+ hours within 40 days.",
   },
   {
     n: "05",
-    t: "We pick up your footage",
+    t: "We collect your footage",
     b: "We collect your recorded SD cards on a regular schedule, or swap in an empty one so you never have to stop.",
   },
   {
     n: "06",
     t: "Get paid",
-    b: "Every video is reviewed within 24 hours. You earn $10 for every approved hour, up to 50 hours per home.",
+    b: "Every video is reviewed within 24 hours. You earn $10 for every approved hour, 50+ hours per home.",
   },
 ];
 
@@ -73,7 +74,7 @@ const recordTips = [
   "Keep your hands in frame the whole time",
   "Pick up or move one object at a time",
   "Move at a steady, controlled pace",
-  "Spread your time across rooms — each one counts for up to 10 hours",
+  "Spread your time across different rooms",
 ];
 
 const privacySweep = [
@@ -149,7 +150,7 @@ function Hero() {
         <Reveal>
           <span className="label inline-flex items-center gap-2.5 rounded-full border border-white/20 px-4 py-2 !text-white/70">
             <span className="h-1.5 w-1.5 rounded-full bg-lime" />
-            New · GoPro home program · Los Angeles
+            New · GoPro home program
           </span>
 
           <h1 className="display mx-auto mt-7 max-w-[16ch] text-[clamp(2.4rem,6vw,4.6rem)]">
@@ -158,7 +159,7 @@ function Hero() {
 
           <p className="mx-auto mt-6 max-w-[56ch] text-[17px] leading-relaxed text-white/65 sm:text-[18px]">
             Put on a GoPro we supply, tidy and organize the rooms you already
-            live in, and earn $10 for every approved hour — up to $500. No
+            live in, and earn $10 for every approved hour — $500+ per home. No
             commute, no boss over your shoulder, just your own space on your
             own time.
           </p>
@@ -210,16 +211,16 @@ function Overview() {
               $10<span className="text-[0.4em] text-muted">/approved hr</span>
             </p>
             <p className="mt-6 max-w-[42ch] text-[15.5px] leading-relaxed text-muted">
-              Each home records up to 50 hours across five rooms — that&apos;s
-              up to $500 for tidying the place you live in anyway. The camera
-              and SD cards are on us.
+              Each home records 50+ hours within 40 days — that&apos;s $500+
+              for tidying the place you live in anyway. The camera and SD
+              cards are on us.
             </p>
             <dl className="mt-auto grid grid-cols-2 gap-x-6 gap-y-6 border-t border-line pt-8">
               {[
-                ["5 rooms", "kitchen to dining room"],
-                ["10 hrs", "max per room"],
-                ["50 hrs", "per home"],
-                ["$500", "max earnings"],
+                ["Any rooms", "kitchen, bedroom and more"],
+                ["40 days", "to record your hours"],
+                ["50+ hrs", "per home"],
+                ["$500+", "per home"],
               ].map(([k, v]) => (
                 <div key={v}>
                   <dt className="display text-[clamp(1.4rem,2.2vw,1.8rem)]">{k}</dt>
@@ -263,8 +264,8 @@ function WhoCanJoin() {
             If this sounds like you, you&apos;re in.
           </h2>
           <p className="mt-5 max-w-md text-[15.5px] leading-relaxed text-white/60">
-            No experience, résumé or interview needed. You just need the right
-            kind of home and a few hours a week.
+            No experience, résumé or interview needed. You just need a home to
+            tidy and time to record 50+ hours over 40 days.
           </p>
         </Reveal>
 
@@ -410,9 +411,9 @@ function Recording() {
             <div>
               <p className="label">Where to record</p>
               <p className="mt-5 text-[14.5px] leading-relaxed text-muted">
-                Your kitchen, bedroom, living room, laundry room and dining
-                room, plus bathrooms and other spaces as extras. Each room
-                counts for up to 10 hours.
+                Any rooms you live in — kitchen, bedroom, living room, laundry
+                room, dining room, bathrooms and more. Mix it up across
+                spaces.
               </p>
             </div>
           </div>
@@ -474,11 +475,10 @@ function Cta() {
       <div className={`${wrap} relative text-center`}>
         <Reveal>
           <h2 className="display mx-auto max-w-[16ch] text-[clamp(2.2rem,5.6vw,4rem)]">
-            Your home. Your hours. Up to $500.
+            Your home. Your hours. $500+.
           </h2>
           <p className="mx-auto mt-6 max-w-[48ch] text-[17px] leading-relaxed text-white/60">
-            Spots are limited to a set number of Los Angeles homes. Sign up now
-            and we&apos;ll be in touch.
+            Spots are limited. Sign up now and we&apos;ll be in touch.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
