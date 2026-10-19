@@ -98,7 +98,7 @@ export default function ProgramSearch() {
                     onClick={() => setSelectedSlug(p.slug)}
                     className={`w-full rounded-[24px] border p-6 text-left transition-all ${
                       on
-                        ? "border-ink bg-ink text-white"
+                        ? "border-amber/50 bg-shell"
                         : "border-ink/10 hover:border-ink/40"
                     }`}
                   >
@@ -107,10 +107,10 @@ export default function ProgramSearch() {
                       <span className="label !text-current opacity-70">{p.location}</span>
                     </div>
                     <h3 className="display mt-3 text-[1.6rem]">{p.name}</h3>
-                    <p className={`mt-2 text-[15px] ${on ? "text-white/70" : "text-muted"}`}>
+                    <p className="mt-2 text-[15px] text-muted">
                       {p.title}
                     </p>
-                    <p className={`mt-4 text-[13.5px] ${on ? "text-white/60" : "text-muted"}`}>
+                    <p className="mt-4 text-[13.5px] text-muted">
                       {p.pay} · {p.gear}
                     </p>
                   </button>
@@ -122,7 +122,7 @@ export default function ProgramSearch() {
           {selected && (
             <article
               key={selected.slug}
-              className="rounded-[28px] bg-ink p-8 text-white sm:p-10 lg:sticky lg:top-24"
+              className="tl-dark rounded-[28px] border border-line bg-shell p-8 text-white sm:p-10 lg:sticky lg:top-24"
             >
               <div className="flex items-center gap-2.5">
                 <span className={`h-2 w-2 rounded-full ${selected.dot}`} />

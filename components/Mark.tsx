@@ -1,6 +1,7 @@
 export default function Mark({
   className = "h-6 w-auto",
-  spark = "var(--color-flame)",
+  // the logo keeps its own orange spark, independent of the site accent
+  spark = "#ff5a18",
 }: {
   className?: string;
   spark?: string;

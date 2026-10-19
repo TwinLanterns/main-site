@@ -96,7 +96,7 @@ const consentPoints = [
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-ink pb-16 pt-36 text-white sm:pb-24 sm:pt-44">
+    <section className="relative overflow-hidden tl-dark bg-ink pb-16 pt-36 text-white sm:pb-24 sm:pt-44">
       <div className="pointer-events-none absolute inset-0 hidden lg:block">
         <Shape
           kind="hex"
@@ -173,7 +173,7 @@ function Hero() {
 
 function HowItWorks() {
   return (
-    <section className="border-t border-white/10 bg-ink py-20 text-white sm:py-28">
+    <section className="border-t border-white/10 tl-dark bg-ink py-20 text-white sm:py-28">
       <div className={wrap}>
         <Reveal className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:items-end">
           <h2 className="display max-w-[14ch] text-[clamp(2rem,4.6vw,3.2rem)]">
@@ -249,7 +249,7 @@ function Modes() {
 
 function Who() {
   return (
-    <section className="border-t border-white/10 bg-ink py-20 text-white sm:py-28">
+    <section className="border-t border-white/10 tl-dark bg-ink py-20 text-white sm:py-28">
       <div className={`${wrap} grid gap-12 lg:grid-cols-2`}>
         <Reveal>
           <h2 className="display max-w-[14ch] text-[clamp(2rem,4.6vw,3.2rem)]">
@@ -293,7 +293,7 @@ function Who() {
 
 function Consent() {
   return (
-    <section className="border-t border-white/10 bg-ink py-20 text-white sm:py-28">
+    <section className="border-t border-white/10 tl-dark bg-ink py-20 text-white sm:py-28">
       <div className={wrap}>
         <Reveal className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:items-end">
           <h2 className="display max-w-[14ch] text-[clamp(2rem,4.6vw,3.2rem)]">
@@ -331,7 +331,7 @@ function Consent() {
 
 function Cta() {
   return (
-    <section className="relative overflow-hidden border-t border-white/10 bg-ink py-24 text-white sm:py-32">
+    <section className="relative overflow-hidden border-t border-white/10 tl-dark bg-ink py-24 text-white sm:py-32">
       <Shape
         kind="squircle"
         className="pointer-events-none absolute -left-10 top-16 w-32 text-blush/30"

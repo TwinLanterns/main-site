@@ -1,13 +1,21 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 
-const dm = DM_Sans({
+const geist = Geist({
   subsets: ["latin"],
-  variable: "--font-dm",
+  weight: ["200", "300", "400", "500"],
+  variable: "--font-geist",
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -16,15 +24,15 @@ const site = "https://twinlanterns.co";
 export const metadata: Metadata = {
   metadataBase: new URL(site),
   title: {
-    default: "Twin Lanterns — Student talent, matched by hand",
+    default: "Twin Lanterns — We capture the real world for AI",
     template: "%s · Twin Lanterns",
   },
   description:
-    "Twin Lanterns is the bridge between ambitious high school and college students and the companies that need them. Screened candidates, scoped roles, real work.",
+    "Twin Lanterns captures real-world egocentric video, in-home video and speech for AI and robotics teams, run end to end from first recruit to final delivery.",
   openGraph: {
     title: "Twin Lanterns",
     description:
-      "The bridge between ambitious students and the companies that need them.",
+      "We capture the real world for AI: egocentric video, in-home video and speech, end to end.",
     url: site,
     siteName: "Twin Lanterns",
     type: "website",
@@ -67,7 +75,7 @@ const jsonLd = {
         caption: "Twin Lanterns"
       },
       description:
-        "The bridge between ambitious high school and college students and the companies that need them.",
+        "Twin Lanterns captures real-world egocentric video, in-home video and speech for AI and robotics teams.",
       foundingDate: "2026", 
       sameAs: [
         "https://www.linkedin.com/company/twinlanterns",
@@ -102,7 +110,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={dm.variable}>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable}`}>
       <body>
         <a
           href="#main"

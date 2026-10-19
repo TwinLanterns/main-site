@@ -77,7 +77,15 @@ export default function Shape({
         } as React.CSSProperties
       }
     >
-      <path d={shapePaths[kind]} fill="currentColor" />
+      {/* drawn as a hairline, like the line art on the homepage */}
+      <path
+        d={shapePaths[kind]}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.2}
+        vectorEffect="non-scaling-stroke"
+        opacity={0.55}
+      />
     </svg>
   );
 }

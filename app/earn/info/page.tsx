@@ -84,7 +84,7 @@ const dontList = [
 const filmingSteps = [
   {
     n: "01",
-    t: "Download Partner B",
+    t: "Download Minute Data",
     b: "Grab the app on iOS or Android and sign in with your email.",
   },
   {
@@ -177,7 +177,7 @@ const autoFail = [
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-ink pb-16 pt-36 text-white sm:pb-24 sm:pt-44">
+    <section className="relative overflow-hidden tl-dark bg-ink pb-16 pt-36 text-white sm:pb-24 sm:pt-44">
       <div className="pointer-events-none absolute inset-0 hidden lg:block">
         <Shape
           kind="arch"
@@ -230,7 +230,7 @@ function Hero() {
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             <Link
               href="/earn/apply"
-              className={`${btn} bg-white text-ink hover:bg-flame hover:text-white`}
+              className={`${btn} bg-white text-ink hover:bg-flame`}
             >
               Start earning
             </Link>
@@ -266,10 +266,10 @@ function Hero() {
 
 function PayAmbassador() {
   return (
-    <section className="border-t border-white/10 bg-ink py-20 text-white sm:py-28">
+    <section className="border-t border-white/10 tl-dark bg-ink py-20 text-white sm:py-28">
       <div className={`${wrap} grid gap-6 lg:grid-cols-2`}>
         <Reveal>
-          <div className="relative flex h-full flex-col overflow-hidden rounded-[32px] bg-white p-8 text-ink sm:p-12">
+          <div className="relative flex h-full flex-col overflow-hidden rounded-[32px] border border-amber/30 bg-amber/[0.05] p-8 text-white sm:p-12">
             <Shape
               kind="clover"
               className="pointer-events-none absolute -right-10 -top-10 w-40 text-ink/10"
@@ -328,7 +328,7 @@ function PayAmbassador() {
 
 function Devices() {
   return (
-    <section className="border-t border-white/10 bg-ink py-20 text-white sm:py-28">
+    <section className="border-t border-white/10 tl-dark bg-ink py-20 text-white sm:py-28">
       <div className={wrap}>
         <Reveal className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:items-end">
           <h2 className="display max-w-[13ch] text-[clamp(2rem,4.6vw,3.2rem)]">
@@ -449,7 +449,7 @@ function DoDont() {
 
 function Steps() {
   return (
-    <section className="bg-ink py-20 text-white sm:py-28">
+    <section className="tl-dark bg-ink py-20 text-white sm:py-28">
       <div className={wrap}>
         <Reveal className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:items-end">
           <h2 className="display max-w-[13ch] text-[clamp(2rem,4.6vw,3.2rem)]">
@@ -484,7 +484,7 @@ function Steps() {
 
 function Tasks() {
   return (
-    <section className="border-t border-white/10 bg-ink py-20 text-white sm:py-28">
+    <section className="border-t border-white/10 tl-dark bg-ink py-20 text-white sm:py-28">
       <div className={wrap}>
         <Reveal className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:items-end">
           <h2 className="display max-w-[15ch] text-[clamp(2rem,4.6vw,3.2rem)]">
@@ -530,7 +530,7 @@ function Tasks() {
 
 function Cta() {
   return (
-    <section className="relative overflow-hidden border-t border-white/10 bg-ink py-24 text-white sm:py-32">
+    <section className="relative overflow-hidden border-t border-white/10 tl-dark bg-ink py-24 text-white sm:py-32">
       <Shape
         kind="squircle"
         className="pointer-events-none absolute -left-10 top-16 w-32 text-blush/30"
@@ -551,7 +551,7 @@ function Cta() {
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link
               href="/earn/apply"
-              className={`${btn} bg-white text-ink hover:bg-flame hover:text-white`}
+              className={`${btn} bg-white text-ink hover:bg-flame`}
             >
               Start earning
             </Link>
