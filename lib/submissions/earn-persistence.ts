@@ -71,6 +71,8 @@ export function saveEarnApplicant(
   payload: EarnSignupPayload,
 ): Promise<SaveEarnSignupResult> {
   return insertSignup("earn_applicants_qualified", payload, {
+    device_os: "",
+    device_model: "",
     task_interests: [],
     filming_ack: false,
     consent: false,
