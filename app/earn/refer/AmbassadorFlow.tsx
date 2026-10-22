@@ -23,7 +23,7 @@ export default function AmbassadorFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"idle" | "copied" | "failed">("idle");
   const [emailVerified, setEmailVerified] = useState(false);
   const [accepted, setAccepted] = useState(false);
 
@@ -73,14 +73,23 @@ export default function AmbassadorFlow() {
           <span className="flex-1 truncate text-[14px]">{link}</span>
           <button
             type="button"
-            onClick={() => {
-              navigator.clipboard.writeText(link);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
+            onClick={async () => {
+              // Rejects on insecure contexts or when permission is denied.
+              try {
+                await navigator.clipboard.writeText(link);
+                setCopied("copied");
+              } catch {
+                setCopied("failed");
+              }
+              setTimeout(() => setCopied("idle"), 1500);
             }}
             className="label shrink-0 text-flame"
           >
-            {copied ? "Copied" : "Copy"}
+            {copied === "copied"
+              ? "Copied"
+              : copied === "failed"
+                ? "Copy failed"
+                : "Copy"}
           </button>
         </div>
       </motion.div>
