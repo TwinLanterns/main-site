@@ -35,8 +35,9 @@ export async function checkEmailVerification(
       );
     }
     if (err instanceof VerificationRequiredError) {
+      // `code` lets the wizards send the user back to re-verify.
       return NextResponse.json(
-        { ok: false, error: err.message },
+        { ok: false, error: err.message, code: "verification_required" },
         { status: 400 },
       );
     }

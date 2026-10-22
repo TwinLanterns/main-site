@@ -143,13 +143,23 @@ export default function HireFlow() {
           payload: { ...data, acceptedTerms: accepted },
         }),
       });
-      if (!res.ok) throw new Error("bad response");
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (result.code === "verification_required") {
+          setEmailVerified(false);
+          setStep(0);
+        }
+        throw new Error(result.error || "bad response");
+      }
       localStorage.removeItem(KEY);
       setDone(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
       setError(
-        "Something went wrong sending that. Email hello@twinlanterns.co and we'll pick it up from there.",
+        message && message !== "bad response"
+          ? message
+          : "Something went wrong sending that. Email hello@twinlanterns.co and we'll pick it up from there.",
       );
     } finally {
       setLoading(false);
@@ -410,6 +420,14 @@ export default function HireFlow() {
               )}
             </motion.div>
           </AnimatePresence>
+
+          {/* The last step renders its own error; this covers being sent back
+              to an earlier step (e.g. to re-verify the email). */}
+          {error && step !== steps.length - 1 && (
+            <p className="mt-6 rounded-[16px] border border-flame/30 bg-flame/5 px-4 py-3 text-[13.5px] text-flame">
+              {error}
+            </p>
+          )}
 
           <NavButtons
             onBack={() => setStep((s) => Math.max(0, s - 1))}
