@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Reorder, useDragControls } from "motion/react";
 import { isValidEmail } from "@/lib/validation";
@@ -13,29 +13,56 @@ export function Field({
   label,
   hint,
   required = false,
+  group = false,
   children,
   className = "",
 }: {
   label: string;
   hint?: string;
   required?: boolean;
+  /**
+   * Set when the children are a set of buttons (Pills, ChoiceCards). A
+   * <label> binds to its first labelable descendant, so wrapping a button
+   * group in one makes clicking the caption select the first option.
+   */
+  group?: boolean;
   children: ReactNode;
   className?: string;
 }) {
+  const captionId = useId();
+  const caption = (
+    <span id={captionId} className="mb-2 block text-[14px]">
+      {label}
+      {required && (
+        <span aria-hidden className="ml-0.5 text-flame">
+          *
+        </span>
+      )}
+    </span>
+  );
+  const hintEl = hint ? (
+    <span className="mt-2 block text-[13px] text-muted">{hint}</span>
+  ) : null;
+
+  if (group) {
+    return (
+      <div
+        role="group"
+        aria-labelledby={captionId}
+        className={`block ${className}`}
+      >
+        {caption}
+        {children}
+        {hintEl}
+      </div>
+    );
+  }
+
   return (
     <label className={`block ${className}`}>
-      <span className="mb-2 block text-[14px]">
-        {label}
-        {required && (
-          <span aria-hidden className="ml-0.5 text-flame">
-            *
-          </span>
-        )}
-      </span>
+      {caption}
       {children}
-      {hint ? (
-        <span className="mt-2 block text-[13px] text-muted">{hint}</span>
-      ) : null}
+      {hintEl}
     </label>
   );
 }

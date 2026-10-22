@@ -246,7 +246,7 @@ export default function HireFlow() {
                         onVerified={setEmailVerified}
                       />
                     </Field>
-                    <Field label="Stage" required className="sm:col-span-2">
+                    <Field label="Stage" required group className="sm:col-span-2">
                       <Pills
                         options={stages}
                         value={data.stage}
@@ -282,7 +282,7 @@ export default function HireFlow() {
                     blurb="You don't need a job description. Describe the problem and we'll write one."
                   />
                   <div className="mt-8 space-y-6">
-                    <Field label="Function" required>
+                    <Field label="Function" required group>
                       <Pills
                         options={functions}
                         value={data.fn}
@@ -322,7 +322,7 @@ export default function HireFlow() {
                   />
                   <div className="mt-8 space-y-6">
                     <div className="grid gap-6 sm:grid-cols-2">
-                      <Field label="Setup" required>
+                      <Field label="Setup" required group>
                         <Pills
                           options={setups}
                           value={data.setup}
@@ -337,7 +337,7 @@ export default function HireFlow() {
                         />
                       </Field>
                     </div>
-                    <Field label="Commitment" required>
+                    <Field label="Commitment" required group>
                       <Pills
                         options={commitments}
                         value={data.commitment}
@@ -352,7 +352,7 @@ export default function HireFlow() {
                           placeholder="$22 / hr"
                         />
                       </Field>
-                      <Field label="When do you want someone starting?" required>
+                      <Field label="When do you want someone starting?" required group>
                         <Pills
                           options={timelines}
                           value={data.timeline}

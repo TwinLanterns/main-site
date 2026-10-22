@@ -277,7 +277,7 @@ export default function ApplyFlow() {
                         ticks={["Now", "4 weeks", "8 weeks", "12 weeks"]}
                       />
                     </div>
-                    <Field label="Where you'd work" required>
+                    <Field label="Where you'd work" required group>
                       <Pills
                         options={setups}
                         value={data.setup}
@@ -357,7 +357,7 @@ export default function ApplyFlow() {
                         autoComplete="tel"
                       />
                     </Field>
-                    <Field label="Level" required className="sm:col-span-2">
+                    <Field label="Level" required group className="sm:col-span-2">
                       <Pills
                         options={levels}
                         value={data.level}
