@@ -5,7 +5,7 @@
 // save until `assertEmailVerified` confirms it. Keyed on (email, purpose) —
 // there's one row per address per funnel, upserted on resend.
 
-import { randomInt, timingSafeEqual } from "crypto";
+import { createHash, randomInt, timingSafeEqual } from "crypto";
 import { getSupabaseOrThrow } from "@/lib/supabase-or-throw";
 import { sendVerificationCodeEmail } from "@/lib/email/verification-emails";
 import type { VerificationPurpose } from "./types";
@@ -36,6 +36,8 @@ export class VerificationRequiredError extends Error {
 }
 
 const CODE_TTL_MS = 10 * 60 * 1000;
+// How long a confirmed address stays usable for a submission.
+const VERIFIED_TTL_MS = 60 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 30 * 1000;
 const MAX_ATTEMPTS = 5;
 
@@ -45,6 +47,11 @@ function normalize(email: string): string {
 
 function generateCode(): string {
   return String(randomInt(100000, 1000000));
+}
+
+// Codes are stored hashed so a database read doesn't hand out live codes.
+function hashCode(code: string): string {
+  return createHash("sha256").update(code).digest("hex");
 }
 
 function codesMatch(a: string, b: string): boolean {
@@ -71,7 +78,7 @@ export async function issueVerificationCode(
 
   const { data: existing, error: fetchError } = await supabase
     .from("email_verifications")
-    .select("created_at")
+    .select("created_at, verified, expires_at")
     .eq("email", email)
     .eq("purpose", purpose)
     .maybeSingle();
@@ -93,14 +100,23 @@ export async function issueVerificationCode(
 
   const code = generateCode();
 
+  // Anyone can request a code for any address, so a request must not undo
+  // a live verification the owner already completed (they may be about to
+  // submit). The new code is still sent, so an owner who lost their page
+  // state can re-confirm.
+  const existingExpiry = existing ? new Date(existing.expires_at).getTime() : 0;
+  const keepVerified = Boolean(existing?.verified) && existingExpiry > Date.now();
+
   const { error } = await supabase.from("email_verifications").upsert(
     {
       email,
       purpose,
-      code,
+      code: hashCode(code),
       attempts: 0,
-      verified: false,
-      expires_at: new Date(Date.now() + CODE_TTL_MS).toISOString(),
+      verified: keepVerified,
+      expires_at: new Date(
+        Math.max(existingExpiry, Date.now() + CODE_TTL_MS),
+      ).toISOString(),
       created_at: new Date().toISOString(),
     },
     { onConflict: "email,purpose" },
@@ -141,8 +157,8 @@ export async function confirmVerificationCode(
     throw new VerificationRequestError("Request a code before trying to verify.");
   }
 
-  if (data.verified) return;
-
+  // No early return for already-verified rows: the code must still match,
+  // otherwise anyone could "confirm" an address its owner verified.
   if (new Date(data.expires_at).getTime() < Date.now()) {
     throw new VerificationRequestError("That code expired — send a new one.");
   }
@@ -174,13 +190,16 @@ export async function confirmVerificationCode(
     );
   }
 
-  if (!codesMatch(data.code, code)) {
+  if (!codesMatch(data.code, hashCode(code))) {
     throw new VerificationRequestError("That code doesn't match.");
   }
 
   const { error: updateError } = await supabase
     .from("email_verifications")
-    .update({ verified: true })
+    .update({
+      verified: true,
+      expires_at: new Date(Date.now() + VERIFIED_TTL_MS).toISOString(),
+    })
     .eq("id", data.id);
 
   if (updateError) {
@@ -191,10 +210,9 @@ export async function confirmVerificationCode(
   }
 }
 
-// No expiry check here beyond `verified` itself — once confirmed, the proof
-// holds until consumeVerification() clears it (on successful submit) or a
-// fresh code overwrites it. Good enough for a marketing-site signup flow,
-// not a session token.
+// A confirmed address is good for VERIFIED_TTL_MS (expires_at is pushed out
+// on confirm), or until consumeVerification() clears it on a successful
+// submit — an abandoned verification can't be reused indefinitely.
 export async function assertEmailVerified(
   rawEmail: string,
   purpose: VerificationPurpose,
@@ -204,7 +222,7 @@ export async function assertEmailVerified(
 
   const { data, error } = await supabase
     .from("email_verifications")
-    .select("verified")
+    .select("verified, expires_at")
     .eq("email", email)
     .eq("purpose", purpose)
     .maybeSingle();
@@ -214,7 +232,7 @@ export async function assertEmailVerified(
     throw new VerificationRequiredError();
   }
 
-  if (!data?.verified) {
+  if (!data?.verified || new Date(data.expires_at).getTime() < Date.now()) {
     throw new VerificationRequiredError();
   }
 }
