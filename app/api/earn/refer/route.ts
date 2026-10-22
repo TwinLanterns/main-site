@@ -11,17 +11,13 @@ import { badRequest } from "@/lib/http";
 import { checkEmailVerification } from "@/lib/verification/check";
 import { consumeVerification } from "@/lib/verification/store";
 import { rateLimit } from "@/lib/rate-limit";
+import { LEGAL } from "@/lib/legal";
 
-function getOrigin(req: Request): string {
+// The referral link is emailed, so never build it from request headers
+// (Host / X-Forwarded-Host are client-influenced off-platform).
+function getOrigin(): string {
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (envUrl) return envUrl.replace(/\/$/, "");
-
-  const proto = req.headers.get("x-forwarded-proto") ?? "https";
-  const host =
-    req.headers.get("x-forwarded-host") ?? req.headers.get("host");
-  if (host) return `${proto}://${host}`;
-
-  return new URL(req.url).origin;
+  return (envUrl || LEGAL.site).replace(/\/$/, "");
 }
 
 const DUPLICATE_MESSAGE =
@@ -55,7 +51,7 @@ export async function POST(req: Request) {
       console.error("earn ambassador verification cleanup failed", err);
     }
 
-    const referralUrl = `${getOrigin(req)}/earn/apply?ref=${encodeURIComponent(code)}`;
+    const referralUrl = `${getOrigin()}/earn/apply?ref=${encodeURIComponent(code)}`;
 
     try {
       await sendEarnAmbassadorEmails({
