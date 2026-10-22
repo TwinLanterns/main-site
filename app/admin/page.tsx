@@ -63,15 +63,22 @@ export default async function AdminPage() {
                ai_summary
              )`,
         )
-      .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .order("id", { ascending: true })
+        // A student gets a tag row per prompt version; keep the newest.
+        .order("ai_processed_at", {
+          referencedTable: "candidate_ai_tags",
+          ascending: false,
+          nullsFirst: false,
+        })
+        .limit(1, { referencedTable: "candidate_ai_tags" })
         .range(from, to),
     ),
     fetchAllRows((from, to) =>
       supabase
         .from("company_briefs")
         .select("*")
-      .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .order("id", { ascending: true })
         .range(from, to),
     ),
@@ -79,7 +86,7 @@ export default async function AdminPage() {
       supabase
         .from("earn_ambassadors")
         .select("*")
-      .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .order("id", { ascending: true })
         .range(from, to),
     ),
@@ -87,7 +94,7 @@ export default async function AdminPage() {
       supabase
         .from("earn_applicants_qualified")
         .select("*")
-      .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .order("id", { ascending: true })
         .range(from, to),
     ),
@@ -95,7 +102,7 @@ export default async function AdminPage() {
       supabase
         .from("earn_applicants_unqualified")
         .select("*")
-      .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .order("id", { ascending: true })
         .range(from, to),
     ),
@@ -103,7 +110,7 @@ export default async function AdminPage() {
       supabase
         .from("earn_gopro_applicants")
         .select("*")
-      .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .order("id", { ascending: true })
         .range(from, to),
     ),
@@ -111,7 +118,7 @@ export default async function AdminPage() {
       supabase
         .from("earn_speech_participants")
         .select("*")
-      .order("created_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .order("id", { ascending: true })
         .range(from, to),
     ),

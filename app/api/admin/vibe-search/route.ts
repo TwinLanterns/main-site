@@ -844,6 +844,15 @@ export async function POST(req: NextRequest) {
               )
               .order("created_at", { ascending: false })
               .order("id", { ascending: true })
+              // A student gets a tag row per prompt version (the tagger
+              // upserts on student_id + prompt_version); getAITags reads
+              // the first, so make that the newest.
+              .order("ai_processed_at", {
+                referencedTable: "candidate_ai_tags",
+                ascending: false,
+                nullsFirst: false,
+              })
+              .limit(1, { referencedTable: "candidate_ai_tags" })
               .range(from, to),
           );
 
