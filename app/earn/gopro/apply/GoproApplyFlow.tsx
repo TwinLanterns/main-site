@@ -21,6 +21,7 @@ import {
 } from "@/components/form";
 import { isValidEmail } from "@/lib/validation";
 import { clearReferralCode, loadReferralCode } from "@/lib/referral";
+import { readDraft, writeDraft } from "@/lib/draft-storage";
 
 const DRAFT_KEY = "tl-earn-gopro-draft-v1";
 
@@ -62,14 +63,10 @@ export default function GoproApplyFlow() {
   const [accepted, setAccepted] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(DRAFT_KEY);
-      // Restoring from localStorage must happen after mount to avoid an SSR hydration mismatch.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (saved) setDraft({ ...EMPTY, ...JSON.parse(saved) });
-    } catch {
-      // ignore corrupt draft
-    }
+    const saved = readDraft<Draft>(DRAFT_KEY);
+    // Restoring from localStorage must happen after mount to avoid an SSR hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (saved) setDraft({ ...EMPTY, ...saved });
 
     setRefCode(loadReferralCode());
     setHydrated(true);
@@ -79,7 +76,7 @@ export default function GoproApplyFlow() {
   // EMPTY state would overwrite it.
   useEffect(() => {
     if (!hydrated) return;
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    writeDraft(DRAFT_KEY, draft);
   }, [draft, hydrated]);
 
   useEffect(() => {

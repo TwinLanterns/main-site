@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { readDraft, writeDraft } from "@/lib/draft-storage";
 
 // Shared by app/apply/ApplyFlow.tsx and app/companies/HireFlow.tsx: both
 // wizards persist their draft to localStorage on every change and restore
@@ -19,12 +20,10 @@ export function useDraftState<T extends object>(key: string, empty: T) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(key);
-      // localStorage is only readable after mount (SSR hydration safety).
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setData({ ...empty, ...JSON.parse(raw) });
-    } catch {}
+    const saved = readDraft<T>(key);
+    // localStorage is only readable after mount (SSR hydration safety).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (saved) setData({ ...empty, ...saved });
     setHydrated(true);
     // Restore once on mount only — `empty` and `key` are constants per flow.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -32,9 +31,7 @@ export function useDraftState<T extends object>(key: string, empty: T) {
 
   useEffect(() => {
     if (!hydrated) return;
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch {}
+    writeDraft(key, data);
   }, [key, data, hydrated]);
 
   const set = <K extends keyof T>(field: K, value: T[K]) =>
