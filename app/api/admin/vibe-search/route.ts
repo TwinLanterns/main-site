@@ -917,7 +917,37 @@ export async function POST(req: NextRequest) {
 
           await new Promise((resolve) => setTimeout(resolve, 300));
 
-          const results = ranking.ranked_candidates.map((r: any) => {
+          // The ranking comes from the LLM — never trust its indexes. Drop
+          // out-of-range, non-integer and repeated entries, and fall back to
+          // the shortlist order if nothing usable survives.
+          const seenIndexes = new Set<number>();
+          let ranked = (
+            Array.isArray(ranking?.ranked_candidates)
+              ? ranking.ranked_candidates
+              : []
+          ).filter((r: any) => {
+            const i = r?.index;
+            if (
+              !Number.isInteger(i) ||
+              i < 0 ||
+              i >= shortlistedCandidates.length ||
+              seenIndexes.has(i)
+            ) {
+              return false;
+            }
+            seenIndexes.add(i);
+            return true;
+          });
+          if (ranked.length === 0) {
+            console.warn("  ⚠ Ranking had no usable entries; using shortlist order.");
+            ranked = shortlistedCandidates.map((_, i) => ({
+              index: i,
+              match_score: 50,
+              reason: "Ranking unavailable — showing shortlisted order.",
+            }));
+          }
+
+          const results = ranked.map((r: any) => {
             const candidate = shortlistedCandidates[r.index];
             const matchedKeywords = keywordMap.get(candidate.id) || [];
             const matchDetails =
