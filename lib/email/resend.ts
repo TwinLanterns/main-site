@@ -26,6 +26,17 @@ export function getEmailConfig() {
   const from =
     process.env.TL_FROM_EMAIL ?? "Twin Lanterns <onboarding@resend.dev>";
 
+  // Resend's shared sandbox sender only delivers to the account owner, so
+  // in production it silently drops every applicant-facing email.
+  if (
+    process.env.NODE_ENV === "production" &&
+    !process.env.TL_FROM_EMAIL
+  ) {
+    console.error(
+      "TL_FROM_EMAIL is not set — falling back to onboarding@resend.dev, which only delivers to the Resend account owner.",
+    );
+  }
+
   return {
     key,
     to,
@@ -43,8 +54,7 @@ export async function sendResendEmail(args: {
   const { key, from } = getEmailConfig();
 
   if (!key) {
-    console.error("resend not configured: RESEND_API_KEY is missing", args.subject);
-    return;
+    throw new Error("resend not configured: RESEND_API_KEY is missing");
   }
 
   const res = await fetch("https://api.resend.com/emails", {
@@ -62,8 +72,12 @@ export async function sendResendEmail(args: {
     }),
   });
 
+  // Throw so callers that depend on delivery (verification codes) can
+  // surface the failure; best-effort callers use sendResendEmailSafely.
   if (!res.ok) {
-    console.error("resend error", args.to, await res.text());
+    const body = await res.text().catch(() => "");
+    console.error("resend error", args.to, body);
+    throw new Error(`Resend responded ${res.status}`);
   }
 }
 

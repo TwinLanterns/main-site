@@ -17,7 +17,12 @@ export async function sendVerificationCodeEmail(
   const { configured } = getEmailConfig();
 
   if (!configured) {
-    // No Resend key set (e.g. local dev) — log so the flow stays testable.
+    // Never log codes or pretend success in production: a missing key there
+    // must surface as "Could not send a code", not a code that never arrives.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("RESEND_API_KEY is not set");
+    }
+    // Local dev — log so the flow stays testable.
     console.log(`[verify] code for ${email}: ${code} (no email configured)`);
     return;
   }
