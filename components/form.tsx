@@ -1,13 +1,24 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { Reorder, useDragControls } from "motion/react";
 import { isValidEmail } from "@/lib/validation";
 import Shape from "./Shapes";
 
 export const ease = [0.22, 1, 0.36, 1] as const;
+
+// Lets Input/Textarea/Select announce a Field's required state; the visual
+// asterisk is aria-hidden.
+const RequiredContext = createContext(false);
 
 export function Field({
   label,
@@ -49,6 +60,7 @@ export function Field({
       <div
         role="group"
         aria-labelledby={captionId}
+        aria-required={required || undefined}
         className={`block ${className}`}
       >
         {caption}
@@ -59,11 +71,13 @@ export function Field({
   }
 
   return (
-    <label className={`block ${className}`}>
-      {caption}
-      {children}
-      {hintEl}
-    </label>
+    <RequiredContext.Provider value={required}>
+      <label className={`block ${className}`}>
+        {caption}
+        {children}
+        {hintEl}
+      </label>
+    </RequiredContext.Provider>
   );
 }
 
@@ -71,15 +85,24 @@ const base =
   "w-full rounded-[14px] border border-line bg-white px-4 py-3.5 text-[15px] text-ink placeholder:text-muted/70 outline-none transition-colors focus:border-ink";
 
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={`${base} ${props.className ?? ""}`} />;
+  const required = useContext(RequiredContext);
+  return (
+    <input
+      aria-required={required || undefined}
+      {...props}
+      className={`${base} ${props.className ?? ""}`}
+    />
+  );
 }
 
 export function Textarea(
   props: React.TextareaHTMLAttributes<HTMLTextAreaElement>,
 ) {
+  const required = useContext(RequiredContext);
   return (
     <textarea
       rows={4}
+      aria-required={required || undefined}
       {...props}
       className={`${base} resize-none leading-relaxed ${props.className ?? ""}`}
     />
@@ -87,8 +110,10 @@ export function Textarea(
 }
 
 export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  const required = useContext(RequiredContext);
   return (
     <select
+      aria-required={required || undefined}
       {...props}
       className={`${base} appearance-none ${props.className ?? ""}`}
     />
@@ -226,6 +251,7 @@ export function EmailVerify({
               setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
             }
             placeholder="6-digit code"
+            aria-label="6-digit verification code"
             inputMode="numeric"
             autoComplete="one-time-code"
             className="w-28 rounded-[12px] border border-line bg-white px-3 py-2.5 text-center text-[15px] tracking-[0.3em] text-ink outline-none transition-colors focus:border-ink"
@@ -492,7 +518,14 @@ export function DropZone({
         onClick={() => input.current?.click()}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => e.key === "Enter" && input.current?.click()}
+        aria-label={file ? `Résumé: ${file.name}. Replace file` : "Add your résumé"}
+        onKeyDown={(e) => {
+          // role="button" must respond to both Enter and Space.
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            input.current?.click();
+          }
+        }}
         className={`flex cursor-pointer flex-col items-center justify-center rounded-[22px] border border-dashed px-6 py-12 text-center transition-colors ${
           over ? "border-ink bg-shell" : "border-line hover:border-ink"
         }`}
