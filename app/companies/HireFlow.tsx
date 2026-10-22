@@ -470,7 +470,7 @@ function Success({ company }: { company: string }) {
             Back to home
           </Link>
           <Link
-            href="/#how"
+            href="/#method"
             className="rounded-[18px] border border-ink/15 px-6 py-3 text-[14px] transition-colors hover:border-ink/40"
           >
             See what happens next

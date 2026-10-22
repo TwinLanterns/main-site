@@ -542,10 +542,10 @@ function Success({ name }: { name: string }) {
             Back to home
           </Link>
           <Link
-            href="/#roles"
+            href="/programs"
             className="rounded-full border border-ink/20 px-8 py-4.5 text-[17px] transition-colors hover:border-ink"
           >
-            See the roles we place
+            See open programs
           </Link>
         </div>
       </motion.div>
