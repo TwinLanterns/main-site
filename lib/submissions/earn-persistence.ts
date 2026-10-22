@@ -4,6 +4,7 @@
 // (EarnConfigError → 500, EarnSaveError → 502) so app/api/earn/*
 // routes can stay thin orchestrators, same as app/api/submit/route.ts.
 
+import { randomInt } from "crypto";
 import { NextResponse } from "next/server";
 import { getSupabaseOrThrow } from "@/lib/supabase-or-throw";
 import type { EarnSignupPayload, EarnAmbassadorPayload } from "./earn-types";
@@ -19,7 +20,7 @@ const CODE_LENGTH = 6;
 function generateCode(): string {
   let code = "";
   for (let i = 0; i < CODE_LENGTH; i++) {
-    code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    code += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
   }
   return code;
 }
