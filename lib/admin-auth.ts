@@ -10,8 +10,12 @@
 /** Name of the httpOnly cookie holding the signed admin session. */
 export const ADMIN_COOKIE_NAME = "admin_session";
 
-/** Default cookie lifetime, in seconds (7 days). */
-export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 24 * 7;
+/**
+ * Cookie lifetime, in seconds (12 hours). Tokens are stateless, so logout
+ * only clears the cookie — a copied token stays valid until it expires.
+ * To revoke every session immediately, rotate ADMIN_SESSION_SECRET.
+ */
+export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 12;
 
 /** Payload prefix — lets verifySessionToken reject unrelated cookies. */
 const TOKEN_PREFIX = "admin";
