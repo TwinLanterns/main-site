@@ -26,9 +26,11 @@ async function existsIn(
     .ilike(column, email)
     .limit(1);
 
+  // Fail closed: treating a failed lookup as "no duplicate" would let
+  // duplicates through whenever the DB hiccups. Callers turn this into 502.
   if (error) {
     console.error(`duplicate check failed (${table}.${column})`, error);
-    return false;
+    throw new Error(`Duplicate check failed (${table})`);
   }
 
   return Boolean(data && data.length);
