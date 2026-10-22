@@ -44,7 +44,8 @@ export default function AmbassadorFlow() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, acceptedTerms: accepted }),
       });
-      const data = await res.json();
+      // Platform errors (413, 504) return HTML, not JSON.
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.error || "Something went wrong");
       setCode(data.code);
     } catch (err) {

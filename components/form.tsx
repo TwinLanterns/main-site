@@ -155,7 +155,8 @@ export function EmailVerify({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, purpose }),
       });
-      const data = await res.json();
+      // Platform errors (413, 504) return HTML, not JSON.
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok)
         throw new Error(data.error || "Could not send a code");
       setSent(true);
@@ -177,7 +178,8 @@ export function EmailVerify({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, purpose, code: code.trim() }),
       });
-      const data = await res.json();
+      // Platform errors (413, 504) return HTML, not JSON.
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok)
         throw new Error(data.error || "That code doesn't match");
       onVerified(true);

@@ -1352,7 +1352,7 @@ function VibeSearch() {
           throw new Error("Search stream ended without a result.");
         }
       } else {
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || "Search failed");
         setResults(data.results || []);
         if (data.shortlist) setShortlist(data.shortlist);

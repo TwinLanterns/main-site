@@ -119,7 +119,8 @@ export default function SpeechApplyFlow() {
           },
         }),
       });
-      const data = await res.json();
+      // Platform errors (413, 504) return HTML, not JSON.
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.error || "Something went wrong");
       setResult({ qualified: data.qualified });
       localStorage.removeItem(DRAFT_KEY);
