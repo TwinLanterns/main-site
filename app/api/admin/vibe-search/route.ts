@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { fetchAllRows } from "@/lib/supabase-fetch-all";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
 
@@ -781,20 +782,24 @@ export async function POST(req: NextRequest) {
           await new Promise((resolve) => setTimeout(resolve, 500));
 
           const supabase = getSupabaseServerClient();
-          const { data: candidates, error } = await supabase
-            .from("student_applications")
-            .select(
-              `
-              id, first_name, last_name, email, school, location, raw_payload,
-              candidate_ai_tags (
-                vibe_tags,
-                soft_skills,
-                hard_skills,
-                ai_summary
+          const { data: candidates, error } = await fetchAllRows((from, to) =>
+            supabase
+              .from("student_applications")
+              .select(
+                `
+                id, first_name, last_name, email, school, location, raw_payload,
+                candidate_ai_tags (
+                  vibe_tags,
+                  soft_skills,
+                  hard_skills,
+                  ai_summary
+                )
+              `,
               )
-            `,
-            )
-            .order("created_at", { ascending: false });
+              .order("created_at", { ascending: false })
+              .order("id", { ascending: true })
+              .range(from, to),
+          );
 
           if (error) throw error;
 
