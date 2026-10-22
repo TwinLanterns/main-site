@@ -416,6 +416,11 @@ export function RankList({
 
 export type Upload = { name: string; size: number; data: string } | null;
 
+// Files are sent base64-encoded in the JSON body (+33%), and Vercel rejects
+// request bodies over 4.5 MB — 3 MB leaves room for the rest of the payload.
+// Keep in sync with MAX_ATTACHMENT_BYTES in lib/submissions/parse.ts.
+const MAX_UPLOAD_BYTES = 3_000_000;
+
 export function DropZone({
   file,
   onFile,
@@ -429,8 +434,8 @@ export function DropZone({
 
   const take = (f: File | undefined) => {
     if (!f) return;
-    if (f.size > 4_000_000) {
-      setError("That file is over 4 MB — send it to us by email instead.");
+    if (f.size > MAX_UPLOAD_BYTES) {
+      setError("That file is over 3 MB — send it to us by email instead.");
       return;
     }
     const reader = new FileReader();
@@ -473,7 +478,7 @@ export function DropZone({
         <p className="mt-1.5 text-[13.5px] text-muted">
           {file
             ? `${(file.size / 1024).toFixed(0)} KB`
-            : "PDF, DOC or an image. Optional."}
+            : "PDF, DOC or an image, up to 3 MB. Optional."}
         </p>
         <input
           ref={input}
