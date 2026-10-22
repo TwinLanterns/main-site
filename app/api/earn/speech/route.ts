@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
     try {
       await sendEarnSpeechEmails({
-        payload: parsed.data,
+        payload: { ...parsed.data, referredByCode: result.referredByCode },
         qualified: result.qualified,
         reasons: result.reasons,
       });

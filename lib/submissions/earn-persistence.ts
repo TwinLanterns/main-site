@@ -30,6 +30,8 @@ export interface SaveEarnSignupResult {
   id: string;
   qualified: boolean;
   reasons: string[];
+  /** The referral code actually credited (null if missing or invalid). */
+  referredByCode: string | null;
 }
 
 function toEarnConfigError(err: unknown): EarnConfigError {
@@ -38,12 +40,47 @@ function toEarnConfigError(err: unknown): EarnConfigError {
   );
 }
 
+// Referral codes come from the URL/localStorage, so only credit ones that
+// belong to a real ambassador — and never the applicant themselves.
+async function resolveReferralCode(
+  supabase: ReturnType<typeof getSupabaseOrThrow>,
+  rawCode: string | null,
+  applicantEmail: string,
+): Promise<string | null> {
+  const code = rawCode?.trim().toUpperCase();
+  if (!code || code.length > 32) return null;
+
+  const { data, error } = await supabase
+    .from("earn_ambassadors")
+    .select("code, email")
+    .eq("code", code)
+    .maybeSingle();
+
+  if (error) {
+    console.error("referral code lookup failed", error);
+    return null;
+  }
+  if (!data) return null;
+  if (
+    String(data.email).trim().toLowerCase() ===
+    applicantEmail.trim().toLowerCase()
+  ) {
+    return null;
+  }
+  return data.code as string;
+}
+
 async function insertSignup(
   table: string,
   payload: EarnSignupPayload,
   extra: Record<string, unknown>,
 ): Promise<SaveEarnSignupResult> {
   const supabase = getSupabaseOrThrow(toEarnConfigError);
+  const referredByCode = await resolveReferralCode(
+    supabase,
+    payload.referredByCode,
+    payload.email,
+  );
 
   const { data, error } = await supabase
     .from(table)
@@ -54,8 +91,8 @@ async function insertSignup(
       phone: payload.phone,
       referred_by: payload.referredBy ?? null,
       referrer_college: payload.referrerCollege ?? null,
-      referred_by_code: payload.referredByCode || null,
-      raw_payload: payload,
+      referred_by_code: referredByCode,
+      raw_payload: { ...payload, referredByCode },
       ...extra,
     })
     .select("id")
@@ -67,7 +104,7 @@ async function insertSignup(
     throw new EarnSaveError(error?.message ?? `Insert into ${table} failed`);
   }
 
-  return { id: data.id as string, qualified: true, reasons: [] };
+  return { id: data.id as string, qualified: true, reasons: [], referredByCode };
 }
 
 export function saveEarnApplicant(

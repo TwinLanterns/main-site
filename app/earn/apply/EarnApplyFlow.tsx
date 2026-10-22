@@ -22,9 +22,9 @@ import {
   ease,
 } from "@/components/form";
 import { isValidEmail } from "@/lib/validation";
+import { clearReferralCode, loadReferralCode } from "@/lib/referral";
 
 const DRAFT_KEY = "tl-earn-draft-v1";
-const REF_KEY = "tl-earn-ref-code";
 
 const STEPS = ["About you", "Finish"] as const;
 
@@ -73,14 +73,7 @@ export default function EarnApplyFlow() {
       // ignore corrupt draft
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref");
-    if (ref) {
-      localStorage.setItem(REF_KEY, ref);
-      setRefCode(ref);
-    } else {
-      setRefCode(localStorage.getItem(REF_KEY));
-    }
+    setRefCode(loadReferralCode());
     setHydrated(true);
   }, []);
 
@@ -132,6 +125,7 @@ export default function EarnApplyFlow() {
       if (!res.ok || !data.ok) throw new Error(data.error || "Something went wrong");
       setResult({ qualified: data.qualified });
       localStorage.removeItem(DRAFT_KEY);
+      clearReferralCode();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
