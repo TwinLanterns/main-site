@@ -1,4 +1,6 @@
-export type StudentPayload = {
+import type { TermsAcceptance } from "@/lib/legal";
+
+export type StudentPayload = Partial<TermsAcceptance> & {
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -14,9 +16,10 @@ export type StudentPayload = {
   priorities?: string[];
   built?: string;
   links?: string;
+  resume?: string;
 };
 
-export type CompanyPayload = {
+export type CompanyPayload = Partial<TermsAcceptance> & {
   company?: string;
   website?: string;
   name?: string;

@@ -28,16 +28,15 @@ export async function POST(req: Request) {
   }
 
   const kind = parsed.data.kind;
-  const email = (parsed.data.payload as { email?: string }).email?.trim() ?? "";
+  // The parser guarantees a valid email, so verification always runs.
+  const email = parsed.data.payload.email!;
 
-  if (email) {
-    const verifyError = await checkEmailVerification(
-      kind,
-      email,
-      DUPLICATE_MESSAGE[kind],
-    );
-    if (verifyError) return verifyError;
-  }
+  const verifyError = await checkEmailVerification(
+    kind,
+    email,
+    DUPLICATE_MESSAGE[kind],
+  );
+  if (verifyError) return verifyError;
 
   try {
     await saveSubmission(parsed.data);
@@ -52,12 +51,10 @@ export async function POST(req: Request) {
     );
   }
 
-  if (email) {
-    try {
-      await consumeVerification(email, kind);
-    } catch (err) {
-      console.error("verification cleanup failed", err);
-    }
+  try {
+    await consumeVerification(email, kind);
+  } catch (err) {
+    console.error("verification cleanup failed", err);
   }
 
   try {
