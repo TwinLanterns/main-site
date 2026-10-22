@@ -15,7 +15,7 @@ import {
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
-  const limited = rateLimit(req, "verify-confirm", 30, 15 * 60 * 1000);
+  const limited = await rateLimit(req, "verify-confirm", 30, 15 * 60 * 1000);
   if (limited) return limited;
 
   const parsed = await parseJsonBody(req);

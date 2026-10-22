@@ -28,7 +28,7 @@ const DUPLICATE_MESSAGE =
   "You're already an ambassador with this email.";
 
 export async function POST(req: Request) {
-  const limited = rateLimit(req, "submit", 10, 60 * 60 * 1000);
+  const limited = await rateLimit(req, "submit", 10, 60 * 60 * 1000);
   if (limited) return limited;
 
   const parsed = await parseEarnReferRequest(req);

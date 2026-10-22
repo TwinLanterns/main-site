@@ -20,7 +20,7 @@ function safeCompare(a: string, b: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimit(req, "admin-login", 5, 15 * 60 * 1000);
+  const limited = await rateLimit(req, "admin-login", 5, 15 * 60 * 1000);
   if (limited) return limited;
 
   const body = await req.json().catch(() => null);

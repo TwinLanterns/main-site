@@ -13,7 +13,7 @@ import {
   VERIFICATION_PURPOSES,
   type VerificationPurpose,
 } from "@/lib/verification/types";
-import { rateLimit } from "@/lib/rate-limit";
+import { rateLimit, rateLimitKey } from "@/lib/rate-limit";
 
 const DUPLICATE_MESSAGE: Record<VerificationPurpose, string> = {
   student: "You've already applied with this email.",
@@ -25,7 +25,7 @@ const DUPLICATE_MESSAGE: Record<VerificationPurpose, string> = {
 };
 
 export async function POST(req: Request) {
-  const limited = rateLimit(req, "verify-send", 10, 15 * 60 * 1000);
+  const limited = await rateLimit(req, "verify-send", 10, 15 * 60 * 1000);
   if (limited) return limited;
 
   const parsed = await parseJsonBody(req);
@@ -52,6 +52,15 @@ export async function POST(req: Request) {
   }
 
   const typedPurpose = purpose as VerificationPurpose;
+
+  // Per-address cap on top of the per-IP one, so the site can't be used to
+  // email-bomb a single inbox from many IPs.
+  const emailLimited = await rateLimitKey(
+    `verify-send-email:${email.trim().toLowerCase()}`,
+    8,
+    24 * 60 * 60 * 1000,
+  );
+  if (emailLimited) return emailLimited;
 
   try {
     if (await findDuplicateEmail(typedPurpose, email)) {
