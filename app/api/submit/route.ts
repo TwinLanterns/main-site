@@ -3,6 +3,7 @@ import { parseSubmissionRequest } from "@/lib/submissions/parse";
 import {
   saveSubmission,
   SubmissionConfigError,
+  SubmissionDuplicateError,
 } from "@/lib/submissions/persistence";
 import { sendSubmissionEmails } from "@/lib/email/submission-emails";
 import { checkEmailVerification } from "@/lib/verification/check";
@@ -41,6 +42,13 @@ export async function POST(req: Request) {
   try {
     await saveSubmission(parsed.data);
   } catch (err) {
+    if (err instanceof SubmissionDuplicateError) {
+      return NextResponse.json(
+        { ok: false, error: DUPLICATE_MESSAGE[kind] },
+        { status: 409 },
+      );
+    }
+
     console.error("submission save failed", err);
 
     const status = err instanceof SubmissionConfigError ? 500 : 502;

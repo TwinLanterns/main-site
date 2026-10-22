@@ -12,6 +12,9 @@ import { checkEmailVerification } from "@/lib/verification/check";
 import { consumeVerification } from "@/lib/verification/store";
 import { rateLimit } from "@/lib/rate-limit";
 
+const DUPLICATE_MESSAGE =
+  "You've already applied to Earn with this email.";
+
 export async function POST(req: Request) {
   const limited = rateLimit(req, "submit", 10, 60 * 60 * 1000);
   if (limited) return limited;
@@ -24,7 +27,7 @@ export async function POST(req: Request) {
   const verifyError = await checkEmailVerification(
     "earn_applicant",
     parsed.data.email,
-    "You've already applied to Earn with this email.",
+    DUPLICATE_MESSAGE,
   );
   if (verifyError) return verifyError;
 
@@ -52,6 +55,9 @@ export async function POST(req: Request) {
       qualified: result.qualified,
     });
   } catch (err) {
-    return earnErrorResponse(err, { exposeDevMessage: true });
+    return earnErrorResponse(err, {
+      exposeDevMessage: true,
+      duplicateMessage: DUPLICATE_MESSAGE,
+    });
   }
 }

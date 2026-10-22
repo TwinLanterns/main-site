@@ -10,6 +10,8 @@ import type { EarnSignupPayload, EarnAmbassadorPayload } from "./earn-types";
 
 export class EarnConfigError extends Error {}
 export class EarnSaveError extends Error {}
+// Unique email violation (23505) — someone with this email already signed up.
+export class EarnDuplicateError extends Error {}
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
 const CODE_LENGTH = 6;
@@ -61,6 +63,7 @@ async function insertSignup(
 
   if (error || !data) {
     console.error(`supabase insert error (${table})`, error);
+    if (error?.code === "23505") throw new EarnDuplicateError(error.message);
     throw new EarnSaveError(error?.message ?? `Insert into ${table} failed`);
   }
 
@@ -123,13 +126,15 @@ export async function saveEarnAmbassador(
     }
 
     // 23505 = unique_violation in Postgres; anything else, bail immediately.
-    if ((error as { code?: string })?.code !== "23505") {
-        throw new EarnSaveError(error?.message ?? "Insert failed");
+    if (error?.code !== "23505") {
+      throw new EarnSaveError(error?.message ?? "Insert failed");
     }
-    if ((error as { constraint?: string })?.constraint === "earn_ambassadors_email_key") {
-        throw new EarnSaveError("You're already an ambassador");
+    // PostgrestError has no `constraint` field — the violated constraint is
+    // only named in the message. Only a `code` collision is worth retrying.
+    if (!/_code_|\(code\)/.test(`${error.message} ${error.details ?? ""}`)) {
+      throw new EarnDuplicateError(error.message);
     }
-    lastError = error?.message;
+    lastError = error.message;
   }
 
   throw new EarnSaveError(
@@ -143,9 +148,19 @@ export async function saveEarnAmbassador(
 // app/api/earn/refer.
 export function earnErrorResponse(
   err: unknown,
-  opts: { exposeDevMessage?: boolean } = {},
+  opts: { exposeDevMessage?: boolean; duplicateMessage?: string } = {},
 ): NextResponse {
   const dev = opts.exposeDevMessage && process.env.NODE_ENV === "development";
+
+  if (err instanceof EarnDuplicateError) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: opts.duplicateMessage ?? "You've already signed up with this email.",
+      },
+      { status: 409 },
+    );
+  }
 
   if (err instanceof EarnConfigError) {
     return NextResponse.json(

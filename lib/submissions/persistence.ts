@@ -15,6 +15,22 @@ export class SubmissionSaveError extends Error {
   }
 }
 
+// Thrown when the unique lower(email) index rejects the insert — i.e. a
+// concurrent submission with the same email won the race past
+// findDuplicateEmail (supabase/unique_emails.sql).
+export class SubmissionDuplicateError extends Error {
+  constructor(message = "Duplicate submission") {
+    super(message);
+    this.name = "SubmissionDuplicateError";
+  }
+}
+
+function toSaveError(error: { code?: string }): Error {
+  return error.code === "23505"
+    ? new SubmissionDuplicateError()
+    : new SubmissionSaveError();
+}
+
 export async function saveSubmission(submission: Submission): Promise<void> {
   const supabase = getSupabaseOrThrow(() => new SubmissionConfigError());
 
@@ -44,7 +60,7 @@ export async function saveSubmission(submission: Submission): Promise<void> {
 
     if (error) {
       console.error("supabase insert error (student_applications)", error);
-      throw new SubmissionSaveError();
+      throw toSaveError(error);
     }
 
     return;
@@ -72,6 +88,6 @@ export async function saveSubmission(submission: Submission): Promise<void> {
 
   if (error) {
     console.error("supabase insert error (company_briefs)", error);
-    throw new SubmissionSaveError();
+    throw toSaveError(error);
   }
 }

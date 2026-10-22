@@ -24,6 +24,9 @@ function getOrigin(req: Request): string {
   return new URL(req.url).origin;
 }
 
+const DUPLICATE_MESSAGE =
+  "You're already an ambassador with this email.";
+
 export async function POST(req: Request) {
   const limited = rateLimit(req, "submit", 10, 60 * 60 * 1000);
   if (limited) return limited;
@@ -39,7 +42,7 @@ export async function POST(req: Request) {
   const verifyError = await checkEmailVerification(
     "earn_ambassador",
     email,
-    "You're already an ambassador with this email.",
+    DUPLICATE_MESSAGE,
   );
   if (verifyError) return verifyError;
 
@@ -66,6 +69,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, code });
   } catch (err) {
-    return earnErrorResponse(err);
+    return earnErrorResponse(err, { duplicateMessage: DUPLICATE_MESSAGE });
   }
 }
