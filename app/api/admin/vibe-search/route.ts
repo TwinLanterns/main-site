@@ -553,20 +553,24 @@ function matchCandidatesWithTags(
 // fresh read of the whole person against the query rather than a
 // rationalization of the earlier keyword hits.
 // ============================================
+// raw_payload keys never sent to the LLM: contact details and identity
+// (the model only needs what the applicant said, not who they are), plus
+// file blobs and server-stamped bookkeeping.
+const LLM_EXCLUDED_KEYS =
+  /^(email|phone|first_?name|last_?name|name|links|resume|accepted_?terms(_?at)?|terms_?version)$|resume_data|base64|_blob$/i;
+
 function buildFullCandidateProfile(c: Candidate) {
   const tags = getAITags(c);
-  // Drop any raw_payload keys that are clearly file blobs (base64 resumes,
-  // etc.) rather than applicant-authored text — everything else goes in
-  // untruncated so the model is reasoning over the whole application.
+  // Everything else goes in untruncated so the model is reasoning over the
+  // whole application.
   const raw = c.raw_payload || {};
   const cleanedRaw: Record<string, any> = {};
   for (const [k, v] of Object.entries(raw)) {
-    if (/resume_data|base64|_blob$/i.test(k)) continue;
+    if (LLM_EXCLUDED_KEYS.test(k)) continue;
     cleanedRaw[k] = v;
   }
 
   return {
-    name: `${c.first_name} ${c.last_name || ""}`.trim(),
     school: c.school || null,
     location: c.location || null,
     vibe_tags: tags?.vibe_tags || [],
@@ -683,9 +687,9 @@ async function stage3Rank(
   analyses: string[],
   signal?: AbortSignal,
 ): Promise<any> {
-  const rankedList = candidates.map((c, i) => ({
+  // Candidates are identified by index only — no names leave the server.
+  const rankedList = candidates.map((_, i) => ({
     index: i,
-    name: `${c.first_name} ${c.last_name || ""}`.trim(),
     analysis: analyses[i],
   }));
 
