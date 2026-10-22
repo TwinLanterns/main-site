@@ -25,7 +25,9 @@ function generateCode(): string {
 }
 
 // The sign-up forms only collect contact details, so there's nothing to
-// screen on: every sign-up is saved as qualified.
+// screen on: every sign-up is saved as qualified. Screening/consent columns
+// left over from the old forms are written as NULL ("not asked"), never
+// false ("said no") — see supabase/earn_consent_columns.sql.
 export interface SaveEarnSignupResult {
   id: string;
   qualified: boolean;
@@ -92,6 +94,8 @@ async function insertSignup(
       referred_by: payload.referredBy ?? null,
       referrer_college: payload.referrerCollege ?? null,
       referred_by_code: referredByCode,
+      terms_accepted_at: payload.acceptedTermsAt,
+      terms_version: payload.termsVersion,
       raw_payload: { ...payload, referredByCode },
       ...extra,
     })
@@ -111,24 +115,37 @@ export function saveEarnApplicant(
   payload: EarnSignupPayload,
 ): Promise<SaveEarnSignupResult> {
   return insertSignup("earn_applicants_qualified", payload, {
-    device_os: "",
-    device_model: "",
-    task_interests: [],
-    filming_ack: false,
-    consent: false,
+    device_os: null,
+    device_model: null,
+    task_interests: null,
+    filming_ack: null,
+    consent: null,
   });
 }
 
 export function saveEarnGoproApplicant(
   payload: EarnSignupPayload,
 ): Promise<SaveEarnSignupResult> {
-  return insertSignup("earn_gopro_applicants", payload, { qualified: true });
+  return insertSignup("earn_gopro_applicants", payload, {
+    qualified: true,
+    is_adult: null,
+    has_core_areas: null,
+    can_keep_others_out: null,
+    weekly_hours_ok: null,
+    consent: null,
+  });
 }
 
 export function saveEarnSpeechParticipant(
   payload: EarnSignupPayload,
 ): Promise<SaveEarnSignupResult> {
-  return insertSignup("earn_speech_participants", payload, { qualified: true });
+  return insertSignup("earn_speech_participants", payload, {
+    qualified: true,
+    first_language_english: null,
+    guardian_consent: null,
+    availability_ok: null,
+    consent: null,
+  });
 }
 
 export interface SaveEarnAmbassadorResult {
