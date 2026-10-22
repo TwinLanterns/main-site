@@ -49,6 +49,8 @@ export function Field({
           *
         </span>
       )}
+      {/* role="group" can't carry aria-required, so say it in the name. */}
+      {required && group && <span className="sr-only"> (required)</span>}
     </span>
   );
   const hintEl = hint ? (
@@ -60,7 +62,6 @@ export function Field({
       <div
         role="group"
         aria-labelledby={captionId}
-        aria-required={required || undefined}
         className={`block ${className}`}
       >
         {caption}
