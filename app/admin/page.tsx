@@ -29,6 +29,7 @@ export default async function AdminPage() {
     { data: earnUnqualified, error: earnUnqualifiedError },
     { data: earnGopro, error: earnGoproError },
     { data: earnSpeech, error: earnSpeechError },
+    { data: dataRequests, error: dataRequestsError },
   ] = await Promise.all([
     fetchAllRows((from, to) =>
       supabase
@@ -122,7 +123,21 @@ export default async function AdminPage() {
         .order("id", { ascending: true })
         .range(from, to),
     ),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("data_requests")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to),
+    ),
   ]);
+
+  // Not fatal: until supabase/data_requests.sql has been run the table
+  // doesn't exist, and that shouldn't take down the rest of the dashboard.
+  if (dataRequestsError) {
+    console.error("data_requests load failed", dataRequestsError);
+  }
 
   if (
     applicationsError ||
@@ -156,6 +171,7 @@ export default async function AdminPage() {
       earnUnqualified={earnUnqualified ?? []}
       earnGopro={earnGopro ?? []}
       earnSpeech={earnSpeech ?? []}
+      dataRequests={dataRequests ?? []}
     />
   );
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Mark from "./Mark";
-import { CONTACT_HREF } from "@/lib/site";
+import { DATA_REQUEST_HREF } from "@/lib/site";
 
 const links = [
   { href: "/#data", label: "Data" },
@@ -50,12 +50,12 @@ export default function Nav() {
               {l.label}
             </Link>
           ))}
-          <a
-            href={CONTACT_HREF}
+          <Link
+            href={DATA_REQUEST_HREF}
             className="rounded-full border border-dim px-3.5 py-1.5 text-ink transition-colors hover:border-muted"
           >
-            Contact
-          </a>
+            Contact Us
+          </Link>
           <button
             onClick={() => setOpen((v) => !v)}
             aria-label="Menu"

@@ -65,6 +65,8 @@ const BRIEF_COLUMNS = [
   "created_at",
 ];
 
+const DATA_REQUEST_COLUMNS = ["name", "email", "message", "created_at"];
+
 const EARN_APPLICANT_COLUMNS = [
   "first_name",
   "last_name",
@@ -1834,6 +1836,7 @@ export default function AdminDashboard({
   earnUnqualified = [],
   earnGopro = [],
   earnSpeech = [],
+  dataRequests = [],
 }: {
   applications: Row[];
   briefs: Row[];
@@ -1842,9 +1845,10 @@ export default function AdminDashboard({
   earnUnqualified?: Row[];
   earnGopro?: Row[];
   earnSpeech?: Row[];
+  dataRequests?: Row[];
 }) {
   const [tab, setTab] = useState<
-    "jobs" | "applications" | "briefs" | "earn" | "vibe"
+    "jobs" | "applications" | "briefs" | "data" | "earn" | "vibe"
   >("jobs");
   const router = useRouter();
 
@@ -1901,6 +1905,16 @@ export default function AdminDashboard({
             Company briefs ({briefs.length})
           </button>
           <button
+            onClick={() => setTab("data")}
+            className={`px-3 py-2 text-sm font-medium ${
+              tab === "data"
+                ? "border-b-2 border-neutral-900 text-neutral-900"
+                : "text-neutral-500 hover:text-neutral-700"
+            }`}
+          >
+            Data requests ({dataRequests.length})
+          </button>
+          <button
             onClick={() => setTab("earn")}
             className={`px-3 py-2 text-sm font-medium ${
               tab === "earn"
@@ -1940,6 +1954,8 @@ export default function AdminDashboard({
           />
         ) : tab === "briefs" ? (
           <Table rows={briefs} columns={BRIEF_COLUMNS} />
+        ) : tab === "data" ? (
+          <Table rows={dataRequests} columns={DATA_REQUEST_COLUMNS} />
         ) : tab === "earn" ? (
           <EarnSection
             ambassadors={earnAmbassadors}

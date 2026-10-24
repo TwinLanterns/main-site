@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Mark from "./Mark";
-import { CONTACT_EMAIL, CONTACT_HREF } from "@/lib/site";
+import { CONTACT_EMAIL, DATA_REQUEST_HREF } from "@/lib/site";
 import "./landing.css";
 
 /* --------------------------------- content --------------------------------- */
@@ -123,7 +123,8 @@ function Art({ kind }: { kind: (typeof products)[number]["art"] }) {
     <svg className="art" viewBox="0 0 500 400" aria-hidden="true">
       {Array.from({ length: 60 }, (_, i) => {
         const x = 40 + i * 7;
-        const a = Math.abs(Math.sin(i * 0.55) * Math.cos(i * 0.13)) * 90 + 6;
+        // rounded so server (Node) and client trig results serialize identically
+        const a = Math.round((Math.abs(Math.sin(i * 0.55) * Math.cos(i * 0.13)) * 90 + 6) * 100) / 100;
         const top = i % 14 < 7;
         return (
           <line
@@ -391,11 +392,11 @@ export default function Landing() {
           <div className="paths" id="contributors">
             <div className="path">
               <span className="label">AI and robotics teams</span>
-              <h2>Request a dataset.</h2>
+              <h2>Get in touch.</h2>
               <p>Tell us what your model needs to see or hear. We&apos;ll come back with a plan.</p>
-              <a className="arrow" href={CONTACT_HREF}>
-                Contact sales
-              </a>
+              <Link className="arrow" href={DATA_REQUEST_HREF}>
+                Contact us
+              </Link>
             </div>
             <div className="path">
               <span className="label">Contributors</span>

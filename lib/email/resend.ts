@@ -50,6 +50,8 @@ export async function sendResendEmail(args: {
   subject: string;
   html: string;
   attachments?: ResendAttachment[];
+  /** Where replies go, e.g. the requester on an internal notification. */
+  replyTo?: string;
 }): Promise<void> {
   const { key, from } = getEmailConfig();
 
@@ -69,6 +71,7 @@ export async function sendResendEmail(args: {
       subject: args.subject,
       html: args.html,
       attachments: args.attachments ?? [],
+      ...(args.replyTo ? { reply_to: args.replyTo } : {}),
     }),
   });
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Mark from "./Mark";
-import { CONTACT_HREF } from "@/lib/site";
+import { DATA_REQUEST_HREF } from "@/lib/site";
 
 const columns = [
   {
@@ -15,7 +15,7 @@ const columns = [
   {
     title: "Company",
     links: [
-      { href: CONTACT_HREF, label: "Contact" },
+      { href: DATA_REQUEST_HREF, label: "Contact us" },
       { href: "/companies", label: "Hire a student" },
       { href: "/apply", label: "Student applications" },
     ],
