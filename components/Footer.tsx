@@ -25,7 +25,6 @@ const columns = [
     links: [
       { href: "/programs", label: "Open programs" },
       { href: "/earn/info", label: "How pay works" },
-      { href: "/shifts", label: "Filming shifts" },
       { href: "/earn/refer", label: "Refer a friend" },
     ],
   },

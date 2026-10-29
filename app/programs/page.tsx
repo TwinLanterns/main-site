@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import ProgramSearch from "@/components/ProgramSearch";
 
 export const metadata: Metadata = {
@@ -11,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function ProgramsPage() {
   return (
-    <main className="mx-auto w-full max-w-[1240px] px-5 pb-20 pt-16 sm:pt-24">
+    <div className="mx-auto w-full max-w-[1240px] px-5 pb-20 pt-16 sm:pt-24">
       <p className="label">Open programs</p>
       <h1 className="display mt-4 max-w-[16ch] text-[clamp(2.4rem,5.4vw,4.2rem)]">
         Find a program that fits.
@@ -21,16 +20,9 @@ export default function ProgramsPage() {
         interview, gear supplied where you need it. Pick one and sign up in
         two minutes.
       </p>
-      <p className="mt-4 text-[15px] text-muted">
-        Already filming with us?{" "}
-        <Link href="/shifts" className="text-ink underline underline-offset-4">
-          Pick a filming shift
-        </Link>
-        .
-      </p>
       <div className="mt-10">
         <ProgramSearch />
       </div>
-    </main>
+    </div>
   );
 }
