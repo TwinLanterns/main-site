@@ -72,6 +72,11 @@ export default function ShiftBoard({ shifts }: { shifts: PublicShift[] | null })
       });
       // Platform errors (413, 504) return HTML, not JSON.
       const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        // Access cookie expired or the code changed: back to the code gate.
+        router.refresh();
+        return;
+      }
       if (res.status === 409) {
         setJustTaken((s) => new Set(s).add(shift.id));
         setOpenId(null);

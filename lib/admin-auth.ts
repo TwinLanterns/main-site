@@ -17,7 +17,10 @@ export const ADMIN_COOKIE_NAME = "admin_session";
  */
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 12;
 
-/** Payload prefix — lets verifySessionToken reject unrelated cookies. */
+/**
+ * Default payload prefix — lets verifySessionToken reject unrelated cookies.
+ * Other gates (e.g. the shift board) pass their own so tokens can't cross over.
+ */
 const TOKEN_PREFIX = "admin";
 
 /** Defensive upper bound on incoming token length. */
@@ -54,6 +57,7 @@ async function getHmacKey(secret: string) {
 export async function createSessionToken(
   secret: string,
   maxAgeSeconds: number,
+  prefix: string = TOKEN_PREFIX,
 ) {
   if (!Number.isFinite(maxAgeSeconds) || maxAgeSeconds <= 0) {
     throw new Error(
@@ -61,7 +65,7 @@ export async function createSessionToken(
     );
   }
   const expiresAt = Date.now() + maxAgeSeconds * 1000;
-  const payload = `${TOKEN_PREFIX}.${expiresAt}`;
+  const payload = `${prefix}.${expiresAt}`;
   const key = await getHmacKey(secret);
   const signature = bufferToHex(
     await crypto.subtle.sign("HMAC", key, encoder.encode(payload)),
@@ -73,6 +77,7 @@ export async function createSessionToken(
 export async function verifySessionToken(
   token: string | undefined | null,
   secret: string,
+  prefix: string = TOKEN_PREFIX,
 ): Promise<boolean> {
   if (!token || token.length > MAX_TOKEN_LENGTH) return false;
 
@@ -83,7 +88,7 @@ export async function verifySessionToken(
   const signature = token.slice(lastDot + 1);
 
   const parts = payload.split(".");
-  if (parts.length !== 2 || parts[0] !== TOKEN_PREFIX) return false;
+  if (parts.length !== 2 || parts[0] !== prefix) return false;
 
   const expiresAt = Number(parts[1]);
   if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return false;

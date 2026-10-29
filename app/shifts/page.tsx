@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { listUpcomingShifts, type PublicShift } from "@/lib/submissions/film-shifts";
+import { SHIFT_ACCESS_COOKIE, hasShiftAccess } from "@/lib/shift-access";
 import ShiftBoard from "./ShiftBoard";
+import ShiftCodeGate from "./ShiftCodeGate";
 
 // Claims change by the minute; never serve a cached board.
 export const dynamic = "force-dynamic";
@@ -13,6 +16,10 @@ export const metadata: Metadata = {
 };
 
 export default async function ShiftsPage() {
+  const token = (await cookies()).get(SHIFT_ACCESS_COOKIE)?.value;
+  // Don't load (or leak) the schedule until the code has been entered.
+  if (!(await hasShiftAccess(token))) return <ShiftCodeGate />;
+
   let shifts: PublicShift[] | null = null;
   try {
     shifts = await listUpcomingShifts();
