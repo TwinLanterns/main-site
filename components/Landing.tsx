@@ -9,8 +9,8 @@ import "./landing.css";
 /* --------------------------------- content --------------------------------- */
 
 const sentence: [string, boolean][] = [
-  ["Robots learn by watching people. We find those people, put cameras on them, and run every hour of capture", false],
-  ["from first recruit to final delivery.", true],
+  ["Robots learn by watching people. We source the real people, get cameras to them and run the operation on the ground,", false],
+  ["so every hour you train on is the real thing.", true],
 ];
 const words = sentence.flatMap(([text, hot]) => text.split(/\s+/).map((w) => ({ w, hot })));
 
@@ -57,9 +57,9 @@ const products = [
 ] as const;
 
 const steps = [
-  ["Sourcing", "Real workers, households and speakers, recruited and screened by us."],
-  ["Logistics", "Cameras shipped, tracked and recovered. Footage in every day."],
-  ["Operations", "Scheduling, training, coaching and backfill, run on the ground."],
+  ["Sourcing", "Real workers on real jobs, real households in their own homes. Recruited and screened by us."],
+  ["Logistics", "Cameras shipped, shared, tracked and recovered. Footage in every day."],
+  ["Operations", "Shifts, training, coaching and backfill, run on the ground by our team."],
   ["Delivery", "Reviewed hours, metadata and releases, ready to train on."],
 ];
 
@@ -250,7 +250,7 @@ export default function Landing() {
             </div>
             <div ref={textRef} className="htext">
               <div className="word">TWIN LANTERNS</div>
-              <h1>We capture the real world for AI.</h1>
+              <h1>We run real-world data collection for AI.</h1>
             </div>
           </div>
           <div ref={cueRef} className="cue">
@@ -341,7 +341,7 @@ export default function Landing() {
         <div className="pin">
           <div className="chain-in wrap">
             <h2>
-              One team. <span>Every step.</span>
+              We run the operation. <span>You get the data.</span>
             </h2>
             <div className="nodes">
               <div className="rule" />
@@ -367,7 +367,7 @@ export default function Landing() {
         <div className="wrap">
           <div className="label">Standards</div>
           <p className="statement">
-            Clean data starts <span>with clean collection.</span>
+            Authentic data starts <span>with authentic collection.</span>
           </p>
           <div className="list">
             {standards.map((s) => (
@@ -393,7 +393,7 @@ export default function Landing() {
             <div className="path">
               <span className="label">AI and robotics teams</span>
               <h2>Get in touch.</h2>
-              <p>Tell us what your model needs to see or hear. We&apos;ll come back with a plan.</p>
+              <p>Tell us what your model needs to see or hear. We&apos;ll source the people, run the logistics and deliver the hours.</p>
               <Link className="arrow" href={DATA_REQUEST_HREF}>
                 Contact us
               </Link>
