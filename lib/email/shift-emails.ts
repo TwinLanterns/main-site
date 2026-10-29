@@ -2,7 +2,8 @@
 //
 // Shift claim notifications. Same contract as data-request-emails.ts:
 // best-effort, never blocks the API response (the claim is already saved).
-// The internal email sets reply-to to the filmer.
+// The internal email sets reply-to to the filmer. Also the access-code email
+// sent from /admin → Shifts, which does report failures.
 
 import type {
   ClaimedShift,
@@ -13,7 +14,12 @@ import {
   formatShiftDay,
   formatShiftRange,
 } from "@/lib/shift-time";
-import { getEmailConfig, sendResendEmailSafely, MARK_ATTACHMENT } from "./resend";
+import {
+  getEmailConfig,
+  sendResendEmail,
+  sendResendEmailSafely,
+  MARK_ATTACHMENT,
+} from "./resend";
 import {
   COLOR,
   brandHeader,
@@ -98,4 +104,44 @@ export async function sendShiftClaimEmails(
     },
     "shift claim confirmation",
   );
+}
+
+/* ------------------------------- access codes ------------------------------- */
+
+function renderShiftCode(name: string, code: string, link: string): string {
+  const firstName = name.split(/\s+/)[0] || "there";
+  const inner = `
+    ${brandHeader()}
+    ${title("Your filming shift code")}
+    <p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${COLOR.ink}">Hi ${escapeHtml(firstName)},</p>
+    <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:${COLOR.ink}">Here's your code for the Twin Lanterns shift board. Enter it to see open filming shifts and take the ones that work for you.</p>
+    <p style="margin:0 0 22px;font-size:32px;font-weight:600;letter-spacing:0.2em;color:${COLOR.ink}">${escapeHtml(code)}</p>
+    <p style="margin:0 0 22px"><a href="${escapeHtml(link)}" style="display:inline-block;background:${COLOR.ink};color:${COLOR.white};text-decoration:none;font-size:15px;padding:12px 22px;border-radius:999px">Open the shift board</a></p>
+    <p style="margin:0;font-size:13px;line-height:1.6;color:${COLOR.muted}">The code is just for you, so please don't share it. Questions? Reply to this email.</p>
+  `;
+  return shell(inner, { preheader: `Your shift code is ${code}.` });
+}
+
+/**
+ * Emails a filmer their access code. Unlike the notifications above this
+ * throws on failure: the admin needs to know whether it went out.
+ */
+export async function sendShiftCodeEmail(args: {
+  name: string;
+  email: string;
+  /** Formatted for people, e.g. "K7QM-X2PD". */
+  code: string;
+  /** Absolute /shifts link with the code prefilled. */
+  link: string;
+}): Promise<void> {
+  const { configured, to } = getEmailConfig();
+  if (!configured) throw new Error("Email isn't configured (RESEND_API_KEY missing)");
+
+  await sendResendEmail({
+    to: [args.email],
+    subject: "Your Twin Lanterns filming shift code",
+    html: renderShiftCode(args.name, args.code, args.link),
+    attachments: [MARK_ATTACHMENT],
+    replyTo: to,
+  });
 }

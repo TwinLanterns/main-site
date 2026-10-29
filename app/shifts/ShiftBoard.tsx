@@ -22,11 +22,18 @@ import type { PublicShift } from "@/lib/submissions/film-shifts";
 
 const EMPTY = { name: "", email: "", phone: "" };
 
-export default function ShiftBoard({ shifts }: { shifts: PublicShift[] | null }) {
+export default function ShiftBoard({
+  shifts,
+  holder,
+}: {
+  shifts: PublicShift[] | null;
+  /** Whose shift code unlocked the board; prefills the claim form. */
+  holder: { name: string; email: string };
+}) {
   const router = useRouter();
   const [openId, setOpenId] = useState<string | null>(null);
   // Kept across claims so someone taking several shifts types it once.
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState({ ...EMPTY, name: holder.name, email: holder.email });
   // Honeypot: hidden from people, tempting to bots.
   const [website, setWebsite] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -52,6 +59,11 @@ export default function ShiftBoard({ shifts }: { shifts: PublicShift[] | null })
 
   function update(key: keyof typeof EMPTY, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function signOut() {
+    await fetch("/api/shifts/access", { method: "DELETE" }).catch(() => {});
+    router.refresh();
   }
 
   function toggle(id: string) {
@@ -108,6 +120,12 @@ export default function ShiftBoard({ shifts }: { shifts: PublicShift[] | null })
         <p className="mt-6 text-[17px] leading-relaxed text-muted">
           We share cameras, so each shift is one camera for one block of time.
           Pick an open one and it&apos;s yours. All times are {SHIFT_TIME_ZONE_LABEL}.
+        </p>
+        <p className="mt-4 text-[13.5px] text-muted">
+          Signed in as {holder.name}.{" "}
+          <button type="button" onClick={signOut} className="text-ink underline underline-offset-4">
+            Not you?
+          </button>
         </p>
 
         <AnimatePresence>

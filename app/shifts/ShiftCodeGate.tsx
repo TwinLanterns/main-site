@@ -10,9 +10,10 @@ import { useRouter } from "next/navigation";
 import { Field, Input } from "@/components/form";
 import { CONTACT_EMAIL } from "@/lib/site";
 
-export default function ShiftCodeGate() {
+export default function ShiftCodeGate({ initialCode = "" }: { initialCode?: string }) {
   const router = useRouter();
-  const [code, setCode] = useState("");
+  // Prefilled from the ?code= link in the email.
+  const [code, setCode] = useState(initialCode);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +46,7 @@ export default function ShiftCodeGate() {
           Enter your code.
         </h1>
         <p className="mt-6 text-[17px] leading-relaxed text-muted">
-          The shift board is for our filmers. Enter the code we sent you to see
+          The shift board is for our filmers. Enter the code we emailed you to see
           and take shifts.
         </p>
 
@@ -54,6 +55,8 @@ export default function ShiftCodeGate() {
             <Input
               value={code}
               onChange={(e) => setCode(e.target.value)}
+              placeholder="XXXX-XXXX"
+              maxLength={20}
               autoComplete="off"
               autoCapitalize="none"
               spellCheck={false}

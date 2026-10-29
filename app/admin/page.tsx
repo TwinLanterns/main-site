@@ -31,6 +31,7 @@ export default async function AdminPage() {
     { data: earnSpeech, error: earnSpeechError },
     { data: dataRequests, error: dataRequestsError },
     { data: filmShifts, error: filmShiftsError },
+    { data: filmShiftCodes, error: filmShiftCodesError },
   ] = await Promise.all([
     fetchAllRows((from, to) =>
       supabase
@@ -140,6 +141,14 @@ export default async function AdminPage() {
         .order("id", { ascending: true })
         .range(from, to),
     ),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("film_shift_codes")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to),
+    ),
   ]);
 
   // Not fatal: until supabase/data_requests.sql has been run the table
@@ -150,6 +159,10 @@ export default async function AdminPage() {
   // Same for supabase/film_shifts.sql.
   if (filmShiftsError) {
     console.error("film_shifts load failed", filmShiftsError);
+  }
+  // And supabase/film_shift_codes.sql.
+  if (filmShiftCodesError) {
+    console.error("film_shift_codes load failed", filmShiftCodesError);
   }
 
   if (
@@ -186,6 +199,7 @@ export default async function AdminPage() {
       earnSpeech={earnSpeech ?? []}
       dataRequests={dataRequests ?? []}
       filmShifts={filmShifts ?? []}
+      filmShiftCodes={filmShiftCodes ?? []}
     />
   );
 }

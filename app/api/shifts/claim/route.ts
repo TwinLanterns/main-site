@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { badRequest } from "@/lib/http";
-import { SHIFT_ACCESS_COOKIE, hasShiftAccess } from "@/lib/shift-access";
+import { SHIFT_ACCESS_COOKIE, getShiftAccess } from "@/lib/shift-access";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   ShiftConfigError,
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   if (limited) return limited;
 
   const token = (await cookies()).get(SHIFT_ACCESS_COOKIE)?.value;
-  if (!(await hasShiftAccess(token))) {
+  if (!(await getShiftAccess(token))) {
     return NextResponse.json(
       { ok: false, error: "Enter the shift code first." },
       { status: 401 },

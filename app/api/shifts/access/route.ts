@@ -1,46 +1,45 @@
 // app/api/shifts/access/route.ts
 //
-// Checks the shared shift-board code and sets the access cookie.
+// POST checks a filmer's shift code and sets the access cookie.
+// DELETE clears it ("Not you?" on the board).
 
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   SHIFT_ACCESS_COOKIE,
   SHIFT_ACCESS_MAX_AGE,
+  ShiftAccessConfigError,
   createShiftAccessToken,
-  normalizeShiftCode,
-  shiftAccessConfigured,
+  redeemShiftCode,
 } from "@/lib/shift-access";
-
-function safeCompare(a: string, b: string) {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) {
-    // Keep mismatched lengths on roughly the same timing.
-    timingSafeEqual(bufA, bufA);
-    return false;
-  }
-  return timingSafeEqual(bufA, bufB);
-}
 
 export async function POST(req: Request) {
   const limited = await rateLimit(req, "shift-access", 10, 15 * 60 * 1000);
   if (limited) return limited;
 
-  if (!shiftAccessConfigured()) {
-    console.error("SHIFTS_ACCESS_CODE / ADMIN_SESSION_SECRET not set.");
+  const body = await req.json().catch(() => null);
+  const code = typeof body?.code === "string" ? body.code.slice(0, 64) : "";
+
+  let holder;
+  let token;
+  try {
+    holder = await redeemShiftCode(code);
+    if (holder) token = await createShiftAccessToken(holder.id);
+  } catch (err) {
+    console.error("shift code check failed", err);
     return NextResponse.json(
-      { ok: false, error: "Server misconfigured" },
-      { status: 500 },
+      {
+        ok: false,
+        error:
+          err instanceof ShiftAccessConfigError
+            ? "Server misconfigured"
+            : "Couldn't check that code — please try again.",
+      },
+      { status: err instanceof ShiftAccessConfigError ? 500 : 502 },
     );
   }
 
-  const body = await req.json().catch(() => null);
-  const code = typeof body?.code === "string" ? normalizeShiftCode(body.code) : "";
-  const expected = normalizeShiftCode(process.env.SHIFTS_ACCESS_CODE!);
-
-  if (!code || !safeCompare(code, expected)) {
+  if (!holder || !token) {
     return NextResponse.json(
       { ok: false, error: "That code didn't work. Check it and try again." },
       { status: 401 },
@@ -48,12 +47,18 @@ export async function POST(req: Request) {
   }
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(SHIFT_ACCESS_COOKIE, await createShiftAccessToken(), {
+  res.cookies.set(SHIFT_ACCESS_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: SHIFT_ACCESS_MAX_AGE,
   });
+  return res;
+}
+
+export async function DELETE() {
+  const res = NextResponse.json({ ok: true });
+  res.cookies.delete(SHIFT_ACCESS_COOKIE);
   return res;
 }

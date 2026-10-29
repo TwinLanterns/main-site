@@ -1203,7 +1203,6 @@ carry no secret. Everything else in this table must never carry a
 | `ADMIN_USERNAME` | `api/admin/login` |
 | `ADMIN_PASSWORD` | `api/admin/login` |
 | `ADMIN_SESSION_SECRET` | `lib/admin-auth`, `lib/shift-access`, `proxy.ts`, `api/admin/*` |
-| `SHIFTS_ACCESS_CODE` | `lib/shift-access` — shared code filmers enter to open `/shifts`; changing it locks out existing visitors |
 | `DEEPSEEK_PROXY_URL` | `lib/deepseek`, `vibe-search`, `scripts/tag-resumes` |
 | `DEEPSEEK_API_KEY_REVERSE_PROXY` | `lib/deepseek`, `vibe-search`, `scripts/tag-resumes` |
 | `RESEND_API_KEY` | `lib/email/resend` (optional) |

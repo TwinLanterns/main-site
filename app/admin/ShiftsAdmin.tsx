@@ -3,7 +3,8 @@
 // app/admin/ShiftsAdmin.tsx
 //
 // Shifts tab: post filming shifts (one per camera per time block), see who
-// took each one, and free up or delete shifts. Filmers claim them at /shifts.
+// took each one, and free up or delete shifts. Filmers claim them at /shifts
+// after entering an access code (ShiftCodesAdmin).
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -12,6 +13,7 @@ import {
   formatShiftDay,
   formatShiftRange,
 } from "@/lib/shift-time";
+import ShiftCodesAdmin from "./ShiftCodesAdmin";
 
 type Row = Record<string, unknown>;
 
@@ -26,7 +28,7 @@ function signupOf(row: Row): Signup | null {
   return one && typeof one === "object" ? (one as Signup) : null;
 }
 
-export default function ShiftsAdmin({ shifts }: { shifts: Row[] }) {
+export default function ShiftsAdmin({ shifts, codes }: { shifts: Row[]; codes: Row[] }) {
   const router = useRouter();
   const [form, setForm] = useState({
     date: "",
@@ -116,7 +118,7 @@ export default function ShiftsAdmin({ shifts }: { shifts: Row[] }) {
             /shifts
           </a>
           . {upcoming.length} upcoming · {openCount} open ·{" "}
-          {upcoming.length - openCount} taken
+          {upcoming.length - openCount} taken · {codes.length} with codes
         </p>
         <button
           onClick={copyLink}
@@ -125,6 +127,8 @@ export default function ShiftsAdmin({ shifts }: { shifts: Row[] }) {
           {copied ? "Copied" : "Copy sign-up link"}
         </button>
       </div>
+
+      <ShiftCodesAdmin codes={codes} />
 
       <form
         onSubmit={handleCreate}

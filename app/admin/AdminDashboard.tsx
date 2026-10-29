@@ -1839,6 +1839,7 @@ export default function AdminDashboard({
   earnSpeech = [],
   dataRequests = [],
   filmShifts = [],
+  filmShiftCodes = [],
 }: {
   applications: Row[];
   briefs: Row[];
@@ -1849,6 +1850,7 @@ export default function AdminDashboard({
   earnSpeech?: Row[];
   dataRequests?: Row[];
   filmShifts?: Row[];
+  filmShiftCodes?: Row[];
 }) {
   const [tab, setTab] = useState<
     "jobs" | "applications" | "briefs" | "data" | "shifts" | "earn" | "vibe"
@@ -1970,7 +1972,7 @@ export default function AdminDashboard({
         ) : tab === "data" ? (
           <Table rows={dataRequests} columns={DATA_REQUEST_COLUMNS} />
         ) : tab === "shifts" ? (
-          <ShiftsAdmin shifts={filmShifts} />
+          <ShiftsAdmin shifts={filmShifts} codes={filmShiftCodes} />
         ) : tab === "earn" ? (
           <EarnSection
             ambassadors={earnAmbassadors}
