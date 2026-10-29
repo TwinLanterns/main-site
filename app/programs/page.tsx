@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import ProgramSearch from "@/components/ProgramSearch";
 
 export const metadata: Metadata = {
@@ -19,6 +20,13 @@ export default function ProgramsPage() {
         Get paid to film everyday work or tidy your own home. No résumé, no
         interview, gear supplied where you need it. Pick one and sign up in
         two minutes.
+      </p>
+      <p className="mt-4 text-[15px] text-muted">
+        Already filming with us?{" "}
+        <Link href="/shifts" className="text-ink underline underline-offset-4">
+          Pick a filming shift
+        </Link>
+        .
       </p>
       <div className="mt-10">
         <ProgramSearch />
