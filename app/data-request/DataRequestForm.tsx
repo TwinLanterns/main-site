@@ -135,7 +135,7 @@ export default function DataRequestForm() {
           </div>
 
           {error && (
-            <p className="rounded-[16px] border border-flame/40 bg-flame/5 px-4 py-3 text-[14px] text-flame">
+            <p role="alert" className="rounded-[16px] border border-flame/40 bg-flame/5 px-4 py-3 text-[14px] text-flame">
               {error}
             </p>
           )}

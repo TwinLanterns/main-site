@@ -142,13 +142,13 @@ export default function ProgramSearch() {
               </dl>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href={selected.apply} className={`${btn} ${selected.primary}`}>
-                  Start earning
+                  Start earning<span className="sr-only">: {selected.name}</span>
                 </Link>
                 <Link
                   href={selected.more}
                   className={`${btn} border border-white/25 hover:border-white`}
                 >
-                  See more
+                  See more<span className="sr-only">: {selected.name}</span>
                 </Link>
               </div>
             </article>

@@ -461,7 +461,7 @@ export default function ApplyFlow() {
                     <TermsAgreement checked={accepted} onChange={setAccepted} />
 
                     {error && (
-                      <p className="rounded-[16px] border border-flame/40 bg-flame/5 px-4 py-3 text-[14px] text-flame">
+                      <p role="alert" className="rounded-[16px] border border-flame/40 bg-flame/5 px-4 py-3 text-[14px] text-flame">
                         {error}
                       </p>
                     )}
@@ -474,7 +474,7 @@ export default function ApplyFlow() {
           {/* The last step renders its own error; this covers being sent back
               to an earlier step (e.g. to re-verify the email). */}
           {error && step !== steps.length - 1 && (
-            <p className="mt-6 rounded-[16px] border border-flame/40 bg-flame/5 px-4 py-3 text-[14px] text-flame">
+            <p role="alert" className="mt-6 rounded-[16px] border border-flame/40 bg-flame/5 px-4 py-3 text-[14px] text-flame">
               {error}
             </p>
           )}

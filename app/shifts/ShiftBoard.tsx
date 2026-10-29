@@ -177,6 +177,7 @@ export default function ShiftBoard({ shifts }: { shifts: PublicShift[] | null })
                               type="button"
                               onClick={() => toggle(s.id)}
                               aria-expanded={open}
+                              aria-controls={`claim-${s.id}`}
                               className={`rounded-full px-5 py-2.5 text-[14px] transition-colors ${
                                 open
                                   ? "border border-line text-ink hover:border-ink"
@@ -184,6 +185,10 @@ export default function ShiftBoard({ shifts }: { shifts: PublicShift[] | null })
                               }`}
                             >
                               {open ? "Cancel" : "Take this shift"}
+                              <span className="sr-only">
+                                , {formatShiftDay(s.starts_at)}{" "}
+                                {formatShiftRange(s.starts_at, s.ends_at)}
+                              </span>
                             </button>
                           )}
                         </div>
@@ -191,6 +196,7 @@ export default function ShiftBoard({ shifts }: { shifts: PublicShift[] | null })
                         <AnimatePresence initial={false}>
                           {open && (
                             <motion.form
+                              id={`claim-${s.id}`}
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: "auto", opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
@@ -240,7 +246,7 @@ export default function ShiftBoard({ shifts }: { shifts: PublicShift[] | null })
                                 </div>
 
                                 {error && (
-                                  <p className="rounded-[16px] border border-flame/40 bg-flame/5 px-4 py-3 text-[14px] text-flame">
+                                  <p role="alert" className="rounded-[16px] border border-flame/40 bg-flame/5 px-4 py-3 text-[14px] text-flame">
                                     {error}
                                   </p>
                                 )}

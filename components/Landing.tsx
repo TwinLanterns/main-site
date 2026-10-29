@@ -238,6 +238,23 @@ export default function Landing() {
     };
   }, [live]);
 
+  // The rail slides panels in from off-screen as you scroll. Tabbing into a
+  // panel that isn't showing scrolls the page to the point where it is, so
+  // keyboard focus never lands on something you can't see.
+  function showPanel(i: number) {
+    const rail = railRef.current;
+    if (!live || !rail) return;
+    // next frame, so the browser's own focus scrolling can't undo it
+    requestAnimationFrame(() => {
+      const r = rail.getBoundingClientRect();
+      const t = r.height - innerHeight;
+      if (t <= 0) return;
+      // inverse of the rail mapping in frame(): panel i is centred at q = i / 2
+      const at = (0.06 + (i / 2) * 0.88) * t;
+      if (Math.abs(-r.top - at) > 4) scrollTo({ top: scrollY + r.top + at, behavior: "instant" });
+    });
+  }
+
   return (
     <div className={`home${live ? " js" : ""}`}>
       {/* Scene 1: logo, one line; scrolling flies you through the lantern */}
@@ -253,7 +270,7 @@ export default function Landing() {
               <h1>We run the field work behind real-world data.</h1>
             </div>
           </div>
-          <div ref={cueRef} className="cue">
+          <div ref={cueRef} className="cue" aria-hidden="true">
             <span>Scroll</span>
             <i />
           </div>
@@ -298,8 +315,8 @@ export default function Landing() {
             </div>
           </div>
           <div ref={trackRef} className="track">
-            {products.map((p) => (
-              <div key={p.label} className="panel">
+            {products.map((p, i) => (
+              <div key={p.label} className="panel" onFocus={() => showPanel(i)}>
                 <div className="wrap">
                   <div>
                     <span className="label">{p.label}</span>
@@ -321,10 +338,10 @@ export default function Landing() {
                     </details>
                     <div className="pacts">
                       <Link className="arrow lit" href={p.apply}>
-                        Apply to film
+                        Apply to film<span className="sr-only">: {p.label}</span>
                       </Link>
                       <Link className="arrow" href={p.more}>
-                        Program details
+                        Program details<span className="sr-only">: {p.label}</span>
                       </Link>
                     </div>
                   </div>

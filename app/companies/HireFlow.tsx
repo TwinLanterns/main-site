@@ -412,7 +412,7 @@ export default function HireFlow() {
                     onChange={setAccepted}
                   />
                   {error && (
-                    <p className="mt-6 rounded-[16px] border border-flame/30 bg-flame/5 px-4 py-3 text-[13.5px] text-flame">
+                    <p role="alert" className="mt-6 rounded-[16px] border border-flame/30 bg-flame/5 px-4 py-3 text-[13.5px] text-flame">
                       {error}
                     </p>
                   )}
@@ -424,7 +424,7 @@ export default function HireFlow() {
           {/* The last step renders its own error; this covers being sent back
               to an earlier step (e.g. to re-verify the email). */}
           {error && step !== steps.length - 1 && (
-            <p className="mt-6 rounded-[16px] border border-flame/30 bg-flame/5 px-4 py-3 text-[13.5px] text-flame">
+            <p role="alert" className="mt-6 rounded-[16px] border border-flame/30 bg-flame/5 px-4 py-3 text-[13.5px] text-flame">
               {error}
             </p>
           )}

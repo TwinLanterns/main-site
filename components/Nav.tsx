@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Mark from "./Mark";
 import { DATA_REQUEST_HREF } from "@/lib/site";
 
@@ -25,6 +25,22 @@ export default function Nav() {
     setOpen(false);
   }
 
+  // Escape closes the mobile menu and hands focus back to its toggle.
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      toggleRef.current?.focus();
+    };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Hash links point into the homepage, so only plain routes can be current.
+  const current = (href: string) => (!href.includes("#") && href === pathname ? "page" : undefined);
+
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-ink/[0.04] bg-white/70 pt-[env(safe-area-inset-top,0px)] backdrop-blur-[14px] backdrop-saturate-[1.4]">
       <div className="flex items-center justify-between px-6 py-3.5">
@@ -45,6 +61,7 @@ export default function Nav() {
             <Link
               key={l.href}
               href={l.href}
+              aria-current={current(l.href)}
               className="hidden transition-colors hover:text-ink md:block"
             >
               {l.label}
@@ -52,17 +69,21 @@ export default function Nav() {
           ))}
           <Link
             href={DATA_REQUEST_HREF}
+            aria-current={current(DATA_REQUEST_HREF)}
             className="rounded-full border border-dim px-3.5 py-1.5 text-ink transition-colors hover:border-muted"
           >
             Contact Us
           </Link>
           <button
+            ref={toggleRef}
+            type="button"
             onClick={() => setOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
+            aria-controls="mobile-menu"
             className="-mr-1 grid h-8 w-8 place-items-center md:hidden"
           >
-            <span className="relative block h-3 w-4">
+            <span aria-hidden="true" className="relative block h-3 w-4">
               <span
                 className={`absolute left-0 block h-px w-4 bg-ink transition-all duration-300 ${open ? "top-1.5 rotate-45" : "top-0.5"}`}
               />
@@ -75,18 +96,19 @@ export default function Nav() {
       </div>
 
       {open && (
-        <div className="border-t border-line px-6 pb-4 md:hidden">
+        <nav id="mobile-menu" aria-label="Mobile" className="border-t border-line px-6 pb-4 md:hidden">
           {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
+              aria-current={current(l.href)}
               className="block border-b border-line py-3.5 text-[15px] text-muted transition-colors last:border-0 hover:text-ink"
             >
               {l.label}
             </Link>
           ))}
-        </div>
+        </nav>
       )}
     </header>
   );

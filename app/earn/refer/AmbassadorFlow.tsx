@@ -83,6 +83,7 @@ export default function AmbassadorFlow() {
               }
               setTimeout(() => setCopied("idle"), 1500);
             }}
+            aria-label="Copy your referral link"
             className="label shrink-0 text-flame"
           >
             {copied === "copied"
@@ -91,6 +92,9 @@ export default function AmbassadorFlow() {
                 ? "Copy failed"
                 : "Copy"}
           </button>
+          <span role="status" className="sr-only">
+            {copied === "copied" ? "Link copied" : copied === "failed" ? "Copy failed" : ""}
+          </span>
         </div>
       </motion.div>
     );
@@ -128,7 +132,7 @@ export default function AmbassadorFlow() {
             />
           </Field>
           <TermsAgreement checked={accepted} onChange={setAccepted} />
-          {error && <p className="text-[13.5px] text-flame">{error}</p>}
+          {error && <p role="alert" className="text-[13.5px] text-flame">{error}</p>}
         </div>
 
         <NavButtons

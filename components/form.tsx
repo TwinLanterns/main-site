@@ -275,7 +275,11 @@ export function EmailVerify({
           </button>
         </div>
       )}
-      {error && <p className="mt-2 text-[13px] text-flame">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-[13px] text-flame">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -551,7 +555,7 @@ export function DropZone({
           onChange={(e) => take(e.target.files?.[0])}
         />
       </div>
-      {error && <p className="mt-3 text-[13.5px] text-flame">{error}</p>}
+      {error && <p role="alert" className="mt-3 text-[13.5px] text-flame">{error}</p>}
       {file && (
         <button
           type="button"
@@ -618,6 +622,7 @@ export function StepRail({
               type="button"
               onClick={() => (i <= current ? onJump(i) : undefined)}
               disabled={i > current}
+              aria-current={active ? "step" : undefined}
               className={`flex w-full items-center gap-3 py-2 text-left text-[14.5px] transition-colors ${
                 active
                   ? "text-ink"
@@ -627,6 +632,7 @@ export function StepRail({
               }`}
             >
               <span
+                aria-hidden="true"
                 className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-[11px] transition-colors ${
                   done
                     ? "border-ink bg-ink text-white"
@@ -650,6 +656,7 @@ export function StepRail({
                 )}
               </span>
               {s}
+              {done && <span className="sr-only"> (done)</span>}
             </button>
           </li>
         );
@@ -729,17 +736,19 @@ export function TermsAgreement({
         <Link
           href="/terms"
           target="_blank"
+          rel="noopener noreferrer"
           className="text-ink underline underline-offset-4"
         >
-          Terms of Service
+          Terms of Service<span className="sr-only"> (opens in a new tab)</span>
         </Link>{" "}
         and{" "}
         <Link
           href="/privacy"
           target="_blank"
+          rel="noopener noreferrer"
           className="text-ink underline underline-offset-4"
         >
-          Privacy Policy
+          Privacy Policy<span className="sr-only"> (opens in a new tab)</span>
         </Link>
         . I&apos;m 18 or older, or a parent or guardian has given me
         permission.

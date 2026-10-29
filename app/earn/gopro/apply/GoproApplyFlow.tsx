@@ -275,7 +275,7 @@ export default function GoproApplyFlow() {
                     onChange={setAccepted}
                   />
                   {error && (
-                    <p className="mt-6 text-[13.5px] text-flame">{error}</p>
+                    <p role="alert" className="mt-6 text-[13.5px] text-flame">{error}</p>
                   )}
                 </>
               )}
