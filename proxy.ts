@@ -6,6 +6,7 @@ export const config = {
     "/admin/:path*",
     "/api/admin/resume/:path*",
     "/api/admin/vibe-search/:path*",
+    "/api/admin/shifts/:path*",
   ],
 };
 

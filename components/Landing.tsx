@@ -9,8 +9,8 @@ import "./landing.css";
 /* --------------------------------- content --------------------------------- */
 
 const sentence: [string, boolean][] = [
-  ["Robots learn by watching people. We find those people, put cameras on them, and run every hour of capture", false],
-  ["from first recruit to final delivery.", true],
+  ["Robots learn by watching people. Someone has to find those people, get a camera on them and keep the shifts running when the day doesn't go to plan.", false],
+  ["That's the part we do.", true],
 ];
 const words = sentence.flatMap(([text, hot]) => text.split(/\s+/).map((w) => ({ w, hot })));
 
@@ -18,7 +18,7 @@ const products = [
   {
     label: "Egocentric video",
     title: "Skilled work, first person.",
-    body: "Mechanics, cooks, warehouse crews and tradespeople filming their real shifts on head-mounted cameras.",
+    body: "Mechanics, line cooks, warehouse crews and tradespeople we recruit on the job, filming their actual shifts on head-mounted cameras.",
     specs: [
       ["Rig", "Phone on head strap, 70° down"],
       ["Settings", "Commercial and industrial"],
@@ -31,7 +31,7 @@ const products = [
   {
     label: "In-home video",
     title: "The everyday, room by room.",
-    body: "Vetted households recording the chores robots will one day do, across kitchens, bedrooms, living rooms and laundry.",
+    body: "Households we vet and kit out ourselves, recording the chores robots will one day do in kitchens, bedrooms, living rooms and laundry rooms.",
     specs: [
       ["Rig", "Supplied camera, head-mounted"],
       ["Rooms", "Kitchen, bed, living, laundry, dining"],
@@ -44,7 +44,7 @@ const products = [
   {
     label: "Speech",
     title: "Conversation, as it's spoken.",
-    body: "Two-person sessions, scripted and unscripted, indoors and out, recruited to the voices your model hasn't heard.",
+    body: "Two-person sessions, scripted and unscripted, indoors and out. We go find the voices your model hasn't heard yet.",
     specs: [
       ["Format", "Two speakers, one continuous take"],
       ["Cohorts", "Built to your demographic quotas"],
@@ -57,10 +57,10 @@ const products = [
 ] as const;
 
 const steps = [
-  ["Sourcing", "Real workers, households and speakers, recruited and screened by us."],
-  ["Logistics", "Cameras shipped, tracked and recovered. Footage in every day."],
-  ["Operations", "Scheduling, training, coaching and backfill, run on the ground."],
-  ["Delivery", "Reviewed hours, metadata and releases, ready to train on."],
+  ["Sourcing", "We find the mechanics, cooks, households and speakers, and screen every one of them ourselves."],
+  ["Logistics", "We ship the cameras, move them between crews, track every unit and get them back."],
+  ["Operations", "We schedule the shifts, train people on the rig, coach the retakes and cover the no-shows."],
+  ["Delivery", "You get reviewed hours with metadata and signed releases attached."],
 ];
 
 const standards = [
@@ -250,7 +250,7 @@ export default function Landing() {
             </div>
             <div ref={textRef} className="htext">
               <div className="word">TWIN LANTERNS</div>
-              <h1>We capture the real world for AI.</h1>
+              <h1>We run the field work behind real-world data.</h1>
             </div>
           </div>
           <div ref={cueRef} className="cue">
@@ -341,7 +341,7 @@ export default function Landing() {
         <div className="pin">
           <div className="chain-in wrap">
             <h2>
-              One team. <span>Every step.</span>
+              We do the ground work. <span>You get the hours.</span>
             </h2>
             <div className="nodes">
               <div className="rule" />
@@ -367,7 +367,7 @@ export default function Landing() {
         <div className="wrap">
           <div className="label">Standards</div>
           <p className="statement">
-            Clean data starts <span>with clean collection.</span>
+            Good data comes down to <span>how the shoot was run.</span>
           </p>
           <div className="list">
             {standards.map((s) => (
@@ -393,7 +393,7 @@ export default function Landing() {
             <div className="path">
               <span className="label">AI and robotics teams</span>
               <h2>Get in touch.</h2>
-              <p>Tell us what your model needs to see or hear. We&apos;ll come back with a plan.</p>
+              <p>Tell us what your model needs to see or hear. We&apos;ll find the people, handle the gear and run the shoots.</p>
               <Link className="arrow" href={DATA_REQUEST_HREF}>
                 Contact us
               </Link>

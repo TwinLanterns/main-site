@@ -30,6 +30,7 @@ export default async function AdminPage() {
     { data: earnGopro, error: earnGoproError },
     { data: earnSpeech, error: earnSpeechError },
     { data: dataRequests, error: dataRequestsError },
+    { data: filmShifts, error: filmShiftsError },
   ] = await Promise.all([
     fetchAllRows((from, to) =>
       supabase
@@ -131,12 +132,24 @@ export default async function AdminPage() {
         .order("id", { ascending: true })
         .range(from, to),
     ),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("film_shifts")
+        .select("*, film_shift_signups (name, email, phone, created_at)")
+        .order("starts_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    ),
   ]);
 
   // Not fatal: until supabase/data_requests.sql has been run the table
   // doesn't exist, and that shouldn't take down the rest of the dashboard.
   if (dataRequestsError) {
     console.error("data_requests load failed", dataRequestsError);
+  }
+  // Same for supabase/film_shifts.sql.
+  if (filmShiftsError) {
+    console.error("film_shifts load failed", filmShiftsError);
   }
 
   if (
@@ -172,6 +185,7 @@ export default async function AdminPage() {
       earnGopro={earnGopro ?? []}
       earnSpeech={earnSpeech ?? []}
       dataRequests={dataRequests ?? []}
+      filmShifts={filmShifts ?? []}
     />
   );
 }

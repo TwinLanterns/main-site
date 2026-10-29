@@ -2,6 +2,7 @@
 
 import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import ShiftsAdmin from "./ShiftsAdmin";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -1837,6 +1838,7 @@ export default function AdminDashboard({
   earnGopro = [],
   earnSpeech = [],
   dataRequests = [],
+  filmShifts = [],
 }: {
   applications: Row[];
   briefs: Row[];
@@ -1846,9 +1848,10 @@ export default function AdminDashboard({
   earnGopro?: Row[];
   earnSpeech?: Row[];
   dataRequests?: Row[];
+  filmShifts?: Row[];
 }) {
   const [tab, setTab] = useState<
-    "jobs" | "applications" | "briefs" | "data" | "earn" | "vibe"
+    "jobs" | "applications" | "briefs" | "data" | "shifts" | "earn" | "vibe"
   >("jobs");
   const router = useRouter();
 
@@ -1915,6 +1918,16 @@ export default function AdminDashboard({
             Data requests ({dataRequests.length})
           </button>
           <button
+            onClick={() => setTab("shifts")}
+            className={`px-3 py-2 text-sm font-medium ${
+              tab === "shifts"
+                ? "border-b-2 border-neutral-900 text-neutral-900"
+                : "text-neutral-500 hover:text-neutral-700"
+            }`}
+          >
+            Shifts ({filmShifts.length})
+          </button>
+          <button
             onClick={() => setTab("earn")}
             className={`px-3 py-2 text-sm font-medium ${
               tab === "earn"
@@ -1956,6 +1969,8 @@ export default function AdminDashboard({
           <Table rows={briefs} columns={BRIEF_COLUMNS} />
         ) : tab === "data" ? (
           <Table rows={dataRequests} columns={DATA_REQUEST_COLUMNS} />
+        ) : tab === "shifts" ? (
+          <ShiftsAdmin shifts={filmShifts} />
         ) : tab === "earn" ? (
           <EarnSection
             ambassadors={earnAmbassadors}

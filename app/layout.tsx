@@ -24,15 +24,15 @@ const site = "https://twinlanterns.co";
 export const metadata: Metadata = {
   metadataBase: new URL(site),
   title: {
-    default: "Twin Lanterns — We capture the real world for AI",
+    default: "Twin Lanterns — Field operations for real-world data",
     template: "%s · Twin Lanterns",
   },
   description:
-    "Twin Lanterns captures real-world egocentric video, in-home video and speech for AI and robotics teams, run end to end from first recruit to final delivery.",
+    "Twin Lanterns recruits the people, ships the cameras and runs the shoots behind egocentric video, in-home video and speech for AI and robotics teams.",
   openGraph: {
     title: "Twin Lanterns",
     description:
-      "We capture the real world for AI: egocentric video, in-home video and speech, end to end.",
+      "We recruit the people, ship the cameras and run the shoots behind real-world video and speech data.",
     url: site,
     siteName: "Twin Lanterns",
     type: "website",
