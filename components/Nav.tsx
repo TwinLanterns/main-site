@@ -7,10 +7,11 @@ import Mark from "./Mark";
 import { DATA_REQUEST_HREF } from "@/lib/site";
 
 const links = [
-  { href: "/#data", label: "Data" },
-  { href: "/#method", label: "Method" },
-  { href: "/programs", label: "Contributors" },
-  { href: "/#standards", label: "Standards" },
+  { href: "/#data", label: "Services" },
+  { href: "/#method", label: "How it works" },
+  { href: "/#platform", label: "Platform" },
+  { href: "/demo", label: "Demo" },
+  { href: "/programs", label: "Film with us" },
 ];
 
 export default function Nav() {

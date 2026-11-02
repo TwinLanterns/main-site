@@ -16,6 +16,8 @@ const columns = [
     title: "Company",
     links: [
       { href: DATA_REQUEST_HREF, label: "Contact us" },
+      { href: "/#platform", label: "Platform" },
+      { href: "/demo", label: "Operations demo" },
       { href: "/companies", label: "Hire a student" },
       { href: "/apply", label: "Student applications" },
     ],
@@ -33,6 +35,7 @@ const columns = [
     links: [
       { href: "/privacy", label: "Privacy" },
       { href: "/terms", label: "Terms" },
+      { href: "/ops/login", label: "Team login" },
     ],
   },
 ];

@@ -81,6 +81,36 @@ const standards = [
   },
 ];
 
+// Describes only what the /ops workspace actually does today; integrations
+// that don't exist yet are called out as manual.
+const platform = [
+  {
+    title: "Operator CRM",
+    sub: "Every lead, from first text to activation.",
+    body: "One record per person, with who sourced them, who owns outreach and onboarding, and the next action and its due date. A lead isn't counted as an operator until a manager activates them.",
+  },
+  {
+    title: "Onboarding",
+    sub: "A checklist per project, confirmed by a manager.",
+    body: "Training, equipment and test-recording steps come from each project's requirements. Blocked steps stay visible, and readiness is a recorded decision, never an automatic percentage.",
+  },
+  {
+    title: "Shifts and recording",
+    sub: "Booked shifts become tracked sessions.",
+    body: "Operators book on our shift board. Each session records check-in, pre-recording checks, duration, upload and review as separate steps.",
+  },
+  {
+    title: "Production tracking",
+    sub: "Committed, submitted and accepted, kept apart.",
+    body: "Totals are recomputed from the underlying rows. Missing acceptance data is shown as unknown, and forecasts are labelled estimates with their assumptions on screen.",
+  },
+  {
+    title: "Files and delivery",
+    sub: "Your naming rules and destination, per project.",
+    body: "File paths are checked against the project's naming rule, and manifests export for delivery. Destinations such as Drive or object storage are configured per project. Uploads are currently confirmed by hand, not through a storage integration.",
+  },
+];
+
 /* ----------------------------------- art ----------------------------------- */
 
 function Art({ kind }: { kind: (typeof products)[number]["art"] }) {
@@ -403,16 +433,62 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="st scroll-mt-14" id="platform">
+        <div className="wrap">
+          <div className="label">Platform</div>
+          <p className="statement">
+            One workspace for the whole collection. <span>From first text to delivered files.</span>
+          </p>
+          <p className="mt-6 max-w-[60ch] text-[15.5px] text-muted">
+            We built our operations workspace to bring the trackers, sheets and shift board we already run on into one place.
+            Household collection is the current pilot. Other environments are scope to discuss.
+          </p>
+          <div className="list">
+            {platform.map((s) => (
+              <details key={s.title}>
+                <summary>
+                  <span className="t">
+                    {s.title}
+                    <small>{s.sub}</small>
+                  </span>
+                  <span className="plus" aria-hidden="true" />
+                </summary>
+                <div className="x">{s.body}</div>
+              </details>
+            ))}
+          </div>
+          <div className="pacts mt-10">
+            <Link className="arrow lit" href="/demo">
+              Explore the operations demo
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="st scroll-mt-14" id="contact">
         <div className="wrap">
           <div className="label">Work with us</div>
           <div className="paths" id="contributors">
             <div className="path">
-              <span className="label">AI and robotics teams</span>
-              <h2>Get in touch.</h2>
-              <p>Tell us what your model needs to see or hear. We&apos;ll find the people, handle the gear and run the shoots.</p>
-              <Link className="arrow" href={DATA_REQUEST_HREF}>
-                Contact us
+              <span className="label">AI and robotics data teams</span>
+              <h2>Managed collection.</h2>
+              <p>
+                We source and onboard recording operators, coordinate collection through a project manager, track
+                production and organize delivery to your project&apos;s requirements.
+              </p>
+              <Link className="arrow lit" href={`${DATA_REQUEST_HREF}?interest=managed_collection`}>
+                Discuss a collection pilot
+              </Link>
+            </div>
+            <div className="path">
+              <span className="label">Early access</span>
+              <h2>Collection operations platform.</h2>
+              <p>
+                Running your own collection workforce? We&apos;re exploring access to the workspace we use. It isn&apos;t
+                a self-serve product yet.
+              </p>
+              <Link className="arrow" href={`${DATA_REQUEST_HREF}?interest=platform_access`}>
+                Discuss platform access
               </Link>
             </div>
             <div className="path">
