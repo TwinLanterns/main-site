@@ -1874,3 +1874,13 @@ paths share error-handling behavior.
 `lib/email/templates.ts` runs every interpolated payload value through
 `escapeHtml()` before it hits the email body. Don't interpolate raw payload
 values into HTML anywhere else.
+---
+
+## Operations workspace (`/ops`, `/demo`)
+
+Internal CRM / field-operations area and the public sanitized demo. Setup,
+routes, access model, data dictionary, import rules and limitations are in
+[`docs/OPS.md`](docs/OPS.md). Schema: `supabase/ops_core.sql`. Logic:
+`lib/ops/*` (pure modules tested by `scripts/test-ops.ts`). `/ops` is added
+to the `proxy.ts` matcher and accepts the shared admin cookie or a per-person
+`ops_session` cookie (`lib/ops/team-token.ts`).
