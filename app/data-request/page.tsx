@@ -4,9 +4,14 @@ import DataRequestForm from "./DataRequestForm";
 export const metadata: Metadata = {
   title: "Get in touch",
   description:
-    "Egocentric video, in-home video and speech data for AI and robotics teams. Send Twin Lanterns a message.",
+    "Scope a managed data collection pilot with Twin Lanterns, or ask about access to our collection operations platform.",
 };
 
-export default function DataRequestPage() {
-  return <DataRequestForm />;
+export default async function DataRequestPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ interest?: string | string[] }>;
+}) {
+  const { interest } = await searchParams;
+  return <DataRequestForm initialInterest={typeof interest === "string" ? interest : ""} />;
 }

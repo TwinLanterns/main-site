@@ -2,21 +2,42 @@
 
 // app/data-request/DataRequestForm.tsx
 //
-// Buyer-facing contact form: name, email, message. No email OTP (it's a
-// sales lead — see lib/submissions/data-request.ts). Replaces the bare
-// mailto links, which do nothing for visitors without a mail client set up.
+// Business inquiry form: who you are, what you're interested in (managed
+// collection vs. platform access — tracked separately), and a short project
+// description. No email OTP (it's a sales lead — see
+// lib/submissions/data-request.ts). Operators apply through /programs.
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { Field, Input, Textarea, ease } from "@/components/form";
+import { Field, Input, Select, Textarea, ease } from "@/components/form";
 import { isValidEmail } from "@/lib/validation";
 import { CONTACT_EMAIL } from "@/lib/site";
 
-const EMPTY = { name: "", email: "", message: "" };
+const EMPTY = {
+  name: "",
+  email: "",
+  organization: "",
+  interest: "",
+  environment: "",
+  geography: "",
+  timing: "",
+  volume: "",
+  message: "",
+};
 
-export default function DataRequestForm() {
-  const [form, setForm] = useState(EMPTY);
+const INTERESTS = [
+  ["managed_collection", "Managed collection: we run it for you"],
+  ["platform_access", "Platform access for your own collection team"],
+  ["both", "Both"],
+] as const;
+
+export default function DataRequestForm({ initialInterest = "" }: { initialInterest?: string }) {
+  const [form, setForm] = useState({
+    ...EMPTY,
+    interest: INTERESTS.some(([k]) => k === initialInterest) ? initialInterest : "",
+  });
+  const [volumeIsEstimate, setVolumeIsEstimate] = useState(true);
   // Honeypot: hidden from people, tempting to bots.
   const [website, setWebsite] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -30,6 +51,8 @@ export default function DataRequestForm() {
   const valid =
     form.name.trim().length > 1 &&
     isValidEmail(form.email) &&
+    form.organization.trim().length > 1 &&
+    form.interest !== "" &&
     form.message.trim().length > 1;
 
   async function handleSubmit(e: FormEvent) {
@@ -41,7 +64,12 @@ export default function DataRequestForm() {
       const res = await fetch("/api/data-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, website }),
+        body: JSON.stringify({
+          ...form,
+          volumeIsEstimate: form.volume.trim() ? volumeIsEstimate : null,
+          sourcePage: "/data-request",
+          website,
+        }),
       });
       // Platform errors (413, 504) return HTML, not JSON.
       const data = await res.json().catch(() => ({}));
@@ -88,7 +116,12 @@ export default function DataRequestForm() {
           Get in touch.
         </h1>
         <p className="mt-6 text-[17px] leading-relaxed text-muted">
-          Looking for data? Send us a message and we&apos;ll get back to you.
+          Tell us about the collection you need. We&apos;ll reply to scope a pilot.
+          Want to film for us instead?{" "}
+          <Link href="/programs" className="text-ink underline underline-offset-4">
+            See contributor programs
+          </Link>
+          .
         </p>
 
         <form
@@ -104,7 +137,7 @@ export default function DataRequestForm() {
                 autoComplete="name"
               />
             </Field>
-            <Field label="Email" required>
+            <Field label="Work email" required>
               <Input
                 type="email"
                 value={form.email}
@@ -113,13 +146,62 @@ export default function DataRequestForm() {
               />
             </Field>
           </div>
-          <Field label="Message" required>
+          <Field label="Organization" required>
+            <Input
+              value={form.organization}
+              onChange={(e) => update("organization", e.target.value)}
+              autoComplete="organization"
+            />
+          </Field>
+          <Field label="What are you interested in?" required>
+            <Select value={form.interest} onChange={(e) => update("interest", e.target.value)}>
+              <option value="">Choose one</option>
+              {INTERESTS.map(([k, label]) => (
+                <option key={k} value={k}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Collection environment" hint="e.g. homes, kitchens, warehouses">
+              <Input value={form.environment} onChange={(e) => update("environment", e.target.value)} />
+            </Field>
+            <Field label="Geography">
+              <Input value={form.geography} onChange={(e) => update("geography", e.target.value)} />
+            </Field>
+            <Field label="Approximate timing">
+              <Input value={form.timing} onChange={(e) => update("timing", e.target.value)} />
+            </Field>
+            <Field label="Volume, with units" hint="e.g. 200 hours of video">
+              <Input value={form.volume} onChange={(e) => update("volume", e.target.value)} />
+            </Field>
+          </div>
+          {form.volume.trim() && (
+            <label className="flex items-center gap-2 text-[14px] text-muted">
+              <input
+                type="checkbox"
+                checked={volumeIsEstimate}
+                onChange={(e) => setVolumeIsEstimate(e.target.checked)}
+              />
+              This volume is an estimate
+            </label>
+          )}
+          <Field label="Brief project description" required>
             <Textarea
-              rows={6}
+              rows={5}
               value={form.message}
               onChange={(e) => update("message", e.target.value)}
             />
           </Field>
+          <p className="text-[13px] leading-relaxed text-muted">
+            Please don&apos;t include footage, credentials or confidential capture specifications. We&apos;ll ask for
+            what we need once we&apos;re talking. We use these details only to reply about your project. See our{" "}
+            <Link href="/privacy" className="text-ink underline underline-offset-4">
+              privacy policy
+            </Link>
+            .
+          </p>
 
           {/* Honeypot — visually hidden and skipped by keyboard/AT. */}
           <div aria-hidden className="absolute left-[-9999px] h-0 w-0 overflow-hidden">

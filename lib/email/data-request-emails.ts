@@ -5,7 +5,7 @@
 // The internal email sets reply-to to the buyer so the team can answer by
 // just hitting Reply.
 
-import type { DataRequestPayload } from "@/lib/submissions/data-request";
+import { inquiryDetails, type DataRequestPayload } from "@/lib/submissions/data-request";
 import { getEmailConfig, sendResendEmailSafely, MARK_ATTACHMENT } from "./resend";
 import {
   COLOR,
@@ -25,6 +25,7 @@ function renderInternal(p: DataRequestPayload): string {
     ${renderKeyValueTable([
       ["Name", p.name],
       ["Email", p.email],
+      ...inquiryDetails(p),
       ["Message", p.message],
     ])}
     <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:${COLOR.muted}">Reply to this email to answer ${escapeHtml(p.name)} directly.</p>
