@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
+import { OPS_COOKIE_NAME, verifyTeamToken } from "@/lib/ops/team-token";
 
 export const config = {
   matcher: [
@@ -7,15 +8,20 @@ export const config = {
     "/api/admin/resume/:path*",
     "/api/admin/vibe-search/:path*",
     "/api/admin/shifts/:path*",
+    "/ops/:path*",
+    "/api/ops/:path*",
   ],
 };
 
 const LOGIN_PATH = "/admin/login";
+const OPS_LOGIN_PATH = "/ops/login";
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isApi = pathname.startsWith("/api/");
-  const isLoginPage = pathname === LOGIN_PATH;
+  const isOps = pathname === "/ops" || pathname.startsWith("/ops/") || pathname.startsWith("/api/ops/");
+  const loginPath = isOps ? OPS_LOGIN_PATH : LOGIN_PATH;
+  const isLoginPage = pathname === loginPath;
 
   const secret = process.env.ADMIN_SESSION_SECRET;
   if (!secret) {
@@ -28,11 +34,19 @@ export async function proxy(req: NextRequest) {
   }
 
   const token = req.cookies.get(ADMIN_COOKIE_NAME)?.value ?? "";
-  const valid = token !== "" && (await verifySessionToken(token, secret));
+  const adminValid = token !== "" && (await verifySessionToken(token, secret));
+  // /ops also takes a per-person team session. This only checks the
+  // signature; lib/ops/auth.ts re-checks the member (active, role, projects)
+  // on every page and action.
+  const valid =
+    adminValid ||
+    (isOps && (await verifyTeamToken(req.cookies.get(OPS_COOKIE_NAME)?.value, secret)) !== null);
 
-  // Already authenticated → keep them out of the login form.
+  // Already authenticated → keep them out of the login form. Not for
+  // /ops/login: a signed token can belong to a deactivated member, so that
+  // page checks the member itself (redirecting here would loop).
   if (isLoginPage) {
-    if (valid) {
+    if (valid && !isOps) {
       const url = new URL("/admin", req.url);
       return NextResponse.redirect(url);
     }
@@ -43,7 +57,7 @@ export async function proxy(req: NextRequest) {
     if (isApi) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const loginUrl = new URL(LOGIN_PATH, req.url);
+    const loginUrl = new URL(loginPath, req.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }

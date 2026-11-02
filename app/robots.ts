@@ -6,7 +6,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: '/admin/', // Prevents crawling of the admin directory
+      // Internal tools; /ops pages are also noindex.
+      disallow: ['/admin/', '/ops/'],
     },
     sitemap: 'https://twinlanterns.co/sitemap.xml',
   }
