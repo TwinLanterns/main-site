@@ -1235,18 +1235,17 @@ query's message (aggregated across all five). On success it hands the rows to
 `robots: { index: false, follow: false, googleBot: { index: false, follow: false } }`
 on the whole `/admin` subtree — see §11.1.
 
-**Four tabs**
+**Tabs**
 
 | Tab | Contents |
 | --- | --- |
 | **Student applications** | Table with `APPLICATION_COLUMNS` (`first_name`, `last_name`, `email`, `school`, `grad_year`, `location`, `hours_per_week`, `start_timing`, `created_at`) + 4 AI columns (`vibe_tags`, `soft_skills`, `hard_skills`, `ai_summary`) + resume download link |
 | **Company briefs** | Table with `BRIEF_COLUMNS` (`company`, `contact_name`, `contact_email`, `title`, `stage`, `city`, `timeline`, `created_at`) |
 | **Earn** (`{qualified.length + unqualified.length}`) | `<EarnSection />` — three sub-tabs, see below |
-| **Search** | `<VibeSearch />` |
 
 Tab buttons display live counts for applications, briefs, and Earn.
 `AdminDashboard.tsx`'s tab state type is
-`"applications" | "briefs" | "earn" | "vibe"`.
+`"jobs" | "applications" | "briefs" | "data" | "shifts" | "earn"`.
 
 **Earn tab** (`EarnSection` component)
 
@@ -1300,48 +1299,6 @@ qualified · M unqualified" banner and a "Clear filter" button when active.
 - **Row count footer** — "X of Y rows"
 - `formatCell` renders `null`/`undefined` as "—", ISO timestamps via
   `toLocaleString()`, arrays joined by comma, and objects as truncated JSON
-
-**VibeSearch UI**
-
-- Text input + "Semantic Search" button; Enter in the input also submits
-- 4 example prompts for quick fill:
-  `"Scrappy self-starter who's shipped side projects"`,
-  `"Data-driven analyst with Python and SQL"`,
-  `"Designer with a strong visual portfolio"`,
-  `"Backend engineer who's worked in fintech"`
-- Manual SSE parsing, **with a JSON fallback path**: the client checks
-  `Content-Type` on the response; `text/event-stream` → SSE parse; anything
-  else → `response.json()`. If the SSE stream closes without ever emitting a
-  `result` event, the client throws
-  `"Search stream ended without a result."`
-- Stepper shows progress across
-  `initializing → filtering → analyzing → ranking → complete`
-- A gradient progress bar is driven by a `progressPct` lookup:
-  initializing 10, filtering 35, analyzing 65, ranking 90, complete 100
-- Two views: **Shortlist** (stage 1) and **Final rankings** (stage 3), with a
-  400ms opacity + translate-y cross-fade triggered by `handleViewTransition`
-- Empty state: "No matching candidates" card
-- Error state: red banner with a "Retry" button that re-invokes the search
-- When the shortlist is empty but the user has searched, the client shows the
-  empty state. When shortlist is null, the view falls back to `results`
-  (`viewMode === "shortlist" ? shortlist || results || [] : results || []`).
-
-**CandidateCard shows**
-
-- Rank badge (amber gradient / neutral gradient / orange gradient for top 3 in
-  final mode; plain ink otherwise)
-- "Shortlisted" pill when rendering in final mode without a `match_score`
-- Contact line: email · school · location
-- Vibe tag chips (`VibeTags`, cycles through 8 background/ring color pairs)
-- `HighlightedSnippet` — matched keywords wrapped in `<mark>` using a
-  case-insensitive regex built from the keyword list
-- `MatchedKeywords` — chips per keyword with a source dot row
-  (`tags` purple / `summary` sky / `profile` amber), plus up to 3 tag excerpts
-  and 3 raw-payload excerpts below
-- "Why this match" panel (`match_reason`, stripped)
-- Deep analysis (`deep_analysis`, stripped)
-- `ScoreRing` (SVG donut; green ≥ 80, lime ≥ 60, amber ≥ 40, red below)
-- "Resume ↗" link to `/api/admin/resume/{id}`
 
 **Logout:** `POST /api/admin/logout` then `router.push("/admin/login")` +
 `router.refresh()`.
