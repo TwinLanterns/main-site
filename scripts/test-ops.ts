@@ -14,6 +14,7 @@ import { forecastOperator, forecastScenario, type ForecastInput } from "../lib/o
 import { onboardingProgress, HOUSEHOLD_GUIDE_TEMPLATE } from "../lib/ops/onboarding";
 import { uploadAlerts, overviewCards } from "../lib/ops/metrics";
 import { normalizePhone } from "../lib/ops/phone";
+import { createTeamToken, passwordStamp, verifyTeamToken } from "../lib/ops/team-token";
 
 let failures = 0;
 let total = 0;
@@ -170,5 +171,21 @@ check("submitted card sums workbook cells", cards.find((c) => c.key === "submitt
 check("US 10-digit normalized", normalizePhone("(555) 010-0000"), "+15550100000");
 check("too short stays un-normalized", normalizePhone("12345"), null);
 
-console.log(`\n${total - failures}/${total} passed`);
-if (failures > 0) process.exit(1);
+/* ------------------------------ team tokens ------------------------------ */
+
+async function tokenChecks() {
+  const secret = "test-secret";
+  const id = "11111111-1111-1111-1111-111111111111";
+  const token = await createTeamToken(secret, id, "scrypt$aa$bb");
+  const v = await verifyTeamToken(token, secret);
+  check("team token names its member", v?.memberId, id);
+  check("stamp matches the hash it was issued for", v?.stamp === (await passwordStamp("scrypt$aa$bb")), true);
+  check("password reset changes the stamp", v?.stamp === (await passwordStamp("scrypt$cc$dd")), false);
+  check("wrong secret rejected", await verifyTeamToken(token, "other"), null);
+  check("old-format token rejected", await verifyTeamToken(`team_${id}.9999999999999.00`, secret), null);
+}
+
+tokenChecks().then(() => {
+  console.log(`\n${total - failures}/${total} passed`);
+  if (failures > 0) process.exit(1);
+});

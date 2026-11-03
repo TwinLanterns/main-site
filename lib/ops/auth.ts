@@ -14,7 +14,7 @@
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
 import { getSupabaseServerClient } from "@/lib/supabase-server";
-import { OPS_COOKIE_NAME, verifyTeamToken } from "./team-token";
+import { OPS_COOKIE_NAME, passwordStamp, verifyTeamToken } from "./team-token";
 
 export type Role = "leadership" | "manager" | "reviewer";
 
@@ -31,15 +31,19 @@ export async function getActor(): Promise<Actor | null> {
   if (!secret) return null;
   const jar = await cookies();
 
-  const memberId = await verifyTeamToken(jar.get(OPS_COOKIE_NAME)?.value, secret);
-  if (memberId) {
+  const team = await verifyTeamToken(jar.get(OPS_COOKIE_NAME)?.value, secret);
+  if (team) {
     const { data, error } = await getSupabaseServerClient()
       .from("team_members")
-      .select("id, name, role, active")
-      .eq("id", memberId)
-      .maybeSingle<{ id: string; name: string; role: Role; active: boolean }>();
+      .select("id, name, role, active, password_hash")
+      .eq("id", team.memberId)
+      .maybeSingle<{ id: string; name: string; role: Role; active: boolean; password_hash: string }>();
     if (error) console.error("team_members lookup failed", error);
-    if (data?.active) return { id: data.id, label: data.name, role: data.role };
+    // A stamp from an older password means the password was reset since
+    // this session was issued: treat it as signed out.
+    if (data?.active && team.stamp === (await passwordStamp(data.password_hash))) {
+      return { id: data.id, label: data.name, role: data.role };
+    }
   }
 
   if (await verifySessionToken(jar.get(ADMIN_COOKIE_NAME)?.value, secret)) {

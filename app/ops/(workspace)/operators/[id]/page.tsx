@@ -61,10 +61,14 @@ export default async function OperatorPage({ params }: { params: Promise<{ id: s
   const fInput = forecastInputs([e], ws.production, ws.assumptions)[0];
   const forecast = fInput ? forecastOperator(fInput, { includePipeline: true, includePaused: true }) : null;
 
-  const [{ data: activity }, codes] = await Promise.all([
+  const [{ data: activity }, allCodes] = await Promise.all([
     db().from("ops_audit_events").select("id, actor_label, action, entity, entity_id, detail, created_at").eq("entity", "enrollment").eq("entity_id", e.id).order("created_at", { ascending: false }).limit(100),
     canEdit ? loadShiftCodes() : Promise.resolve([]),
   ]);
+  // Managers only see codes that are unlinked or linked to someone on this
+  // project; linkShiftCode enforces the same rule server-side.
+  const projectPeople = new Set(ws.enrollments.map((x) => x.person_id));
+  const codes = actor.role === "leadership" ? allCodes : allCodes.filter((c) => !c.person_id || projectPeople.has(c.person_id));
   const linkedCode = codes.find((c) => c.person_id === e.person_id);
 
   return (

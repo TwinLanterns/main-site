@@ -10,7 +10,8 @@
 import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { OpsAuthError, requireActor, requireProject, type Actor, type Role } from "@/lib/ops/auth";
+import { ADMIN_COOKIE_NAME } from "@/lib/admin-auth";
+import { OpsAuthError, projectScope, requireActor, requireProject, type Actor, type Role } from "@/lib/ops/auth";
 import { audit, db, nextAnonymousCode } from "@/lib/ops/db";
 import { FieldError, checked, oneOf, optDate, optNumber, optUuid, required, str, uuid, type ActionResult } from "@/lib/ops/form";
 import { HOUSEHOLD_GUIDE_TEMPLATE, onboardingProgress, type TemplateStep } from "@/lib/ops/onboarding";
@@ -66,6 +67,19 @@ async function enrollmentProject(actor: Actor, enrollmentId: string) {
 
 const EDITORS: Role[] = ["leadership", "manager"];
 
+/** Session/file review states that record a customer's decision. */
+const CUSTOMER_DECISIONS = ["customer_accepted", "customer_rejected", "partial"];
+
+/** Whether a person has an enrollment in a project the actor may see. */
+async function personInScope(actor: Actor, personId: string): Promise<boolean> {
+  const scope = await projectScope(actor);
+  if (!scope) return true;
+  if (!scope.length) return false;
+  const { data, error } = await db().from("ops_enrollments").select("id").eq("person_id", personId).in("project_id", scope).limit(1);
+  if (error) throw new Error(error.message);
+  return (data ?? []).length > 0;
+}
+
 /* --------------------------------- auth ---------------------------------- */
 
 export async function login(_: ActionResult | null, fd: FormData): Promise<ActionResult> {
@@ -82,7 +96,9 @@ export async function login(_: ActionResult | null, fd: FormData): Promise<Actio
   const { data, error } = await db()
     .from("team_members")
     .select("id, password_hash, active")
-    .ilike("email", email.replace(/[%_\\]/g, "\\$&"))
+    // Exact match: emails are stored lowercased. (A LIKE pattern would let
+    // "*" match any account.)
+    .eq("email", email)
     .maybeSingle<{ id: string; password_hash: string; active: boolean }>();
   if (error) {
     console.error("ops login lookup failed", error);
@@ -92,7 +108,7 @@ export async function login(_: ActionResult | null, fd: FormData): Promise<Actio
   const ok = data?.active && (await verifyPassword(password, data.password_hash));
   if (!ok || !data) return { ok: false, error: "Invalid email or password." };
 
-  (await cookies()).set(OPS_COOKIE_NAME, await createTeamToken(secret, data.id), {
+  (await cookies()).set(OPS_COOKIE_NAME, await createTeamToken(secret, data.id, data.password_hash), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -106,7 +122,11 @@ export async function login(_: ActionResult | null, fd: FormData): Promise<Actio
 }
 
 export async function logout() {
-  (await cookies()).set(OPS_COOKIE_NAME, "", { path: "/", maxAge: 0 });
+  const jar = await cookies();
+  jar.set(OPS_COOKIE_NAME, "", { path: "/", maxAge: 0 });
+  // The shared admin login also opens /ops, so signing out here ends it
+  // too. Otherwise /ops/login would send the user straight back in.
+  jar.set(ADMIN_COOKIE_NAME, "", { path: "/", maxAge: 0 });
   redirect("/ops/login");
 }
 
@@ -381,6 +401,14 @@ export async function linkShiftCode(_: ActionResult | null, fd: FormData) {
     const project_id = await enrollmentProject(actor, enrollment);
     const codeId = optUuid(fd, "code_id");
     const { person_id } = must(await db().from("ops_enrollments").select("person_id").eq("id", enrollment).maybeSingle<{ person_id: string }>());
+    if (codeId) {
+      // Codes aren't project-scoped, so don't let a manager take one that's
+      // linked to someone outside their projects.
+      const code = must(await db().from("film_shift_codes").select("person_id").eq("id", codeId).maybeSingle<{ person_id: string | null }>());
+      if (code.person_id && code.person_id !== person_id && !(await personInScope(actor, code.person_id))) {
+        throw new OpsAuthError("That code is linked to someone on a project you're not assigned to.");
+      }
+    }
     // Clear any previous link for this person, then set the new one.
     await db().from("film_shift_codes").update({ person_id: null }).eq("person_id", person_id);
     if (codeId) must(await db().from("film_shift_codes").update({ person_id }).eq("id", codeId).select("id").maybeSingle());
@@ -576,7 +604,13 @@ export async function updateSession(_: ActionResult | null, fd: FormData) {
       }
     } else if (op === "review") {
       const status = oneOf(fd, "review_status", keys(REVIEW_STATES));
-      if (actor.role === "reviewer" && status.startsWith("customer")) throw new OpsAuthError("Customer decisions are recorded by managers, with a source.");
+      if (actor.role === "reviewer") {
+        // Reviewers record internal review only: they can't set a customer
+        // decision, or overwrite one a manager already recorded.
+        if (CUSTOMER_DECISIONS.includes(status)) throw new OpsAuthError("Customer decisions are recorded by managers, with a source.");
+        const cur = must(await db().from("ops_sessions").select("review_status").eq("id", id).maybeSingle<{ review_status: string }>());
+        if (CUSTOMER_DECISIONS.includes(cur.review_status)) throw new OpsAuthError("This session already has a customer decision; only a manager can change it.");
+      }
       patch.review_status = status;
       patch.review_source = str(fd, "review_source", 300);
       if (["customer_accepted", "customer_rejected", "partial"].includes(status) && !patch.review_source) {
@@ -690,7 +724,11 @@ export async function updateFile(_: ActionResult | null, fd: FormData) {
       if (patch.submission_state !== "pending_upload" && !patch.submission_evidence) throw new FieldError("Record the evidence (reference, who confirmed, when).");
     } else if (op === "review") {
       const state = oneOf(fd, "review_state", ["not_reviewed", "internal_passed", "internal_failed", "customer_accepted", "customer_rejected"] as const);
-      if (actor.role === "reviewer" && state.startsWith("customer")) throw new OpsAuthError("Customer decisions are recorded by managers, with a source.");
+      if (actor.role === "reviewer") {
+        if (CUSTOMER_DECISIONS.includes(state)) throw new OpsAuthError("Customer decisions are recorded by managers, with a source.");
+        const cur = must(await db().from("ops_files").select("review_state").eq("id", id).maybeSingle<{ review_state: string }>());
+        if (CUSTOMER_DECISIONS.includes(cur.review_state)) throw new OpsAuthError("This file already has a customer decision; only a manager can change it.");
+      }
       patch.review_state = state;
       patch.review_source = str(fd, "review_source", 300);
       patch.review_date = optDate(fd, "review_date") ?? new Date().toISOString().slice(0, 10);
