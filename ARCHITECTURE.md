@@ -256,9 +256,9 @@ they should be uninstalled to keep the tree honest.
 │   │   window.svg
 │   └── team/{carlos,cameron}.png   Orphaned — Founders section removed
 │
-├── supabase/
-│   └── email_verifications.sql     Schema for the OTP table (§4.8) — apply
-│                                   by hand in the Supabase SQL editor
+├── supabase/                       SQL schema files (local only, not in
+│                                   the repo) — apply by hand in the
+│                                   Supabase SQL editor
 │
 ├── proxy.ts                        Next.js 16 middleware — gates /admin/*
 │                                   and the two protected admin API routes
@@ -1628,9 +1628,8 @@ values into HTML anywhere else.
 
 ## Operations workspace (`/ops`, `/demo`)
 
-Internal CRM / field-operations area and the public sanitized demo. Setup,
-routes, access model, data dictionary, import rules and limitations are in
-[`docs/OPS.md`](docs/OPS.md). Schema: `supabase/ops_core.sql`. Logic:
+Internal CRM / field-operations area and the public sanitized demo. The
+setup handoff and SQL schema are kept outside the repository. Logic:
 `lib/ops/*` (pure modules tested by `scripts/test-ops.ts`). `/ops` is added
 to the `proxy.ts` matcher and accepts the shared admin cookie or a per-person
 `ops_session` cookie (`lib/ops/team-token.ts`).
