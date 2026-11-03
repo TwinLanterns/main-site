@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ShiftsAdmin from "./ShiftsAdmin";
 
@@ -1870,12 +1871,21 @@ export default function AdminDashboard({
           <h1 className="text-xl font-semibold text-neutral-900">
             Admin dashboard
           </h1>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-neutral-500 hover:text-neutral-900"
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-4">
+            {/* The admin session also signs in to /ops (as leadership). */}
+            <Link
+              href="/ops"
+              className="rounded-md bg-amber px-3 py-1.5 text-sm font-medium text-black transition-opacity hover:opacity-90"
+            >
+              Open Operations
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-neutral-500 hover:text-neutral-900"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-2 border-b border-neutral-200">
