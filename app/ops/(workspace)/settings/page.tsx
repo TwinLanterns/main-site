@@ -119,17 +119,35 @@ export default async function SettingsPage() {
                   <Badge>{t.role}</Badge>
                   {!t.active && <Badge tone="bad">Deactivated</Badge>}
                   {t.role !== "leadership" && (
-                    <ActionForm action={assignToProject} inline submit={assigned.has(t.id) ? `Remove from ${project.code}` : `Assign to ${project.code}`} submitClassName={ghostButton}>
+                    <ActionForm
+                      action={assignToProject}
+                      inline
+                      submit={assigned.has(t.id) ? `Remove from ${project.code}` : `Assign to ${project.code}`}
+                      submitClassName={ghostButton}
+                      confirm={assigned.has(t.id) ? `Remove ${t.name} from ${project.code}? They'll lose access to its records.` : undefined}
+                    >
                       <input type="hidden" name="project_id" value={project.id} />
                       <input type="hidden" name="team_member_id" value={t.id} />
                       {assigned.has(t.id) && <input type="hidden" name="remove" value="on" />}
                     </ActionForm>
                   )}
-                  <ActionForm action={setTeamMemberActive} inline submit={t.active ? "Deactivate" : "Reactivate"} submitClassName={ghostButton}>
+                  <ActionForm
+                    action={setTeamMemberActive}
+                    inline
+                    submit={t.active ? "Deactivate" : "Reactivate"}
+                    submitClassName={ghostButton}
+                    confirm={t.active ? `Deactivate ${t.name}? They're signed out immediately.` : undefined}
+                  >
                     <input type="hidden" name="id" value={t.id} />
                     {!t.active && <input type="hidden" name="active" value="on" />}
                   </ActionForm>
-                  <ActionForm action={resetTeamPassword} inline submit="Reset password" submitClassName={ghostButton}>
+                  <ActionForm
+                    action={resetTeamPassword}
+                    inline
+                    submit="Reset password"
+                    submitClassName={ghostButton}
+                    confirm={`Reset ${t.name}'s password? Their current password stops working and they're signed out everywhere.`}
+                  >
                     <input type="hidden" name="id" value={t.id} />
                   </ActionForm>
                 </li>

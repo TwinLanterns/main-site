@@ -178,11 +178,11 @@ export default async function OperatorsPage({ searchParams }: { searchParams: Pr
       )}
 
       {tab === "potential" && view === "board" ? (
-        <div className="flex gap-3 overflow-x-auto pb-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {PIPELINE.map((stage) => {
             const col = rows.filter((e) => e.lead_stage === stage);
             return (
-              <section key={stage} aria-label={stageLabel(stage)} className="w-60 shrink-0 rounded-[22px] border border-line bg-shell">
+              <section key={stage} aria-label={stageLabel(stage)} className="rounded-[22px] border border-line bg-shell">
                 <h2 className="border-b border-line px-3 py-2 label">
                   {stageLabel(stage)} ({col.length})
                 </h2>

@@ -205,9 +205,9 @@ function OperatorJourney({
     <div className="space-y-5">
       <Panel title="Sourcing pipeline">
         <p className="mb-3 text-xs text-neutral-500">Leads are tracked from first contact to onboarding. A sourced lead never counts as an active operator. Move a card to see it update (sandbox).</p>
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {[...PIPELINE, "onboarding" as const].map((stage) => (
-            <section key={stage} aria-label={stageLabel(stage)} className="w-44 shrink-0 rounded-[14px] border border-line bg-white">
+            <section key={stage} aria-label={stageLabel(stage)} className="rounded-[14px] border border-line bg-white">
               <h3 className="border-b border-line px-2 py-1.5 label">{stageLabel(stage)}</h3>
               <ul className="space-y-1.5 p-1.5">
                 {board
@@ -275,9 +275,15 @@ function OperatorJourney({
                       {r?.reason && <span className="block text-xs text-red-300">{r.reason}</span>}
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <Badge tone={status === "completed" ? "good" : status === "blocked" ? "bad" : "amber"}>{status}</Badge>
-                      {!op.readiness_confirmed_at && (
-                        <select aria-label={`Set ${s.label}`} value={status === "not_applicable" ? "pending" : status} onChange={(e) => setStepStatus(s.key, e.target.value as "completed" | "blocked" | "pending")} className={`${input} w-28 py-0.5 text-xs`}>
+                      {op.readiness_confirmed_at ? (
+                        <Badge tone={status === "completed" ? "good" : status === "blocked" ? "bad" : "amber"}>{status}</Badge>
+                      ) : (
+                        <select
+                          aria-label={`Set ${s.label}`}
+                          value={status === "not_applicable" ? "pending" : status}
+                          onChange={(e) => setStepStatus(s.key, e.target.value as "completed" | "blocked" | "pending")}
+                          className={`${input} w-32 py-1 text-xs ${status === "completed" ? "border-emerald-500/40 text-emerald-300" : status === "blocked" ? "border-red-500/40 text-red-300" : "text-amber"}`}
+                        >
                           <option value="pending">pending</option>
                           <option value="completed">completed</option>
                           <option value="blocked">blocked</option>

@@ -8,10 +8,11 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { currentWorkspace } from "@/lib/ops/request";
-import { logout, selectProject } from "../actions";
+import { logout } from "../actions";
 import OpsNav from "../_components/OpsNav";
 import NewProjectForm from "../_components/NewProjectForm";
-import { Badge, Panel, ghostButton, input } from "../_components/ui";
+import ProjectSelect from "../_components/ProjectSelect";
+import { Badge, Panel } from "../_components/ui";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -61,23 +62,7 @@ export default async function OpsLayout({ children }: { children: ReactNode }) {
       <div className="mx-auto flex max-w-[1500px] flex-col lg:flex-row">
         <aside className="border-b border-line px-5 py-6 lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-64 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
           <p className="label">Twin Lanterns Operations</p>
-          {ws && ws.projects.length > 0 && (
-            <form action={selectProject} className="mt-4 flex gap-2">
-              <label className="sr-only" htmlFor="ops-project">
-                Project
-              </label>
-              <select id="ops-project" name="project_id" defaultValue={ws.project?.id} className={input}>
-                {ws.projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.code} · {p.name}
-                  </option>
-                ))}
-              </select>
-              <button type="submit" className={ghostButton}>
-                Go
-              </button>
-            </form>
-          )}
+          {ws && ws.projects.length > 0 && <ProjectSelect projects={ws.projects} current={ws.project?.id} />}
           {ws?.project && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               <Badge tone="amber">{ws.project.stage === "pilot" ? "Pilot" : ws.project.stage}</Badge>
