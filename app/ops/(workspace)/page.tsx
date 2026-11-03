@@ -71,7 +71,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-sm text-neutral-700">
+      <div className="flex flex-wrap items-center gap-2 rounded-[14px] border border-line bg-shell px-4 py-2.5 text-sm text-neutral-700">
         <Badge tone="info">Manual CSV snapshot</Badge>
         {lastImport ? (
           <span>
@@ -112,7 +112,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel title={`Leads awaiting first contact (${leadsToContact.length})`} actions={<Link className="text-xs underline text-neutral-500" href="/ops/operators">Operator CRM</Link>}>
           {leadsToContact.length ? (
-            <ul className="divide-y divide-neutral-200 text-sm">
+            <ul className="divide-y divide-line text-sm">
               {leadsToContact.map(({ e }) => (
                 <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <Link href={`/ops/operators/${e.id}`} className="font-mono text-neutral-900 underline-offset-2 hover:underline">
@@ -131,7 +131,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
         <Panel title={`Follow-ups due (${followUpsDue.length})`}>
           {followUpsDue.length ? (
-            <ul className="divide-y divide-neutral-200 text-sm">
+            <ul className="divide-y divide-line text-sm">
               {followUpsDue.map(({ e }) => (
                 <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <Link href={`/ops/operators/${e.id}`} className="font-mono underline-offset-2 hover:underline">
@@ -149,7 +149,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
         <Panel title={`Onboarding blockers (${blockedSteps.length})`} actions={<Link className="text-xs underline text-neutral-500" href="/ops/onboarding">Onboarding</Link>}>
           {blockedSteps.length ? (
-            <ul className="divide-y divide-neutral-200 text-sm">
+            <ul className="divide-y divide-line text-sm">
               {blockedSteps.map((s) => (
                 <li key={s.id} className="py-2">
                   <Link href={`/ops/operators/${s.enrollment_id}`} className="font-mono underline-offset-2 hover:underline">
@@ -169,7 +169,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           {shifts === null ? (
             <Empty>{ws.contactsVisible ? "Couldn't load the shift board." : "Shift bookings aren't shown to reviewers."}</Empty>
           ) : upcomingShifts.length ? (
-            <ul className="divide-y divide-neutral-200 text-sm">
+            <ul className="divide-y divide-line text-sm">
               {upcomingShifts.slice(0, 8).map((s) => (
                 <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <span>{fmtDateTime(s.starts_at)}</span>
@@ -196,7 +196,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
             Computed from workbook operator-days with submitted time, as of {fmtDate(asOf)}. Workbook legend: active within {NO_RECENT_UPLOAD_DAYS} days, offboard after {OFFBOARD_REVIEW_DAYS}. These are follow-up flags. Nobody is offboarded automatically, and daily aggregates are only accurate to the day.
           </p>
           {alerts.length ? (
-            <ul className="divide-y divide-neutral-200 text-sm">
+            <ul className="divide-y divide-line text-sm">
               {alerts.map((a) => {
                 const e = current.find((x) => x.source_operator_id === a.sourceOperatorId);
                 return (
@@ -241,7 +241,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
       <Panel title="Recent activity in this workspace">
         <p className="mb-3 text-xs text-neutral-500">Changes made in this app since it was set up. Nothing here is backfilled from earlier spreadsheets.</p>
         {ws.audit.length ? (
-          <ul className="divide-y divide-neutral-200 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {ws.audit.slice(0, 12).map((a) => (
               <li key={a.id} className="flex flex-wrap gap-x-3 py-1.5">
                 <span className="w-40 shrink-0 text-xs text-neutral-500">{fmtDateTime(a.created_at)}</span>

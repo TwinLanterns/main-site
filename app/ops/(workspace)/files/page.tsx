@@ -47,7 +47,7 @@ export default async function FilesPage({ searchParams }: { searchParams: Promis
           </p>
           <p className="mt-1 text-xs text-neutral-500">Version: {GUIDE_RULE_VERSION}. From the household Onboarding Video Guide. Not yet confirmed as the customer&apos;s requirement.</p>
           <p className="mt-2 text-xs text-neutral-500">Rooms: {ROOMS.join(", ")} (cross-room joined with “+”).</p>
-          <h3 className="mt-3 text-xs font-medium uppercase tracking-wider text-amber">Unconfirmed, so these only warn</h3>
+          <h3 className="mt-3 label text-amber!">Unconfirmed, so these only warn</h3>
           <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs text-neutral-600">
             {UNCONFIRMED_RULES.map((r) => (
               <li key={r}>{r}</li>
@@ -116,7 +116,7 @@ export default async function FilesPage({ searchParams }: { searchParams: Promis
       ) : (
         <ul className="space-y-2">
           {files.map((f) => (
-            <li key={f.id} className="rounded-md border border-neutral-200 bg-neutral-50 p-3">
+            <li key={f.id} className="rounded-[14px] border border-line bg-shell p-3">
               <div className="flex flex-wrap items-center gap-2">
                 <code className="font-mono text-xs text-neutral-900">{f.original_path}</code>
                 <Badge tone={f.validation_status === "valid" ? "good" : f.validation_status === "warning" ? "amber" : "bad"}>

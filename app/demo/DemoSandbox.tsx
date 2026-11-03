@@ -58,15 +58,15 @@ export default function DemoSandbox() {
   };
 
   return (
-    <div className="min-h-screen bg-white pt-14 text-neutral-900">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-amber">Pilot workflow demonstration</p>
-        <h1 className="mt-2 text-3xl font-light tracking-tight">How we run a household collection pilot</h1>
-        <p className="mt-2 max-w-3xl text-neutral-600">
+    <div className="min-h-screen bg-white px-4 pb-24 pt-32 text-ink sm:pt-36">
+      <div className="mx-auto max-w-6xl sm:px-2">
+        <p className="label">Pilot workflow demonstration</p>
+        <h1 className="display mt-4 text-5xl leading-[1.02] md:text-6xl">How we run a household collection pilot.</h1>
+        <p className="mt-6 max-w-3xl text-[17px] leading-relaxed text-muted">
           Twin Lanterns sources recording operators, onboards and trains them, coordinates recording through a project manager, tracks production, and organizes delivery to each project&apos;s requirements. This is the operations workspace that brings those steps together.
         </p>
 
-        <div role="note" className="mt-5 rounded-md border border-amber/40 bg-amber/10 px-4 py-3 text-sm text-neutral-800">
+        <div role="note" className="mt-8 rounded-[18px] border border-amber/30 bg-amber/[0.06] px-5 py-4 text-sm leading-relaxed text-neutral-800">
           <strong className="font-medium text-amber">{DEMO_DATA_KIND === "synthetic" ? "Synthetic sample data." : "Approved anonymized snapshot."}</strong>{" "}
           {DEMO_DATA_KIND === "synthetic"
             ? "Operator codes, hours, dates and files here are invented to show the workflow. They are not company results."
@@ -77,9 +77,15 @@ export default function DemoSandbox() {
           </button>
         </div>
 
-        <nav aria-label="Demo steps" className="mt-6 flex flex-wrap gap-1.5">
+        <nav aria-label="Demo steps" className="mt-10 flex flex-wrap gap-2">
           {STEPS.map((s) => (
-            <button key={s.key} type="button" aria-current={step === s.key ? "step" : undefined} onClick={() => setStep(s.key)} className={`${ghostButton} ${step === s.key ? "border-amber text-neutral-900" : ""}`}>
+            <button
+              key={s.key}
+              type="button"
+              aria-current={step === s.key ? "step" : undefined}
+              onClick={() => setStep(s.key)}
+              className={step === s.key ? "rounded-full border border-ink bg-ink px-4 py-2 text-sm text-white" : ghostButton}
+            >
               {s.label}
             </button>
           ))}
@@ -104,7 +110,7 @@ export default function DemoSandbox() {
           </Panel>
         )}
 
-        <div className="mt-10 flex flex-wrap items-center gap-4 border-t border-neutral-200 pt-6">
+        <div className="mt-14 flex flex-wrap items-center gap-4 border-t border-line pt-8">
           <Link href="/data-request?interest=managed_collection" className={button}>
             Discuss a collection pilot
           </Link>
@@ -201,13 +207,13 @@ function OperatorJourney({
         <p className="mb-3 text-xs text-neutral-500">Leads are tracked from first contact to onboarding. A sourced lead never counts as an active operator. Move a card to see it update (sandbox).</p>
         <div className="flex gap-2 overflow-x-auto pb-2">
           {[...PIPELINE, "onboarding" as const].map((stage) => (
-            <section key={stage} aria-label={stageLabel(stage)} className="w-44 shrink-0 rounded-md border border-neutral-200 bg-white">
-              <h3 className="border-b border-neutral-200 px-2 py-1.5 text-[11px] uppercase tracking-wider text-neutral-500">{stageLabel(stage)}</h3>
+            <section key={stage} aria-label={stageLabel(stage)} className="w-44 shrink-0 rounded-[14px] border border-line bg-white">
+              <h3 className="border-b border-line px-2 py-1.5 label">{stageLabel(stage)}</h3>
               <ul className="space-y-1.5 p-1.5">
                 {board
                   .filter((o) => o.lead_stage === stage)
                   .map((o) => (
-                    <li key={o.id} className="rounded border border-neutral-200 p-2 text-xs">
+                    <li key={o.id} className="rounded border border-line p-2 text-xs">
                       <button type="button" className="font-mono text-neutral-900 underline-offset-2 hover:underline" onClick={() => setSelected(o.id)}>
                         {o.anonymous_code}
                       </button>
@@ -256,7 +262,7 @@ function OperatorJourney({
           <p className="mb-2 text-sm text-neutral-600">
             {progress.completed} of {progress.applicable} required steps completed{progress.blocked.length ? ` · ${progress.blocked.length} blocked` : ""}. The checklist labels are generalized from the project&apos;s onboarding guide.
           </p>
-          <ul className="divide-y divide-neutral-200 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {demoTemplateSteps
               .filter((s) => s.scope === "onboarding")
               .map((s) => {
@@ -282,7 +288,7 @@ function OperatorJourney({
                 );
               })}
           </ul>
-          <div className="mt-3 rounded-md border border-neutral-200 p-3">
+          <div className="mt-3 rounded-[14px] border border-line p-3">
             {op.readiness_confirmed_at ? (
               <p className="text-sm text-emerald-300">
                 Ready to record: confirmed by {op.readiness_confirmed_label}. Collection status: {op.collection_stage.replace("_", " ")}.
@@ -337,7 +343,7 @@ function Recording() {
           </div>
         </dl>
         <table className="mt-3 w-full text-sm">
-          <tbody className="divide-y divide-neutral-200">
+          <tbody className="divide-y divide-line">
             {[
               ["Recording", `${demoSession.state} · ${demoSession.duration}`],
               ["Upload", demoSession.upload],
@@ -360,7 +366,7 @@ function Recording() {
         </p>
         <ul className="space-y-2">
           {results.map(({ f, r }) => (
-            <li key={f} className="rounded border border-neutral-200 p-2">
+            <li key={f} className="rounded border border-line p-2">
               <code className="block break-all font-mono text-xs">{f}</code>
               <Badge tone={r.status === "valid" ? "good" : r.status === "warning" ? "amber" : "bad"}>{r.status}</Badge>
               {r.issues.map((i, n) => (
@@ -408,7 +414,7 @@ function Forecast({ operators }: { operators: DemoOperator[] }) {
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-max text-sm">
-          <thead className="text-left text-[11px] uppercase tracking-wider text-neutral-500">
+          <thead className="text-left label">
             <tr>
               {["Operator", "Bucket", "Submitted to date", "Target", "Rate × days", "Forecast", "Note"].map((h) => (
                 <th key={h} className="px-2 py-1.5 font-medium">
@@ -417,7 +423,7 @@ function Forecast({ operators }: { operators: DemoOperator[] }) {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-200">
+          <tbody className="divide-y divide-line">
             {sc.rows
               .filter((r) => r.capacitySeconds !== null || r.input.recordedToDateSeconds > 0)
               .map((r) => (
@@ -503,7 +509,7 @@ function Delivery({ note }: { note: (s: string) => void }) {
       </p>
       <ul className="space-y-2 text-sm">
         {profiles.map((p) => (
-          <li key={p.version} className="flex flex-wrap items-center gap-2 rounded border border-neutral-200 p-2">
+          <li key={p.version} className="flex flex-wrap items-center gap-2 rounded border border-line p-2">
             <span className="font-mono">{p.version}</span>
             <Badge tone="amber">{p.type}</Badge>
             <span>{p.label}</span>

@@ -53,7 +53,7 @@ export default async function SessionsPage() {
           {shifts.length === 0 ? (
             <Empty>No shifts in the last week or upcoming.</Empty>
           ) : (
-            <ul className="divide-y divide-neutral-200 text-sm">
+            <ul className="divide-y divide-line text-sm">
               {shifts.map((s) => (
                 <li key={s.id} className="flex flex-wrap items-center gap-3 py-2">
                   <span className="w-44">{fmtDateTime(s.starts_at)}</span>
@@ -84,9 +84,9 @@ export default async function SessionsPage() {
       )}
 
       {canEdit && (
-        <details className="rounded-lg border border-neutral-200 bg-neutral-50">
+        <details className="rounded-[22px] border border-line bg-shell">
           <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-neutral-900">Schedule a session manually</summary>
-          <div className="border-t border-neutral-200 p-4">
+          <div className="border-t border-line p-4">
             {recordable.length === 0 ? (
               <Empty>Only current operators (readiness confirmed) can be scheduled.</Empty>
             ) : (
@@ -153,7 +153,7 @@ export default async function SessionsPage() {
           <Panel key={day} title={day === "unscheduled" ? "Unscheduled" : fmtDate(day)}>
             <ul className="space-y-3">
               {byDay.get(day)!.map((s) => (
-                <li key={s.id} id={`s-${s.id}`} className="scroll-mt-20 rounded-md border border-neutral-200 p-3">
+                <li key={s.id} id={`s-${s.id}`} className="scroll-mt-20 rounded-[14px] border border-line p-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Link href={`/ops/operators/${s.enrollment_id}`} className="font-mono text-neutral-900 underline-offset-2 hover:underline">
                       {codeOf.get(s.enrollment_id)}

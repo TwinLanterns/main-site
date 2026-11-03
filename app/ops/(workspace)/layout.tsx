@@ -57,12 +57,12 @@ export default async function OpsLayout({ children }: { children: ReactNode }) {
 
   const ws = result.ok ? result.ws : null;
   return (
-    <div className="min-h-screen bg-white pt-14 text-neutral-900">
+    <div className="min-h-screen bg-white pt-14 text-ink">
       <div className="mx-auto flex max-w-[1500px] flex-col lg:flex-row">
-        <aside className="border-b border-neutral-200 px-4 py-4 lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-60 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
-          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-amber">Twin Lanterns Operations</p>
+        <aside className="border-b border-line px-5 py-6 lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-64 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+          <p className="label">Twin Lanterns Operations</p>
           {ws && ws.projects.length > 0 && (
-            <form action={selectProject} className="mt-3 flex gap-2">
+            <form action={selectProject} className="mt-4 flex gap-2">
               <label className="sr-only" htmlFor="ops-project">
                 Project
               </label>
@@ -85,7 +85,7 @@ export default async function OpsLayout({ children }: { children: ReactNode }) {
             </div>
           )}
           <OpsNav role={actor.role} />
-          <div className="mt-6 border-t border-neutral-200 pt-4 text-xs text-neutral-500">
+          <div className="mt-6 border-t border-line pt-4 text-xs text-neutral-500">
             <p className="text-neutral-800">{actor.label}</p>
             <p className="capitalize">{actor.role}</p>
             <form action={logout} className="mt-2">
@@ -95,7 +95,7 @@ export default async function OpsLayout({ children }: { children: ReactNode }) {
             </form>
           </div>
         </aside>
-        <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">{body}</div>
+        <div className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">{body}</div>
       </div>
     </div>
   );

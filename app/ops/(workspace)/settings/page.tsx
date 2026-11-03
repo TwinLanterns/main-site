@@ -39,7 +39,7 @@ export default async function SettingsPage() {
         {ws.profiles.length ? (
           <ul className="mb-4 space-y-2 text-sm">
             {ws.profiles.map((p) => (
-              <li key={p.id} className="rounded-md border border-neutral-200 p-3">
+              <li key={p.id} className="rounded-[14px] border border-line p-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono">{p.version}</span>
                   <Badge tone="amber">{p.destination_type.toUpperCase()}</Badge>
@@ -111,7 +111,7 @@ export default async function SettingsPage() {
             Leadership sees everything. Managers and reviewers see only projects they&apos;re assigned to, and reviewers never see operator contact details. Confirm someone&apos;s role before creating their account.
           </p>
           {ws.team.length ? (
-            <ul className="mb-4 divide-y divide-neutral-200 text-sm">
+            <ul className="mb-4 divide-y divide-line text-sm">
               {ws.team.map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center gap-3 py-2">
                   <span className="w-40 text-neutral-900">{t.name}</span>

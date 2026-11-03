@@ -7,7 +7,7 @@ import { button, input, label } from "../_components/ui";
 export default function LoginForm({ from }: { from: string }) {
   const [state, action, pending] = useActionState(login, null);
   return (
-    <form action={action} className="mt-6 space-y-4">
+    <form action={action} className="space-y-5">
       <input type="hidden" name="from" value={from} />
       <label className="block space-y-1">
         <span className={label}>Email</span>
@@ -22,7 +22,7 @@ export default function LoginForm({ from }: { from: string }) {
           {state.error}
         </p>
       )}
-      <button type="submit" disabled={pending} className={`${button} w-full`}>
+      <button type="submit" disabled={pending} className={`${button} w-full py-3`}>
         {pending ? "Signing in…" : "Sign in"}
       </button>
     </form>

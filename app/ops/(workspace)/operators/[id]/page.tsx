@@ -331,7 +331,7 @@ export default async function OperatorPage({ params }: { params: Promise<{ id: s
               {progress.completed} of {progress.applicable} applicable required steps completed
               {progress.blocked.length > 0 && <span className="text-red-300"> · {progress.blocked.length} blocked</span>}. Readiness isn&apos;t inferred from this count. A manager confirms it below.
             </p>
-            <ul className="divide-y divide-neutral-200 rounded-md border border-neutral-200">
+            <ul className="divide-y divide-line rounded-[14px] border border-line">
               {tpl.steps
                 .filter((s) => s.scope === "onboarding")
                 .map((s) => {
@@ -395,7 +395,7 @@ export default async function OperatorPage({ params }: { params: Promise<{ id: s
               Per-session checks ({tpl.steps.filter((s) => s.scope === "session").map((s) => s.label).join(", ")}) are recorded on each session in Recording Operations, not once here.
             </p>
 
-            <div className="rounded-md border border-neutral-200 p-3">
+            <div className="rounded-[14px] border border-line p-3">
               <h3 className="text-sm font-medium text-neutral-900">Readiness for scheduled recording</h3>
               {e.readiness_confirmed_at ? (
                 <p className="mt-1 text-sm text-emerald-300">
@@ -470,7 +470,7 @@ export default async function OperatorPage({ params }: { params: Promise<{ id: s
 
       <Panel title="Files" actions={<Link href="/ops/files" className="text-xs underline text-neutral-500">Files and Review</Link>}>
         {files.length ? (
-          <ul className="divide-y divide-neutral-200 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {files.map((f) => (
               <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5">
                 <span className="font-mono text-xs">{f.original_path}</span>
@@ -486,7 +486,7 @@ export default async function OperatorPage({ params }: { params: Promise<{ id: s
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel title="Issues">
           {issues.length ? (
-            <ul className="mb-4 divide-y divide-neutral-200 text-sm">
+            <ul className="mb-4 divide-y divide-line text-sm">
               {issues.map((i) => (
                 <li key={i.id} className="py-2">
                   <div className="flex flex-wrap items-center gap-2">
@@ -531,7 +531,7 @@ export default async function OperatorPage({ params }: { params: Promise<{ id: s
 
         <Panel title="Tasks">
           {tasks.length ? (
-            <ul className="mb-4 divide-y divide-neutral-200 text-sm">
+            <ul className="mb-4 divide-y divide-line text-sm">
               {tasks.map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <span className={t.status === "done" ? "text-neutral-500 line-through" : ""}>{t.title}</span>

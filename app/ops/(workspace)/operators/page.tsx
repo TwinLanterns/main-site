@@ -74,7 +74,7 @@ export default async function OperatorsPage({ searchParams }: { searchParams: Pr
     <div className="space-y-5">
       <PageHeader title="Operator CRM" sub={`${project.name}. A sourced lead is not an active operator: leads never count toward current operator or production totals.`} />
 
-      <nav aria-label="Operator lists" className="flex flex-wrap gap-1 border-b border-neutral-200">
+      <nav aria-label="Operator lists" className="flex flex-wrap gap-1 border-b border-line">
         {TABS.map((t) => (
           <Link
             key={t.key}
@@ -111,9 +111,9 @@ export default async function OperatorsPage({ searchParams }: { searchParams: Pr
       </div>
 
       {canEdit && tab === "potential" && (
-        <details className="rounded-lg border border-neutral-200 bg-neutral-50">
+        <details className="rounded-[22px] border border-line bg-shell">
           <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-neutral-900">Add a potential operator</summary>
-          <div className="border-t border-neutral-200 p-4">
+          <div className="border-t border-line p-4">
             <p className="mb-3 text-xs text-neutral-500">
               Enter only what you actually know. A new lead starts at “New lead” or “Outreach pending”. Mark them contacted only after you&apos;ve logged a real contact. The phone number stays in the protected person record and never reaches the demo.
             </p>
@@ -182,13 +182,13 @@ export default async function OperatorsPage({ searchParams }: { searchParams: Pr
           {PIPELINE.map((stage) => {
             const col = rows.filter((e) => e.lead_stage === stage);
             return (
-              <section key={stage} aria-label={stageLabel(stage)} className="w-60 shrink-0 rounded-lg border border-neutral-200 bg-neutral-50">
-                <h2 className="border-b border-neutral-200 px-3 py-2 text-xs font-medium uppercase tracking-wider text-neutral-500">
+              <section key={stage} aria-label={stageLabel(stage)} className="w-60 shrink-0 rounded-[22px] border border-line bg-shell">
+                <h2 className="border-b border-line px-3 py-2 label">
                   {stageLabel(stage)} ({col.length})
                 </h2>
                 <ul className="space-y-2 p-2">
                   {col.map((e) => (
-                    <li key={e.id} className="rounded-md border border-neutral-200 bg-white p-2.5 text-sm">
+                    <li key={e.id} className="rounded-[14px] border border-line bg-white p-2.5 text-sm">
                       <Link href={`/ops/operators/${e.id}`} className="font-mono text-neutral-900 hover:underline">
                         {e.anonymous_code}
                       </Link>

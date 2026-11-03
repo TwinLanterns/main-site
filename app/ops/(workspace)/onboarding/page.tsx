@@ -92,7 +92,7 @@ function TemplateSteps({ steps, clarifications }: { steps: typeof HOUSEHOLD_GUID
     <div className="grid gap-4 lg:grid-cols-3">
       {(["onboarding", "session"] as const).map((scope) => (
         <div key={scope}>
-          <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-neutral-500">{scope === "onboarding" ? "Once per operator" : "Before every session"}</h3>
+          <h3 className="mb-2 label">{scope === "onboarding" ? "Once per operator" : "Before every session"}</h3>
           <ol className="list-decimal space-y-1 pl-5 text-sm text-neutral-800">
             {steps
               .filter((s) => s.scope === scope)
@@ -106,7 +106,7 @@ function TemplateSteps({ steps, clarifications }: { steps: typeof HOUSEHOLD_GUID
       ))}
       {clarifications.length > 0 && (
         <div>
-          <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-amber">Needs clarification (not enforced)</h3>
+          <h3 className="mb-2 label text-amber!">Needs clarification (not enforced)</h3>
           <ul className="list-disc space-y-1 pl-5 text-sm text-neutral-700">
             {clarifications.map((c) => (
               <li key={c}>{c}</li>

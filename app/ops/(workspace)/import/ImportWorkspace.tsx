@@ -74,7 +74,7 @@ function ProductionImport({ projectId, today }: { projectId: string; today: stri
     });
 
   return (
-    <form ref={form} onSubmit={(e) => e.preventDefault()} className="space-y-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+    <form ref={form} onSubmit={(e) => e.preventDefault()} className="space-y-4 rounded-[22px] border border-line bg-shell p-4">
       <p className="text-sm text-neutral-600">
         Export one tab of the weekly production workbook as CSV (values, not formulas). Dates come from the date row above the headers, not the tab label. Submitted/Accepted are read as h:mm:ss. Blank Accepted cells stay unknown. The sheet&apos;s own totals are compared, not used.
       </p>
@@ -104,7 +104,7 @@ function ProductionImport({ projectId, today }: { projectId: string; today: stri
       <Message error={error} done={done} />
 
       {preview && (
-        <div className="space-y-4 border-t border-neutral-200 pt-4">
+        <div className="space-y-4 border-t border-line pt-4">
           <div className="flex flex-wrap gap-2 text-sm">
             <Badge>Layout: {preview.layout === "w41" ? "W41 (no State column)" : "W42/W43 (with State)"}</Badge>
             <Badge>Header row {preview.headerRow}</Badge>
@@ -116,7 +116,7 @@ function ProductionImport({ projectId, today }: { projectId: string; today: stri
           </div>
 
           <div>
-            <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-neutral-500">Day groups</h3>
+            <h3 className="mb-2 label">Day groups</h3>
             <div className="flex flex-wrap gap-3">
               {preview.groups.map((g) => {
                 const letter = g.columns.split("–")[0];
@@ -141,7 +141,7 @@ function ProductionImport({ projectId, today }: { projectId: string; today: stri
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div>
-              <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-neutral-500">Recomputed from rows</h3>
+              <h3 className="mb-2 label">Recomputed from rows</h3>
               <p className="text-sm">
                 Submitted {formatHours(preview.recomputed.submittedSeconds)} over {preview.recomputed.submittedCells} operator-days · Accepted{" "}
                 {preview.recomputed.acceptedCells ? formatHours(preview.recomputed.acceptedSeconds) : "unknown (no values)"} · Commit {preview.recomputed.commit} (unit unconfirmed)
@@ -160,7 +160,7 @@ function ProductionImport({ projectId, today }: { projectId: string; today: stri
               )}
             </div>
             <div>
-              <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-neutral-500">Operators ({preview.operators.length})</h3>
+              <h3 className="mb-2 label">Operators ({preview.operators.length})</h3>
               <ul className="space-y-0.5 text-xs">
                 {preview.operators.map((o) => (
                   <li key={o.operatorId} className="flex flex-wrap gap-2">
@@ -176,7 +176,7 @@ function ProductionImport({ projectId, today }: { projectId: string; today: stri
 
           {preview.warnings.length > 0 && (
             <details open>
-              <summary className="cursor-pointer text-xs font-medium uppercase tracking-wider text-amber">Warnings ({preview.warnings.length})</summary>
+              <summary className="cursor-pointer label text-amber!">Warnings ({preview.warnings.length})</summary>
               <ul className="mt-1 list-disc space-y-0.5 pl-5 text-xs text-neutral-700">
                 {preview.warnings.map((w, i) => (
                   <li key={i}>{w}</li>
@@ -186,7 +186,7 @@ function ProductionImport({ projectId, today }: { projectId: string; today: stri
           )}
           {preview.rejected.length > 0 && (
             <details>
-              <summary className="cursor-pointer text-xs font-medium uppercase tracking-wider text-red-300">Rejected ({preview.rejected.length})</summary>
+              <summary className="cursor-pointer label text-red-300!">Rejected ({preview.rejected.length})</summary>
               <ul className="mt-1 space-y-0.5 text-xs text-neutral-700">
                 {preview.rejected.map((r, i) => (
                   <li key={i}>
@@ -199,7 +199,7 @@ function ProductionImport({ projectId, today }: { projectId: string; today: stri
           )}
 
           <details>
-            <summary className="cursor-pointer text-xs font-medium uppercase tracking-wider text-neutral-500">Rows to import ({preview.sample.length} shown)</summary>
+            <summary className="cursor-pointer label">Rows to import ({preview.sample.length} shown)</summary>
             <div className="mt-2">
               <Table head={["Row", "Operator", "Date", "Commit", "Submitted", "Accepted", "Change"]}>
                 {preview.sample.map((c) => (
@@ -219,7 +219,7 @@ function ProductionImport({ projectId, today }: { projectId: string; today: stri
             </div>
           </details>
 
-          <div className="space-y-2 rounded-md border border-neutral-200 p-3">
+          <div className="space-y-2 rounded-[14px] border border-line p-3">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" name="create_unknown" /> Create unconfirmed operator records for IDs not on this project (names stay private; each needs confirming before it counts)
             </label>
@@ -291,7 +291,7 @@ function RosterImport({ projectId, today }: { projectId: string; today: string }
     });
 
   return (
-    <form ref={form} onSubmit={(e) => e.preventDefault()} className="space-y-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+    <form ref={form} onSubmit={(e) => e.preventDefault()} className="space-y-4 rounded-[22px] border border-line bg-shell p-4">
       <p className="text-sm text-neutral-600">
         Import a sanitized lead sheet (e.g. Neal&apos;s leads). Rows matching an existing person by phone or intake ID are never merged automatically. Add those by hand after confirming. Contact details go only to the protected person record.
       </p>
@@ -312,8 +312,8 @@ function RosterImport({ projectId, today }: { projectId: string; today: string }
       <Message error={error} done={done} />
 
       {headers && (
-        <div className="space-y-3 border-t border-neutral-200 pt-4">
-          <h3 className="text-xs font-medium uppercase tracking-wider text-neutral-500">Map columns</h3>
+        <div className="space-y-3 border-t border-line pt-4">
+          <h3 className="label">Map columns</h3>
           <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
             {ROSTER_FIELDS.map((f) => (
               <Field key={f} name={f.replace(/_/g, " ")}>

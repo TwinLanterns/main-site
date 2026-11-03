@@ -29,8 +29,8 @@ export default function OpsNav({ role }: { role: Role }) {
               <Link
                 href={i.href}
                 aria-current={active ? "page" : undefined}
-                className={`block rounded-md px-2.5 py-1.5 text-sm transition-colors ${
-                  active ? "bg-neutral-200 text-neutral-900" : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                className={`block rounded-full px-3.5 py-1.5 text-sm transition-colors ${
+                  active ? "bg-ink text-white" : "text-muted hover:bg-shell hover:text-ink"
                 }`}
               >
                 {i.label}

@@ -13,18 +13,20 @@ export default async function OpsLoginPage({ searchParams }: { searchParams: Pro
   if (await getActor()) redirect("/ops");
   const { from } = await searchParams;
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 pt-14">
-      <div className="w-full max-w-sm rounded-lg border border-neutral-200 bg-white p-6">
-        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-amber">Twin Lanterns Operations</p>
-        <h1 className="mt-2 text-xl font-light text-neutral-900">Team sign in</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+    <div className="px-4 pb-24 pt-32 sm:pt-36">
+      <div className="mx-auto max-w-[460px]">
+        <p className="label">Twin Lanterns Operations</p>
+        <h1 className="display mt-4 text-5xl leading-[1.02]">Team sign in.</h1>
+        <p className="mt-6 text-[15px] leading-relaxed text-muted">
           Accounts are created by leadership in Project settings. The shared admin login at{" "}
-          <a className="underline" href="/admin/login">
+          <a className="text-ink underline underline-offset-4" href="/admin/login">
             /admin
           </a>{" "}
           also opens this workspace.
         </p>
-        <LoginForm from={typeof from === "string" ? from : ""} />
+        <div className="mt-10 rounded-[28px] border border-line p-6 sm:p-8">
+          <LoginForm from={typeof from === "string" ? from : ""} />
+        </div>
       </div>
     </div>
   );

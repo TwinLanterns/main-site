@@ -27,7 +27,7 @@ export default async function ImportPage() {
         ) : (
           <ul className="space-y-3">
             {ws.imports.map((i) => (
-              <li key={i.id} className="rounded-md border border-neutral-200 p-3 text-sm">
+              <li key={i.id} className="rounded-[14px] border border-line p-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge>{i.kind === "roster" ? "Roster" : "Production"}</Badge>
                   <span className="text-neutral-900">{i.source_tab || i.source_filename}</span>

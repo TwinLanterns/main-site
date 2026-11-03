@@ -70,7 +70,7 @@ export default async function IssuesPage({ searchParams }: { searchParams: Promi
             </ActionForm>
           )}
           {open.length ? (
-            <ul className="divide-y divide-neutral-200 text-sm">
+            <ul className="divide-y divide-line text-sm">
               {open.map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center gap-2 py-2">
                   <span className="flex-1">{t.title}</span>
@@ -152,7 +152,7 @@ export default async function IssuesPage({ searchParams }: { searchParams: Promi
         ) : (
           <ul className="space-y-3">
             {ws.issues.map((i) => (
-              <li key={i.id} className="rounded-md border border-neutral-200 p-3">
+              <li key={i.id} className="rounded-[14px] border border-line p-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={i.status === "resolved" ? "good" : i.status === "in_progress" ? "info" : "amber"}>{i.status.replace("_", " ")}</Badge>
                   <Badge>{isKey(ISSUE_CATEGORIES, i.category) ? ISSUE_CATEGORIES[i.category] : i.category}</Badge>
