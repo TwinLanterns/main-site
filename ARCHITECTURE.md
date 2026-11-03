@@ -70,9 +70,8 @@ Three user-facing funnels feed Supabase: the original student/company pair
 (`student_applications`, `company_briefs`) and a second, parallel product —
 Earn, a robotics data-collection vertical layered onto the same app — which
 writes to three of its own tables via a separate persistence module (never the
-original one; see §4.6–4.7 and §12). An admin surface reads from all of them,
-runs AI semantic search over tagged candidates, and can stream resumes back to
-the browser.
+original one; see §4.6–4.7 and §12). An admin surface reads from all of them
+and can stream resumes back to the browser.
 
 `proxy.ts` (Next.js 16's renamed `middleware.ts`) sits in front of `/admin/*` and
 the two protected admin API routes, verifying the HMAC session cookie before any
@@ -91,8 +90,7 @@ are public, like `/api/submit` — `proxy.ts` does not match them.
 | **Fonts** | DM Sans via `next/font/google` → CSS var `--font-dm` |
 | **Animations** | Motion `^13.2.0` (`motion/react`) |
 | **Database** | Supabase (Postgres, service-role client) |
-| **AI (tagging)** | DeepSeek via the same self-hosted Playwright reverse proxy used by vibe-search — model `deepseek-chat`, `prompt_version` `"v5"` |
-| **AI (search)** | DeepSeek via a self-hosted Playwright reverse proxy |
+| **AI (tagging)** | DeepSeek via a self-hosted Playwright reverse proxy (`scripts/tag-resumes.ts` only) — model `deepseek-chat`, `prompt_version` `"v5"` |
 | **Parsing** | `pdfjs-dist`, `mammoth` (docx), `jsonrepair` for LLM JSON recovery, raw `txt` passthrough |
 | **Email** | Resend (optional — non-blocking) |
 | **Analytics** | Vercel Analytics |
@@ -181,8 +179,7 @@ they should be uninstalled to keep the tree honest.
 │       └── admin/
 │           ├── login/route.ts      POST — verify creds, set cookie
 │           ├── logout/route.ts     POST — clear cookie
-│           ├── resume/[id]/route.ts GET — download resume (auth)
-│           └── vibe-search/route.ts POST — SSE semantic candidate search
+│           └── resume/[id]/route.ts GET — download resume (auth)
 │
 ├── components/
 │   ├── form.tsx                    Design system: Field, Input, Pills,
@@ -205,7 +202,6 @@ they should be uninstalled to keep the tree honest.
 │   ├── supabase-server.ts          Service-role Supabase client factory
 │   ├── admin-auth.ts               HMAC-signed cookie sessions (Web Crypto)
 │   │                               + ADMIN_COOKIE_NAME / ADMIN_SESSION_MAX_AGE
-│   ├── deepseek.ts                 Streaming DeepSeek proxy client (SSE)
 │   ├── submissions/
 │   │   ├── types.ts                StudentPayload / CompanyPayload /
 │   │   │                           Submission discriminated union
@@ -247,8 +243,6 @@ they should be uninstalled to keep the tree honest.
 │   ├── migrate-resumes.ts          Backfill resume_data from local files
 │   ├── tag-resumes.ts              DeepSeek tagging (deepseek-chat,
 │   │                               prompt_version v5) → candidate_ai_tags
-│   ├── test-deepseek-api.ts        Interactive CLI chat against the proxy
-│   │                               (stale header comment says chat.ts)
 │   └── test-earn-eligibility.ts   Pure-logic smoke test for
 │                                   evaluateEarnEligibility (no Supabase)
 │
@@ -394,142 +388,6 @@ wizard: `tl-company-draft` (vs. `tl-student-draft-v2`).
           httpOnly, sameSite=lax, secure in prod, ADMIN_SESSION_MAX_AGE
 ```
 
-### 4.4 Vibe Search — `POST /api/admin/vibe-search`
-
-Streamed via SSE. Auth check runs before the stream opens; the query is
-required to be at least 3 characters after trimming.
-
-**Pre-stream guards**
-
-| Condition | Response |
-| --- | --- |
-| Invalid/missing session cookie | `401 { error: "Unauthorized" }` (also enforced by `proxy.ts`) |
-| Body isn't JSON, or `query` missing / `query.trim().length < 3` | `400 { error: "Query too short" }` |
-| Any other pre-stream error | `500 { error }` |
-
-Errors **after** the stream opens are emitted as SSE events
-(`{ type: "error", error }`), never as HTTP statuses.
-
-**Three stages, four SSE stage names**
-
-The route emits these `stage` events in order. `filtering`, `analyzing`, and
-`ranking` each fire twice (start + done); `initializing` fires once. Small
-artificial delays (three × 500ms, one × 300ms) space the stages out.
-
-```
-initializing  →  filtering (start)  →  filtering (done, with shortlist)
-              →  analyzing (start)  →  analyzing (done)
-              →  ranking   (start)  →  ranking   (done)
-              →  result
-```
-
----
-
-**Stage 1 — Fetch & filter**
-
-- Fetch all students from `student_applications` (joined with
-  `candidate_ai_tags`, ordered `created_at desc`) — **no `.limit()`**; the full
-  table is pulled and filtered in memory.
-- Client-side filter keeps rows where:
-  - `candidate_ai_tags` exists, and `vibe_tags.length > 0`, and
-  - `isTestAccount(candidate) === false`
-- `isTestAccount` matches on these heuristics:
-  - name includes `"test"`
-  - name is exactly `"a a"`, `"a b"`, or `"c xx"`
-  - email includes `"test"`, `"example.com"`, or `"ssrf"`
-  - email is exactly `"a@gmail.com"` or `"pwn2@gmail.com"`
-- `classifyQueryWithAI(query)` via DeepSeek proxy
-  (`callDeepSeekProxy(systemPrompt, prompt, 1000, 0.2)`) →
-  `{ keywords, tag_matches{ vibe_tags, soft_skills, hard_skills }, search_phrase }`
-- On proxy error or invalid JSON, `classifyQueryWithAI` falls back to naive
-  whitespace tokenization of the query (words with length > 2), with empty
-  `tag_matches`. Search still runs; only tag-overlap scoring goes dark.
-- `matchCandidatesWithTags(...)`
-  - **Tag overlap: +8** per candidate tag that overlaps at least one target
-    tag (inner loop breaks on first hit, so one candidate tag scores at most
-    once)
-  - **Summary hit: +2** per expanded term that hits
-  - **`raw_payload` hit: +3** per expanded term, breaking on the first
-    matching field
-  - A single term can score on both summary (+2) and raw_payload (+3).
-  - Token pipeline: lowercase → unicode dashes (`\u2010-\u2015\u2212`) to
-    ASCII `-` → strip non-alnum → tokenize (len > 1) → light stem
-    (`ing`/`ers` → strip, `ies` → `y`, `es` → strip, trailing `s` → strip if
-    len > 3 and not `ss`)
-  - Prefix match when both tokens are length ≥ 4
-  - **Relax-if-too-few:** if `topMatches.length < min(5, limit)`, rebuild as
-    `[...score > 0 sorted desc, ...score === 0 in input order].slice(0, limit)`
-    — a "keep the scorers, then pad" fill, not a global re-sort.
-- If the shortlist is empty, the route emits
-  `{ type: "result", results: [], shortlist: [] }` and closes. **Stages 2 and
-  3 do not run.**
-
-**Stage 2 — `stage2BatchAnalysis`**
-
-- DeepSeek, per shortlist, `max_tokens 2000`, `temperature 0.3`
-- `buildFullCandidateProfile()` sends the model a **fresh, full re-read of
-  each candidate**, not the stage-1 preview: untruncated `vibe_tags` /
-  `soft_skills` / `hard_skills`, the full `ai_summary`, and the entire
-  `raw_payload` as submitted (every key survives except ones matching
-  `/resume_data|base64|_blob$/i`, which are dropped as file blobs, not
-  applicant-authored text). Stage 1's `score` / `matchedKeywords` are
-  deliberately **not** included in this payload — the prompt instructs the
-  model to evaluate each candidate against the query from scratch and not
-  assume relevance just because they made the shortlist, since
-  `matchCandidatesWithTags`'s relax-if-too-few path can backfill the
-  shortlist with `score === 0` candidates.
-- Still **one batched DeepSeek call for the whole shortlist** (not one call
-  per candidate) — the proxy serializes all requests through a single
-  Playwright browser, so up to 20 sequential
-  per-candidate calls at a 180s hard timeout each would be far too slow and
-  would block every other proxy consumer. The tradeoff of sending full
-  profiles instead of truncated ones is a larger prompt; if the shortlist
-  `limit` (currently 20, set in `matchCandidatesWithTags`) is raised, watch
-  for the 180s proxy timeout rather than re-introducing per-field truncation.
-- Two fallback strings:
-  - per-candidate `"Analysis unavailable."` — call succeeded, index missing
-  - whole-call `"Analysis unavailable (API limits)."` — call threw, returned
-    empty analyses, or JSON parse failed
-
-**Stage 3 — `stage3Rank`**
-
-- DeepSeek, `max_tokens 4000`, `temperature 0.1`
-- Returns `{ ranked_candidates: [{ index, rank, match_score, reason }] }`
-- Fallback on parse failure: unranked with `match_score = 50`,
-  `rank = index + 1`, reason `"Ranking unavailable — showing shortlisted
-  order."`
-
-> **Security:** All three stages wrap untrusted content in XML-style tags
-> (`<search_query>`, `<candidate_data>`, `<candidate_analyses>`) and instruct
-> the model to treat it as data (prompt-injection hardening). `<think>` blocks
-> are stripped inside `callDeepSeekProxy` and again inside `parseAIResponse`.
-
-**SSE events**
-
-```ts
-{ type: "stage",  stage: "initializing" | "filtering" | "analyzing" | "ranking",
-  message: string, shortlist?: Candidate[] }
-
-{ type: "result", results: RankedCandidate[], shortlist: Candidate[] }
-
-{ type: "error",  error: string }
-```
-
-The route never emits `stage: "complete"`. The stepper's "complete" state in
-`AdminDashboard.tsx` is derived from receiving `{ type: "result" }`.
-`initializing` fires once; `filtering`, `analyzing`, and `ranking` each fire
-twice (start + done). The `shortlist` field appears on the second `filtering`
-event and on the final `result`.
-
-**Response headers**
-
-```
-Content-Type: text/event-stream
-Cache-Control: no-cache
-Connection: keep-alive
-X-Accel-Buffering: no
-```
-
 ### 4.5 Resume Download — `GET /api/admin/resume/[id]`
 
 ```
@@ -656,7 +514,7 @@ external requirements doc):
 > the Earn routes — `/api/submit` (§4.1) always returns the same generic
 > string regardless of environment. `"Server Misconfigured"` is also
 > capitalized inconsistently with the rest of the app's lowercase error
-> strings (e.g. `"Server misconfigured"` in §4.1/§4.4). Worth normalizing if
+> strings (e.g. `"Server misconfigured"` in §4.1). Worth normalizing if
 > Earn's error handling is ever consolidated with the original submission
 > path.
 
@@ -887,7 +745,6 @@ matches exactly three surfaces:
 ```
 /admin/:path*
 /api/admin/resume/:path*
-/api/admin/vibe-search/:path*
 ```
 
 `/api/admin/login` and `/api/admin/logout` are deliberately **not** matched —
@@ -924,7 +781,6 @@ that path after a successful login.
 | --- | --- |
 | `/admin` and `/admin/*` pages | `proxy.ts` verifies the HMAC cookie before the page renders |
 | `/api/admin/resume/[id]` | `proxy.ts` returns `401 JSON` before the handler runs; handler also calls `isAdmin()` as defense-in-depth |
-| `/api/admin/vibe-search` | `proxy.ts` returns `401 JSON` before the handler runs; handler also calls `verifySessionToken` before opening the SSE stream |
 | `/api/admin/login` | Issues the cookie; 401 on bad creds |
 | `/api/admin/logout` | Clears the cookie (no auth check needed — idempotent) |
 
@@ -1062,32 +918,18 @@ a streamed SSE response (`stream: true`) or a single JSON object
 | Env | `DEEPSEEK_PROXY_URL`, `DEEPSEEK_API_KEY_REVERSE_PROXY` |
 | Model requested | `deepseek-chat` |
 
-**Three client paths**
+**Client:** `scripts/tag-resumes.ts` (`callDeepSeek`) is the only caller:
+non-streaming (`stream: false`), `temperature: 0.1`, `max_tokens: 2500`.
+Normalizes the base URL via `buildChatCompletionsUrl` (accepts a bare host, a
+`/v1` suffix, or a full `/chat/completions` URL).
 
-| Path | Behaviour |
-| --- | --- |
-| `lib/deepseek.ts` (`streamDeepSeekWeb`) | streaming (`stream: true`), yields `"append"` / `"replace"` events. `"replace"` exists because DeepSeek's DOM can re-render mid-response (e.g. table separators becoming real content), which append-only streaming can't represent. **Does not strip `<think>` blocks** — raw content is yielded; the consumer is expected to strip. |
-| `app/api/admin/vibe-search/route.ts` (`callDeepSeekProxy`) | non-streaming (`stream: false`) with per-call timeouts. **Strips `<think>` blocks** inside the helper, and again inside `parseAIResponse`. |
-| `scripts/tag-resumes.ts` (`callDeepSeek`) | non-streaming (`stream: false`), `temperature: 0.1`, `max_tokens: 2500`. Normalizes the base URL via `buildChatCompletionsUrl` (accepts a bare host, a `/v1` suffix, or a full `/chat/completions` URL). Strips `<think>` blocks inside `extractJson` before running `jsonrepair`. |
+- **Timeout:** 200s (`200_000ms`) client-side via `AbortController`.
+- **Reasoning tokens:** `<think>` blocks are stripped inside `extractJson`.
+- **Empty content:** `callDeepSeek` throws `"DeepSeek proxy returned no content"`.
+- **JSON recovery:** `extractJson` strips thinking → strips markdown fence →
+  slices to outermost `{...}` → **`jsonrepair()`** (handles unquoted keys,
+  trailing commas, raw newlines inside strings, malformed nesting).
 
-- **Timeout:** 200s (`200_000ms`) client-side via `AbortController`, in **all
-  three** paths. The vibe-search route's comment claims a 180s server-side
-  hard cap, but nothing in the route, `lib/deepseek.ts`, or `tag-resumes.ts`
-  enforces it — treat 200s as the only enforced bound and confirm the proxy's
-  own timeout before relying on 180s.
-- **Reasoning tokens:** the vibe-search route strips `<think>...</think>`
-  twice (`callDeepSeekProxy` and `parseAIResponse`); `tag-resumes.ts` strips
-  once inside `extractJson`; `lib/deepseek.ts` does **not** strip.
-- **Empty content:** `callDeepSeekProxy` throws `"Empty content from proxy"`;
-  `callDeepSeek` throws `"DeepSeek proxy returned no content"`.
-- **JSON recovery:**
-  - vibe-search's `parseAIResponse`: strip thinking → extract fenced ```json
-    block → slice from first `{` to last `}` → `JSON.parse` → regex
-    `/\{[\s\S]*\}/` fallback.
-  - tag-resumes' `extractJson`: strip thinking → strip markdown fence →
-    slice to outermost `{...}` → **`jsonrepair()`** (handles unquoted keys,
-    trailing commas, raw newlines inside strings, malformed nesting).
-    
 ### 6.3 Groq
 
 Not used anywhere in the repo. Earlier revisions of this document claimed the
@@ -1202,16 +1044,15 @@ carry no secret. Everything else in this table must never carry a
 | `ADMIN_USERNAME` | `api/admin/login` |
 | `ADMIN_PASSWORD` | `api/admin/login` |
 | `ADMIN_SESSION_SECRET` | `lib/admin-auth`, `lib/shift-access`, `proxy.ts`, `api/admin/*` |
-| `DEEPSEEK_PROXY_URL` | `lib/deepseek`, `vibe-search`, `scripts/tag-resumes` |
-| `DEEPSEEK_API_KEY_REVERSE_PROXY` | `lib/deepseek`, `vibe-search`, `scripts/tag-resumes` |
+| `DEEPSEEK_PROXY_URL` | `scripts/tag-resumes` |
+| `DEEPSEEK_API_KEY_REVERSE_PROXY` | `scripts/tag-resumes` |
 | `RESEND_API_KEY` | `lib/email/resend` (optional) |
 | `TL_NOTIFY_EMAIL` | `lib/email/resend` |
 | `TL_FROM_EMAIL` | `lib/email/resend` (optional) |
 | `NEXT_PUBLIC_SITE_URL` | `api/earn/refer` — origin used to build the referral URL; falls back to request headers when unset (optional) |
 | `OLD_DATABASE_URL` | `scripts/migrate-lovable` |
 | `RESUME_DIR` | `scripts/migrate-resumes` |
-| `DEBUG` | `lib/deepseek`, `scripts/tag-resumes`, `scripts/test-deepseek-api` |
-| `SYSTEM_PROMPT` | `scripts/test-deepseek-api` (optional override) |
+| `DEBUG` | `scripts/tag-resumes` |
 
 ---
 
@@ -1631,8 +1472,7 @@ npx tsx --env-file=.env.local scripts/tag-resumes.ts --commit
 - Length budget: 5–15 hard skills, 3–8 soft skills, 3–8 work-style tags
 - `soft_skills` must be ≤ 6 words, verb-first, no metrics
 - `vibe_tags` must come from a fixed vocabulary (Environment / Setup /
-  Cadence / Scope / Function mix) — same vocabulary the vibe-search route
-  uses for `tag_matches`
+  Cadence / Scope / Function mix)
 
 **Output schema:**
 
@@ -1655,36 +1495,7 @@ fences, slices to the outermost `{...}`, then runs **`jsonrepair()`** — this
 is why the script can absorb unquoted keys, trailing commas, and raw newlines
 inside strings.
 
-> **Vocabulary sync:** the `vibe_tags` vocabulary in this script's
-> `buildUserPrompt()` **must stay in sync** with the vocabulary in
-> `app/api/admin/vibe-search/route.ts`'s `classifyQueryWithAI()` prompt. If
-> you edit one, edit the other and bump `PROMPT_VERSION` so existing rows
-> get re-tagged.
-
-### 10.4 `scripts/test-deepseek-api.ts`
-
-Interactive CLI chat against the DeepSeek proxy, streaming tokens to stdout.
-Handles `"replace"` events by clearing the current terminal line via ANSI
-escape `\r\x1b[K` and reprinting the full content.
-
-```bash
-npx tsx --env-file=.env.local scripts/test-deepseek-api.ts
-DEBUG=true npx tsx --env-file=.env.local scripts/test-deepseek-api.ts
-SYSTEM_PROMPT="You are a pirate." npx tsx --env-file=.env.local scripts/test-deepseek-api.ts
-```
-
-- Type `exit`, `quit`, or `q` to end the session
-- `SYSTEM_PROMPT` env var overrides the default system message
-- `DEBUG=true` prints each event to stderr as it arrives
-- On stream error, the user's message is popped from history to keep the
-  conversation consistent
-- On empty response, the user's message is also popped, with warnings
-  suggesting DEBUG mode
-
-> The file header comment says `// scripts/chat.ts` — stale; the file is
-> `scripts/test-deepseek-api.ts`.
-
-### 10.5 `scripts/test-earn-eligibility.ts`
+### 10.4 `scripts/test-earn-eligibility.ts`
 
 Pure-logic smoke test for `evaluateEarnEligibility` (§4.6) — no Supabase, no
 network calls, no `--commit` flag.
@@ -1730,9 +1541,7 @@ on the whole `/admin` subtree — belt-and-suspenders with `robots.ts`'s
 | **Production URL** | https://twinlanterns.co(`metadataBase` in `app/layout.tsx`) |
 
 **Runtime**
-`proxy.ts` runs on Vercel's Edge runtime. The SSE route
-`/api/admin/vibe-search` sets `X-Accel-Buffering: no` to defeat proxy buffering
-on Vercel.
+`proxy.ts` runs on Vercel's Edge runtime.
 
 **Cookie security**
 `ADMIN_COOKIE_NAME` is only `secure` when `NODE_ENV === "production"`.
@@ -1753,30 +1562,15 @@ integration.
 `lib/supabase-server.ts` is tagged as server-only in its header comment. Its
 service-role key bypasses RLS; it must never be imported by a client component.
 
-**Prompt-injection hardening**
-Applies to **vibe-search only**. All three stages wrap untrusted content in
-XML-style tags (`<search_query>`, `<candidate_data>`,
-`<candidate_analyses>`) and instruct the model to treat it as data.
-`scripts/tag-resumes.ts` does **not** wrap its inputs in XML tags — it uses
-markdown headers (`## RESUME` / `## APPLICATION DATA`) and relies on a
-system prompt that forbids speculation, inference, and marketing language
-instead of a "treat as data" instruction. Don't assume the tagger has the
-same guardrails as vibe-search.
-
-**Reasoning tags**
-`<think>...</think>` blocks are stripped in the vibe-search route
-(`callDeepSeekProxy` and `parseAIResponse`) and, per its own helper, on the
-client side of the admin dashboard (`AdminDashboard.tsx` `stripThinking`).
-`lib/deepseek.ts` does **not** strip — the streaming helper yields raw
-content and the consumer is responsible for removing reasoning blocks.
+**Prompt hygiene**
+`scripts/tag-resumes.ts` uses markdown headers (`## RESUME` / `## APPLICATION
+DATA`) and a system prompt that forbids speculation, inference and marketing
+language. It does not wrap inputs in XML-style "treat as data" tags. `<think>`
+blocks are stripped in `extractJson`.
 
 **Idempotency**
 Migration scripts preserve IDs and upsert on the natural key. The tagging script
 skips already-tagged rows, upserting on `(student_id, prompt_version)`.
-
-Vibe search *reads* `candidate_ai_tags`; it never writes or caches. The
-`(student_id, prompt_version)` unique constraint belongs to the tagging
-script's upsert, not to the search path.
 
 **Two-schema awareness**
 The admin dashboard treats `raw_payload` as either the current flat shape or the
@@ -1789,7 +1583,7 @@ Email is best-effort. `lib/email/submission-emails.ts` and `lib/email/earn-email
 **Single source of truth for the session cookie**
 `ADMIN_COOKIE_NAME` and `ADMIN_SESSION_MAX_AGE` live in `lib/admin-auth.ts`.
 Every call site — `proxy.ts`, `login/route.ts`, `logout/route.ts`,
-`resume/[id]/route.ts`, `vibe-search/route.ts` — imports them. Don't inline the
+`resume/[id]/route.ts` — imports them. Don't inline the
 string or the literal `60 * 60 * 24 * 7` again.
 
 **Formatting**

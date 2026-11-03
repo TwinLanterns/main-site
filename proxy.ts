@@ -6,7 +6,6 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/api/admin/resume/:path*",
-    "/api/admin/vibe-search/:path*",
     "/api/admin/shifts/:path*",
     "/ops/:path*",
     "/api/ops/:path*",

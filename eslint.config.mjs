@@ -19,7 +19,6 @@ const eslintConfig = defineConfig([
     files: [
       "scripts/**",
       "app/admin/AdminDashboard.tsx",
-      "app/api/admin/vibe-search/route.ts",
     ],
     rules: { "@typescript-eslint/no-explicit-any": "off" },
   },
