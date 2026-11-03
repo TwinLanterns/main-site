@@ -19,6 +19,25 @@ export function str(fd: FormData, key: string, max = 500): string {
   return s;
 }
 
+const PHONE_CHARS_RE = /^[+\d\s().-]*$/;
+
+/** True for text made only of phone characters ("+1 (555) 010-0000"). */
+export function isPhoneText(s: string): boolean {
+  return PHONE_CHARS_RE.test(s);
+}
+
+/**
+ * A phone field. A leading "+" is normal here, so it skips the formula
+ * guard, but only digits and phone punctuation are accepted, so nothing a
+ * spreadsheet could execute gets through.
+ */
+export function phoneField(fd: FormData, key: string, max = 40): string {
+  const v = fd.get(key);
+  const s = typeof v === "string" ? v.trim().slice(0, max) : "";
+  if (!isPhoneText(s)) throw new FieldError("Phone numbers can only contain digits, spaces, +, -, ( and ).");
+  return s;
+}
+
 export function required(fd: FormData, key: string, label: string, max = 500): string {
   const s = str(fd, key, max);
   if (!s) throw new FieldError(`${label} is required.`);

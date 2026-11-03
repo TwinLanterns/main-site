@@ -6,6 +6,7 @@
 // allowed to see them — reviewers never receive them, not even hidden.
 
 import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { fetchAllRows } from "@/lib/supabase-fetch-all";
 import { canSeeContacts, projectScope, type Actor } from "./auth";
 import type { TemplateStep } from "./onboarding";
 
@@ -360,22 +361,34 @@ export async function loadWorkspace(actor: Actor, projectId: string | undefined)
   if (!project) return { ok: true, ws: empty };
 
   const pid = project.id;
+  // Lists that can pass PostgREST's 1,000-row cap are paged (fetchAllRows),
+  // each ordered by a unique column last so pages can't shift.
   const results = await Promise.all([
-    supabase
-      .from("ops_enrollments")
-      .select(contactsVisible ? `${ENROLLMENT_COLUMNS}, ops_people (name, phone, email, sourced_by, intake_ref)` : ENROLLMENT_COLUMNS)
-      .eq("project_id", pid)
-      .order("anonymous_code"),
-    supabase.from("ops_daily_production").select("*").eq("project_id", pid).order("calendar_date"),
-    supabase.from("ops_sessions").select("*").eq("project_id", pid).order("scheduled_start", { ascending: true, nullsFirst: false }),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("ops_enrollments")
+        .select(contactsVisible ? `${ENROLLMENT_COLUMNS}, ops_people (name, phone, email, sourced_by, intake_ref)` : ENROLLMENT_COLUMNS)
+        .eq("project_id", pid)
+        .order("anonymous_code")
+        .order("id")
+        .range(from, to),
+    ),
+    fetchAllRows((from, to) => supabase.from("ops_daily_production").select("*").eq("project_id", pid).order("calendar_date").order("id").range(from, to)),
+    fetchAllRows((from, to) =>
+      supabase.from("ops_sessions").select("*").eq("project_id", pid).order("scheduled_start", { ascending: true, nullsFirst: false }).order("id").range(from, to),
+    ),
     // private_storage_reference / remote_object_key deliberately not selected.
-    supabase
-      .from("ops_files")
-      .select("id, session_id, enrollment_id, original_path, original_filename, proposed_filename, recording_date, room, task_label, capture_mode, take_number, media_duration_seconds, duration_source, submission_state, submission_evidence, review_state, review_source, review_date, naming_rule_version, validation_status, validation_notes, created_at")
-      .eq("project_id", pid)
-      .order("original_path"),
-    supabase.from("ops_issues").select("*").eq("project_id", pid).order("opened_at", { ascending: false }),
-    supabase.from("ops_tasks").select("*").eq("project_id", pid).order("due_at", { ascending: true, nullsFirst: false }),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("ops_files")
+        .select("id, session_id, enrollment_id, original_path, original_filename, proposed_filename, recording_date, room, task_label, capture_mode, take_number, media_duration_seconds, duration_source, submission_state, submission_evidence, review_state, review_source, review_date, naming_rule_version, validation_status, validation_notes, created_at")
+        .eq("project_id", pid)
+        .order("original_path")
+        .order("id")
+        .range(from, to),
+    ),
+    fetchAllRows((from, to) => supabase.from("ops_issues").select("*").eq("project_id", pid).order("opened_at", { ascending: false }).order("id").range(from, to)),
+    fetchAllRows((from, to) => supabase.from("ops_tasks").select("*").eq("project_id", pid).order("due_at", { ascending: true, nullsFirst: false }).order("id").range(from, to)),
     supabase.from("ops_onboarding_templates").select("*").eq("project_id", pid).order("created_at"),
     supabase.from("ops_delivery_profiles").select("*").eq("project_id", pid).order("effective_from", { ascending: false }),
     supabase.from("ops_imports").select("*").eq("project_id", pid).order("imported_at", { ascending: false }).limit(50),
@@ -388,8 +401,8 @@ export async function loadWorkspace(actor: Actor, projectId: string | undefined)
   const ids = enrollments.map((e) => e.id);
   const [steps, assumptions] = ids.length
     ? await Promise.all([
-        supabase.from("ops_onboarding_steps").select("*").in("enrollment_id", ids),
-        supabase.from("ops_forecast_assumptions").select("*").in("enrollment_id", ids),
+        fetchAllRows((from, to) => supabase.from("ops_onboarding_steps").select("*").in("enrollment_id", ids).order("id").range(from, to)),
+        fetchAllRows((from, to) => supabase.from("ops_forecast_assumptions").select("*").in("enrollment_id", ids).order("enrollment_id").range(from, to)),
       ])
     : [{ data: [], error: null }, { data: [], error: null }];
   if (steps.error || assumptions.error) {
@@ -419,7 +432,9 @@ export async function loadWorkspace(actor: Actor, projectId: string | undefined)
 
 /** Next free OP-### code in a project. */
 export async function nextAnonymousCode(projectId: string): Promise<string> {
-  const { data, error } = await db().from("ops_enrollments").select("anonymous_code").eq("project_id", projectId);
+  const { data, error } = await fetchAllRows((from, to) =>
+    db().from("ops_enrollments").select("anonymous_code, id").eq("project_id", projectId).order("id").range(from, to),
+  );
   if (error) throw new Error(error.message);
   const max = (data ?? []).reduce((m, r) => {
     const n = /^OP-(\d+)$/.exec(r.anonymous_code as string);

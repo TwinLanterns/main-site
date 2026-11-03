@@ -15,6 +15,8 @@ import { parseProductionTab, type ParsedTab, type ProductionCell } from "@/lib/o
 import { normalizePhone } from "@/lib/ops/phone";
 import { LEAD_STAGES, isKey } from "@/lib/ops/stages";
 import { ROSTER_FIELDS, type RosterField } from "@/lib/ops/roster";
+import { isPhoneText } from "@/lib/ops/form";
+import { fetchAllRows } from "@/lib/supabase-fetch-all";
 
 const MAX_BYTES = 900_000;
 
@@ -103,12 +105,17 @@ async function prepare(actor: Actor, fd: FormData): Promise<Prepared | Fail> {
 
   const supabase = db();
   const [{ data: enr, error: enrError }, { data: existing, error: exError }] = await Promise.all([
-    supabase.from("ops_enrollments").select("id, anonymous_code, source_operator_id").eq("project_id", projectId),
-    supabase
-      .from("ops_daily_production")
-      .select("source_operator_id, calendar_date, commit_quantity, submitted_seconds, accepted_seconds, source_as_of")
-      .eq("project_id", projectId)
-      .in("calendar_date", [...new Set(parsed.cells.map((c) => c.date))]),
+    fetchAllRows((from, to) => supabase.from("ops_enrollments").select("id, anonymous_code, source_operator_id").eq("project_id", projectId).order("id").range(from, to)),
+    // Paged so new-vs-update-vs-conflict is decided against every existing row.
+    fetchAllRows((from, to) =>
+      supabase
+        .from("ops_daily_production")
+        .select("id, source_operator_id, calendar_date, commit_quantity, submitted_seconds, accepted_seconds, source_as_of")
+        .eq("project_id", projectId)
+        .in("calendar_date", [...new Set(parsed.cells.map((c) => c.date))])
+        .order("id")
+        .range(from, to),
+    ),
   ]);
   if (enrError || exError) throw new Error((enrError ?? exError)!.message);
 
@@ -318,11 +325,25 @@ async function planRoster(actor: Actor, fd: FormData): Promise<{ headers: string
   if (mapping.sourced_by === undefined && !field(fd, "default_sourced_by")) return { ok: false, error: "Map Sourced by, or give a default." };
 
   const supabase = db();
-  const { data: people, error } = await supabase.from("ops_people").select("id, phone, intake_ref").is("merged_into", null);
+  // Paged: dedupe must see every person, not the first 1,000.
+  const { data: people, error } = await fetchAllRows((from, to) =>
+    supabase.from("ops_people").select("id, phone, intake_ref").is("merged_into", null).order("id").range(from, to),
+  );
   if (error) throw new Error(error.message);
-  const { data: enr, error: enrError } = await supabase.from("ops_enrollments").select("person_id").eq("project_id", projectId);
+  const { data: enr, error: enrError } = await fetchAllRows((from, to) =>
+    supabase.from("ops_enrollments").select("id, person_id, ops_people (name, sourced_by)").eq("project_id", projectId).order("id").range(from, to),
+  );
   if (enrError) throw new Error(enrError.message);
   const onProject = new Set((enr ?? []).map((e) => e.person_id as string));
+  // Rows with no phone and no intake ID can only be matched by name +
+  // sourced_by, so a re-run of the same sheet doesn't create duplicates.
+  const nameKey = (name: string, by: string) => `${name.trim().toLowerCase()}|${by.trim().toLowerCase()}`;
+  const byName = new Set(
+    (enr ?? []).map((e) => {
+      const p = e.ops_people as unknown as { name: string; sourced_by: string } | null;
+      return p ? nameKey(p.name, p.sourced_by) : "";
+    }),
+  );
   const byPhone = new Map((people ?? []).filter((x) => x.phone).map((x) => [x.phone as string, x.id as string]));
   const byRef = new Map((people ?? []).filter((x) => x.intake_ref).map((x) => [x.intake_ref as string, x.id as string]));
 
@@ -331,17 +352,22 @@ async function planRoster(actor: Actor, fd: FormData): Promise<{ headers: string
     const values = Object.fromEntries(ROSTER_FIELDS.map((f) => [f, mapping[f] !== undefined ? (r[mapping[f]!] ?? "").trim() : ""])) as Record<RosterField, string>;
     if (!values.sourced_by) values.sourced_by = field(fd, "default_sourced_by", 120);
     const row = i + 2;
-    const bad = ROSTER_FIELDS.find((f) => isFormulaLike(values[f]));
+    // Phones legitimately start with "+"; they're checked against phone
+    // characters instead of the formula guard.
+    const bad = ROSTER_FIELDS.find((f) => (f === "phone" ? !isPhoneText(values[f]) : isFormulaLike(values[f])));
     if (bad) return { row, values, phone: "", status: "rejected" as const, reason: `${bad}: formula-like text` };
     if (!values.name) return { row, values, phone: "", status: "rejected" as const, reason: "no name" };
     const phone = values.phone ? normalizePhone(values.phone) : "";
     if (phone === null) return { row, values, phone: "", status: "rejected" as const, reason: "unrecognizable phone" };
     if (values.lead_stage && !isKey(LEAD_STAGES, values.lead_stage)) return { row, values, phone, status: "rejected" as const, reason: `unknown stage "${values.lead_stage}" (use ${Object.keys(LEAD_STAGES).join(", ")})` };
-    const dupKey = phone || values.intake_ref;
-    if (dupKey && seenInFile.has(dupKey)) return { row, values, phone, status: "rejected" as const, reason: "same phone / intake ID earlier in this file" };
+    const dupKey = phone || values.intake_ref || `name:${nameKey(values.name, values.sourced_by)}`;
+    if (dupKey && seenInFile.has(dupKey)) return { row, values, phone, status: "rejected" as const, reason: "same phone, intake ID, or name + sourced by earlier in this file" };
     if (dupKey) seenInFile.add(dupKey);
     const refMatch = values.intake_ref ? byRef.get(values.intake_ref) : undefined;
     if (refMatch && onProject.has(refMatch)) return { row, values, phone, status: "exists" as const, reason: "intake ID already imported to this project" };
+    if (!phone && !values.intake_ref && byName.has(nameKey(values.name, values.sourced_by))) {
+      return { row, values, phone, status: "probable_match" as const, reason: "same name and sourced-by as someone already on this project; add by hand if it's a different person" };
+    }
     const phoneMatch = phone ? byPhone.get(phone) : undefined;
     if (phoneMatch || refMatch) return { row, values, phone, status: "probable_match" as const, reason: "matches an existing person — add via Operator CRM after confirming it's them" };
     return { row, values, phone, status: "create" as const, reason: "" };

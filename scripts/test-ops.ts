@@ -14,6 +14,7 @@ import { forecastOperator, forecastScenario, type ForecastInput } from "../lib/o
 import { onboardingProgress, HOUSEHOLD_GUIDE_TEMPLATE } from "../lib/ops/onboarding";
 import { uploadAlerts, overviewCards } from "../lib/ops/metrics";
 import { normalizePhone } from "../lib/ops/phone";
+import { isPhoneText } from "../lib/ops/form";
 import { createTeamToken, passwordStamp, verifyTeamToken } from "../lib/ops/team-token";
 
 let failures = 0;
@@ -170,6 +171,8 @@ check("submitted card sums workbook cells", cards.find((c) => c.key === "submitt
 
 check("US 10-digit normalized", normalizePhone("(555) 010-0000"), "+15550100000");
 check("too short stays un-normalized", normalizePhone("12345"), null);
+
+check("phone text allows + and punctuation", [isPhoneText("+44 20 7946 0958"), isPhoneText("+1 (555) 010-0000"), isPhoneText("=HYPERLINK(1)")], [true, true, false]);
 
 /* ------------------------------ team tokens ------------------------------ */
 

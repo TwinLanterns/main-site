@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { OpsAuthError, requireActor, requireProject } from "@/lib/ops/auth";
 import { db } from "@/lib/ops/db";
 import { toCsv } from "@/lib/ops/csv";
+import { fetchAllRows } from "@/lib/supabase-fetch-all";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -25,12 +26,17 @@ export async function GET(req: Request) {
   const supabase = db();
   const [{ data: project }, { data: files, error }, { data: enrollments }] = await Promise.all([
     supabase.from("ops_projects").select("code").eq("id", projectId).maybeSingle<{ code: string }>(),
-    supabase
-      .from("ops_files")
-      .select("id, session_id, enrollment_id, original_path, proposed_filename, recording_date, room, task_label, capture_mode, take_number, media_duration_seconds, duration_source, submission_state, submission_evidence, review_state, review_source, review_date, naming_rule_version, validation_status")
-      .eq("project_id", projectId)
-      .order("original_path"),
-    supabase.from("ops_enrollments").select("id, anonymous_code").eq("project_id", projectId),
+    // Paged: the manifest must include every file, not the first 1,000.
+    fetchAllRows((from, to) =>
+      supabase
+        .from("ops_files")
+        .select("id, session_id, enrollment_id, original_path, proposed_filename, recording_date, room, task_label, capture_mode, take_number, media_duration_seconds, duration_source, submission_state, submission_evidence, review_state, review_source, review_date, naming_rule_version, validation_status")
+        .eq("project_id", projectId)
+        .order("original_path")
+        .order("id")
+        .range(from, to),
+    ),
+    fetchAllRows((from, to) => supabase.from("ops_enrollments").select("id, anonymous_code").eq("project_id", projectId).order("id").range(from, to)),
   ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const codeOf = new Map((enrollments ?? []).map((e) => [e.id as string, e.anonymous_code as string]));

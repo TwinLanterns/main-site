@@ -13,7 +13,9 @@ import { redirect } from "next/navigation";
 import { ADMIN_COOKIE_NAME } from "@/lib/admin-auth";
 import { OpsAuthError, projectScope, requireActor, requireProject, type Actor, type Role } from "@/lib/ops/auth";
 import { audit, db, nextAnonymousCode } from "@/lib/ops/db";
-import { FieldError, checked, oneOf, optDate, optNumber, optUuid, required, str, uuid, type ActionResult } from "@/lib/ops/form";
+import { FieldError, checked, oneOf, optDate, optNumber, optUuid, phoneField, required, str, uuid, type ActionResult } from "@/lib/ops/form";
+import { isFormulaLike } from "@/lib/ops/csv";
+import { fetchAllRows } from "@/lib/supabase-fetch-all";
 import { HOUSEHOLD_GUIDE_TEMPLATE, onboardingProgress, type TemplateStep } from "@/lib/ops/onboarding";
 import { GUIDE_RULE_VERSION, normalizePath, validateFilePath } from "@/lib/ops/naming";
 import { normalizePhone } from "@/lib/ops/phone";
@@ -253,7 +255,7 @@ export async function addLead(_: ActionResult | null, fd: FormData) {
     const project_id = uuid(fd, "project_id");
     await requireProject(actor, project_id);
 
-    const phoneOriginal = str(fd, "phone", 40);
+    const phoneOriginal = phoneField(fd, "phone");
     const phone = phoneOriginal ? normalizePhone(phoneOriginal) : "";
     if (phoneOriginal && phone === null) throw new FieldError("Phone number isn't recognizable — check the digits.");
     let personId: string | null = null;
@@ -650,13 +652,22 @@ export async function addFiles(_: ActionResult | null, fd: FormData) {
       enrollment_id = s.enrollment_id;
     }
 
-    const lines = str(fd, "paths", 20000).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    // Read raw and refuse oversize input rather than truncating it, which
+    // would drop paths and store a half-path. Each line is checked on its own.
+    const raw = fd.get("paths");
+    const text = typeof raw === "string" ? raw : "";
+    if (text.length > 200_000) throw new FieldError("Too much text at once. Paste at most 500 paths.");
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     if (!lines.length) throw new FieldError("Paste at least one file path.");
     if (lines.length > 500) throw new FieldError("500 paths at a time, please.");
+    const tooLong = lines.findIndex((l) => l.length > 400);
+    if (tooLong !== -1) throw new FieldError(`Line ${tooLong + 1} is longer than 400 characters.`);
+    const formula = lines.findIndex((l) => isFormulaLike(l));
+    if (formula !== -1) throw new FieldError(`Line ${formula + 1} starts with =, +, - or @.`);
 
     const [{ data: enrollments }, { data: existing }] = await Promise.all([
-      db().from("ops_enrollments").select("id, anonymous_code, source_operator_id").eq("project_id", project_id),
-      db().from("ops_files").select("original_path").eq("project_id", project_id),
+      fetchAllRows((from, to) => db().from("ops_enrollments").select("id, anonymous_code, source_operator_id").eq("project_id", project_id).order("id").range(from, to)),
+      fetchAllRows((from, to) => db().from("ops_files").select("id, original_path").eq("project_id", project_id).order("id").range(from, to)),
     ]);
     const known = new Set<string>();
     const byFolder = new Map<string, string>();
