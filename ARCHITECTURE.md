@@ -280,8 +280,7 @@ they should be uninstalled to keep the tree honest.
 ├── package.json
 ├── package-lock.json
 ├── tsconfig.tsbuildinfo            TS incremental build cache (gitignored)
-├── ARCHITECTURE.md                 This document
-└── DEEPSEEK-PROXY.md               Reverse-proxy runbook
+└── ARCHITECTURE.md                 This document
 ```
 
 ---
@@ -481,7 +480,7 @@ initializing  →  filtering (start)  →  filtering (done, with shortlist)
   shortlist with `score === 0` candidates.
 - Still **one batched DeepSeek call for the whole shortlist** (not one call
   per candidate) — the proxy serializes all requests through a single
-  Playwright browser (§9 of `DEEPSEEK-PROXY.md`), so up to 20 sequential
+  Playwright browser, so up to 20 sequential
   per-candidate calls at a 180s hard timeout each would be far too slow and
   would block every other proxy consumer. The tradeoff of sending full
   profiles instead of truncated ones is a larger prompt; if the shortlist
