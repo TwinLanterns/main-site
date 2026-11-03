@@ -1865,7 +1865,8 @@ export default function AdminDashboard({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 px-6 py-8">
+    // pt clears the fixed site nav (3.5rem + iOS safe area), plus the old 2rem gap.
+    <div className="min-h-screen bg-neutral-50 px-6 pb-8 pt-[calc(5.5rem+env(safe-area-inset-top,0px))]">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-neutral-900">

@@ -175,7 +175,7 @@ export default async function AdminPage() {
     earnSpeechError
   ) {
     return (
-      <div className="p-8 text-sm text-red-600">
+      <div className="p-8 pt-[calc(5.5rem+env(safe-area-inset-top,0px))] text-sm text-red-600">
         Failed to load data:{" "}
         {applicationsError?.message ||
           briefsError?.message ||
