@@ -23,6 +23,7 @@ import { hoursToSeconds, parseDuration } from "@/lib/ops/duration";
 import { hashPassword, generatePassword, verifyPassword } from "@/lib/ops/password";
 import { OPS_COOKIE_NAME, OPS_COOKIE_OPTIONS, createTeamToken } from "@/lib/ops/team-token";
 import { safeOpsPath } from "@/lib/ops/google-sso";
+import { SIGNUP_PROGRAMS, isSignupProgram, parseSignupRef, toSignup } from "@/lib/ops/signups";
 import { rateLimitKey } from "@/lib/rate-limit";
 import { OPS_PROJECT_COOKIE } from "@/lib/ops/request";
 import { shiftTimeToUtc } from "@/lib/shift-time";
@@ -69,6 +70,22 @@ async function enrollmentProject(actor: Actor, enrollmentId: string) {
 }
 
 const EDITORS: Role[] = ["leadership", "manager"];
+
+/**
+ * The project form's sign-up program, or undefined when the form didn't
+ * include it (the column needs supabase/ops_signups.sql first).
+ */
+function signupProgramField(fd: FormData): string | null | undefined {
+  if (!fd.has("signup_program")) return undefined;
+  const v = String(fd.get("signup_program") ?? "");
+  if (!v) return null;
+  if (!isSignupProgram(v)) throw new FieldError("Pick a sign-up program from the list.");
+  return v;
+}
+
+function missingSignupColumn(message: string) {
+  return /signup_program/.test(message) ? "Run supabase/ops_signups.sql in the Supabase SQL editor before linking a sign-up program." : message;
+}
 
 /** Session/file review states that record a customer's decision. */
 const CUSTOMER_DECISIONS = ["customer_accepted", "customer_rejected", "partial"];
@@ -190,8 +207,13 @@ export async function createProject(_: ActionResult | null, fd: FormData) {
       target_source: str(fd, "target_source", 300),
     };
     if (target !== null && !row.target_source) throw new FieldError("Say where the target comes from.");
-    const { data, error } = await db().from("ops_projects").insert(row).select("id").single();
-    if (error) throw new FieldError(error.code === "23505" ? "That project code is taken." : error.message);
+    const program = signupProgramField(fd);
+    const { data, error } = await db()
+      .from("ops_projects")
+      .insert((program ? { ...row, signup_program: program } : row) as Record<string, unknown>)
+      .select("id")
+      .single();
+    if (error) throw new FieldError(error.code === "23505" ? "That project code is taken." : missingSignupColumn(error.message));
     await audit(actor, "project.created", "project", data.id, data.id, { code });
   });
 }
@@ -215,8 +237,16 @@ export async function updateProject(_: ActionResult | null, fd: FormData) {
       target_source: str(fd, "target_source", 300),
     };
     if (target !== null && !patch.target_source) throw new FieldError("Say where the target comes from.");
-    must(await db().from("ops_projects").update(patch).eq("id", id).select("id").maybeSingle());
-    await audit(actor, "project.updated", "project", id, id, patch);
+    const program = signupProgramField(fd);
+    const res = await db()
+      .from("ops_projects")
+      .update(program === undefined ? patch : { ...patch, signup_program: program })
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
+    if (res.error) throw new FieldError(missingSignupColumn(res.error.message));
+    must(res);
+    await audit(actor, "project.updated", "project", id, id, program === undefined ? patch : { ...patch, signup_program: program });
   });
 }
 
@@ -310,6 +340,99 @@ export async function addLead(_: ActionResult | null, fd: FormData) {
     if (error) throw new FieldError(error.code === "23505" ? "This person is already on this project." : error.message);
     await audit(actor, "enrollment.created", "enrollment", enr.id, project_id, { code, linked_existing_person: linkedExisting });
     return { ok: true, message: `Added as ${code}.` };
+  });
+}
+
+/**
+ * Adds public program sign-ups (form field `ref`, repeatable) to a project
+ * as New leads. Name/email/phone are read from the sign-up row itself, never
+ * from the form. The person's intake_ref is the sign-up ref, so re-adding is
+ * a no-op. A sign-up whose phone already belongs to a different person is
+ * skipped: that needs a human to confirm it's the same person (Operator CRM).
+ */
+export async function addSignups(_: ActionResult | null, fd: FormData) {
+  return run(async () => {
+    const actor = await requireActor(EDITORS);
+    const project_id = uuid(fd, "project_id");
+    await requireProject(actor, project_id);
+    const project = must(await db().from("ops_projects").select("*").eq("id", project_id).maybeSingle<Record<string, unknown>>());
+    const program = project.signup_program;
+    if (!isSignupProgram(program)) throw new FieldError("Link this project to a sign-up program in Project settings first.");
+
+    const refs = [...new Set(fd.getAll("ref").map(String))].slice(0, 500);
+    const parsed = refs.map((r) => parseSignupRef(r, program)).filter((x): x is { table: string; id: string } => x !== null);
+    if (!parsed.length) throw new FieldError("Pick at least one sign-up.");
+
+    const qualifiedDefault = new Map<string, boolean>(SIGNUP_PROGRAMS[program].tables.map((t) => [t.table, t.qualifiedDefault]));
+    const label = SIGNUP_PROGRAMS[program].label;
+    let added = 0;
+    let already = 0;
+    const needsReview: string[] = [];
+
+    for (const table of new Set(parsed.map((p) => p.table))) {
+      const ids = parsed.filter((p) => p.table === table).map((p) => p.id);
+      const { data: rows, error } = await db().from(table).select("*").in("id", ids);
+      if (error) throw new Error(error.message);
+      for (const row of rows ?? []) {
+        const signup = toSignup(table, row as Record<string, unknown>, qualifiedDefault.get(table) ?? true);
+        if (!signup) continue;
+
+        let personId: string | null = null;
+        const { data: byRef, error: refErr } = await db().from("ops_people").select("id").eq("intake_ref", signup.ref).maybeSingle<{ id: string }>();
+        if (refErr) throw new Error(refErr.message);
+        personId = byRef?.id ?? null;
+
+        if (!personId) {
+          const phone = signup.phone ? normalizePhone(signup.phone) ?? "" : "";
+          if (phone) {
+            const { data: matches, error: phoneErr } = await db().from("ops_people").select("id").eq("phone", phone).is("merged_into", null).limit(1);
+            if (phoneErr) throw new Error(phoneErr.message);
+            if (matches?.length) {
+              needsReview.push(signup.name);
+              continue;
+            }
+          }
+          const { data: person, error: insErr } = await db()
+            .from("ops_people")
+            .insert({ name: signup.name.slice(0, 200), phone, phone_original: signup.phone.slice(0, 40), email: signup.email.slice(0, 200), sourced_by: `${label} sign-up form`, intake_ref: signup.ref, notes: "" })
+            .select("id")
+            .single();
+          if (insErr) throw new Error(insErr.message);
+          personId = person.id as string;
+          await audit(actor, "person.created", "person", personId, project_id, { intake_ref: signup.ref });
+        }
+
+        const code = await nextAnonymousCode(project_id);
+        const { data: enr, error: enrErr } = await db()
+          .from("ops_enrollments")
+          .insert({
+            person_id: personId,
+            project_id,
+            anonymous_code: code,
+            lead_stage: "new_lead",
+            lead_source: `${label} sign-up form`,
+            channel: "Website",
+            location_category: signup.location.slice(0, 120),
+            notes: `Signed up ${signup.createdAt.slice(0, 10)}${signup.qualified ? "" : " (did not meet the screening questions)"}.`,
+          })
+          .select("id")
+          .single();
+        if (enrErr) {
+          if (enrErr.code === "23505") {
+            already++;
+            continue;
+          }
+          throw new Error(enrErr.message);
+        }
+        added++;
+        await audit(actor, "enrollment.created", "enrollment", enr.id as string, project_id, { code, source: signup.ref });
+      }
+    }
+
+    const parts = [`Added ${added} to the CRM as new leads.`];
+    if (already) parts.push(`${already} already on this project.`);
+    if (needsReview.length) parts.push(`Skipped ${needsReview.length} whose phone number already belongs to a person record (${needsReview.slice(0, 5).join(", ")}${needsReview.length > 5 ? "…" : ""}). Add them from the Operator CRM after confirming it's the same person.`);
+    return { ok: true, message: parts.join(" ") };
   });
 }
 

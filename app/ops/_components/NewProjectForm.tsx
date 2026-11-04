@@ -3,6 +3,7 @@
 import type { Project, TeamMember } from "@/lib/ops/db";
 import { createProject, updateProject } from "../actions";
 import ActionForm from "./ActionForm";
+import { SIGNUP_PROGRAMS } from "@/lib/ops/signups";
 import { Field, input } from "./ui";
 
 /** Create a project, or edit one when `project` is given. */
@@ -46,6 +47,18 @@ export default function NewProjectForm({ team, project }: { team: TeamMember[]; 
               ))}
           </select>
         </Field>
+        {(!p || "signup_program" in p) && (
+          <Field name="Sign-up program">
+            <select name="signup_program" defaultValue={p?.signup_program ?? ""} className={input}>
+              <option value="">— none —</option>
+              {Object.entries(SIGNUP_PROGRAMS).map(([key, v]) => (
+                <option key={key} value={key}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
         <Field name="Starts">
           <input type="date" name="starts_on" defaultValue={p?.starts_on ?? ""} className={input} />
         </Field>

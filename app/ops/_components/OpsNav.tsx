@@ -6,6 +6,7 @@ import type { Role } from "@/lib/ops/auth";
 
 const ITEMS: { href: string; label: string; roles?: Role[] }[] = [
   { href: "/ops", label: "Overview" },
+  { href: "/ops/signups", label: "Sign-ups", roles: ["leadership", "manager"] },
   { href: "/ops/operators", label: "Operator CRM" },
   { href: "/ops/onboarding", label: "Onboarding" },
   { href: "/ops/sessions", label: "Recording Operations" },

@@ -16,6 +16,7 @@ import { uploadAlerts, overviewCards } from "../lib/ops/metrics";
 import { normalizePhone } from "../lib/ops/phone";
 import { isPhoneText } from "../lib/ops/form";
 import { createTeamToken, passwordStamp, verifyTeamToken } from "../lib/ops/team-token";
+import { parseSignupRef, toSignup, isSignupProgram } from "../lib/ops/signups";
 import { checkIdToken, decodeFlow, encodeFlow, pkceChallenge, safeOpsPath } from "../lib/ops/google-sso";
 
 let failures = 0;
@@ -216,6 +217,22 @@ async function googleChecks() {
   // RFC 7636 Appendix B test vector.
   check("PKCE S256 challenge", await pkceChallenge("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
 }
+
+/* -------------------------------- sign-ups -------------------------------- */
+
+const gid = "22222222-2222-2222-2222-222222222222";
+const su = toSignup("earn_gopro_applicants", { id: gid, first_name: " Ana ", last_name: "Diaz", email: "Ana@X.com", phone: "310 555 0100", location: "LA", qualified: false, disqualified_reasons: ["no laundry room", 3], created_at: "2026-11-01T10:00:00Z" }, true);
+check("sign-up ref is table:id", su?.ref, `earn_gopro_applicants:${gid}`);
+check("sign-up name/email normalized", [su?.name, su?.email], ["Ana Diaz", "ana@x.com"]);
+check("row qualified flag wins over table default", su?.qualified, false);
+check("non-string reasons dropped", su?.reasons, ["no laundry room"]);
+check("legacy table defaults to unqualified", toSignup("earn_applicants_unqualified", { id: gid, first_name: "B", email: "b@x.com" }, false)?.qualified, false);
+check("row without id skipped", toSignup("earn_gopro_applicants", { first_name: "C" }, true), null);
+check("ref parses for its program", parseSignupRef(`earn_gopro_applicants:${gid}`, "gopro"), { table: "earn_gopro_applicants", id: gid });
+check("ref from another program rejected", parseSignupRef(`earn_speech_participants:${gid}`, "gopro"), null);
+check("ref to arbitrary table rejected", parseSignupRef(`team_members:${gid}`, "gopro"), null);
+check("ref with bad id rejected", parseSignupRef("earn_gopro_applicants:1 or 1=1", "gopro"), null);
+check("program keys validated", [isSignupProgram("gopro"), isSignupProgram("toString"), isSignupProgram(null)], [true, false, false]);
 
 tokenChecks().then(googleChecks).then(() => {
   console.log(`\n${total - failures}/${total} passed`);

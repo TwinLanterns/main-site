@@ -57,6 +57,8 @@ export interface Project {
   target_seconds: number | null;
   target_source: string;
   notes: string;
+  /** Absent until supabase/ops_signups.sql has been run. */
+  signup_program?: string | null;
 }
 
 export interface Person {
