@@ -1633,3 +1633,12 @@ setup handoff and SQL schema are kept outside the repository. Logic:
 `lib/ops/*` (pure modules tested by `scripts/test-ops.ts`). `/ops` is added
 to the `proxy.ts` matcher and accepts the shared admin cookie or a per-person
 `ops_session` cookie (`lib/ops/team-token.ts`).
+
+**Google sign-in** (`lib/ops/google-sso.ts`, `app/api/ops/auth/google/{start,callback}`):
+OIDC authorization code flow with PKCE, enabled when `GOOGLE_SSO_CLIENT_ID`
+and `GOOGLE_SSO_CLIENT_SECRET` are set. Redirect URI:
+`https://twinlanterns.co/api/ops/auth/google/callback`. The callback checks
+state, swaps the code for an ID token, checks `iss`/`aud`/`exp`/`nonce`/
+`email_verified`, and signs in the **existing active** `team_members` row with
+that email (same `ops_session` cookie as password sign-in). It never creates
+accounts. Both routes are exempt from the `proxy.ts` session check.

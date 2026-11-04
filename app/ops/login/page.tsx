@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getActor } from "@/lib/ops/auth";
+import { GOOGLE_ERRORS, googleConfig } from "@/lib/ops/google-sso";
 import LoginForm from "./LoginForm";
 
 export const dynamic = "force-dynamic";
@@ -9,9 +10,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 
-export default async function OpsLoginPage({ searchParams }: { searchParams: Promise<{ from?: string | string[] }> }) {
+export default async function OpsLoginPage({ searchParams }: { searchParams: Promise<{ from?: string | string[]; error?: string | string[] }> }) {
   if (await getActor()) redirect("/ops");
-  const { from } = await searchParams;
+  const { from, error } = await searchParams;
   return (
     <div className="px-4 pb-24 pt-32 sm:pt-36">
       <div className="mx-auto max-w-[460px]">
@@ -25,7 +26,11 @@ export default async function OpsLoginPage({ searchParams }: { searchParams: Pro
           also opens this workspace.
         </p>
         <div className="mt-10 rounded-[28px] border border-line p-6 sm:p-8">
-          <LoginForm from={typeof from === "string" ? from : ""} />
+          <LoginForm
+            from={typeof from === "string" ? from : ""}
+            google={googleConfig() !== null}
+            notice={typeof error === "string" ? GOOGLE_ERRORS[error] : undefined}
+          />
         </div>
       </div>
     </div>

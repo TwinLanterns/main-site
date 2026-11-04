@@ -21,7 +21,8 @@ import { GUIDE_RULE_VERSION, normalizePath, validateFilePath } from "@/lib/ops/n
 import { normalizePhone } from "@/lib/ops/phone";
 import { hoursToSeconds, parseDuration } from "@/lib/ops/duration";
 import { hashPassword, generatePassword, verifyPassword } from "@/lib/ops/password";
-import { OPS_COOKIE_NAME, OPS_SESSION_MAX_AGE, createTeamToken } from "@/lib/ops/team-token";
+import { OPS_COOKIE_NAME, OPS_COOKIE_OPTIONS, createTeamToken } from "@/lib/ops/team-token";
+import { safeOpsPath } from "@/lib/ops/google-sso";
 import { rateLimitKey } from "@/lib/rate-limit";
 import { OPS_PROJECT_COOKIE } from "@/lib/ops/request";
 import { shiftTimeToUtc } from "@/lib/shift-time";
@@ -110,17 +111,10 @@ export async function login(_: ActionResult | null, fd: FormData): Promise<Actio
   const ok = data?.active && (await verifyPassword(password, data.password_hash));
   if (!ok || !data) return { ok: false, error: "Invalid email or password." };
 
-  (await cookies()).set(OPS_COOKIE_NAME, await createTeamToken(secret, data.id, data.password_hash), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: OPS_SESSION_MAX_AGE,
-  });
+  (await cookies()).set(OPS_COOKIE_NAME, await createTeamToken(secret, data.id, data.password_hash), OPS_COOKIE_OPTIONS);
   await db().from("team_members").update({ last_login_at: new Date().toISOString() }).eq("id", data.id);
 
-  const from = fd.get("from");
-  redirect(typeof from === "string" && /^\/ops(\/|$)/.test(from) && !from.startsWith("//") ? from : "/ops");
+  redirect(safeOpsPath(fd.get("from")));
 }
 
 export async function logout() {

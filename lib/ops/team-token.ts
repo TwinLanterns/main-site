@@ -34,3 +34,12 @@ export async function verifyTeamToken(token: string | undefined | null, secret: 
   if (!m) return null;
   return (await verifySessionToken(token, secret, prefix)) ? { memberId: m[1], stamp: m[2] } : null;
 }
+
+/** Cookie options for the ops_session cookie (password and Google sign-in). */
+export const OPS_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  path: "/",
+  maxAge: OPS_SESSION_MAX_AGE,
+} as const;

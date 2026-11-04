@@ -16,6 +16,7 @@ import { uploadAlerts, overviewCards } from "../lib/ops/metrics";
 import { normalizePhone } from "../lib/ops/phone";
 import { isPhoneText } from "../lib/ops/form";
 import { createTeamToken, passwordStamp, verifyTeamToken } from "../lib/ops/team-token";
+import { checkIdToken, decodeFlow, encodeFlow, pkceChallenge, safeOpsPath } from "../lib/ops/google-sso";
 
 let failures = 0;
 let total = 0;
@@ -188,7 +189,35 @@ async function tokenChecks() {
   check("old-format token rejected", await verifyTeamToken(`team_${id}.9999999999999.00`, secret), null);
 }
 
-tokenChecks().then(() => {
+/* ------------------------------ google sso ------------------------------- */
+
+function fakeJwt(claims: Record<string, unknown>) {
+  const b = (o: unknown) => Buffer.from(JSON.stringify(o)).toString("base64url");
+  return `${b({ alg: "RS256" })}.${b(claims)}.sig`;
+}
+
+async function googleChecks() {
+  const now = 1_800_000_000_000;
+  const good = { iss: "https://accounts.google.com", aud: "client-1", exp: now / 1000 + 300, nonce: "n1", email: "Neil@Example.edu", email_verified: true };
+  check("valid id token → lowercased email", checkIdToken(fakeJwt(good), "client-1", "n1", now), { ok: true, email: "neil@example.edu" });
+  check("wrong audience rejected", checkIdToken(fakeJwt(good), "client-2", "n1", now), { ok: false, reason: "audience" });
+  check("wrong nonce rejected", checkIdToken(fakeJwt(good), "client-1", "n2", now), { ok: false, reason: "nonce" });
+  check("wrong issuer rejected", checkIdToken(fakeJwt({ ...good, iss: "https://evil.example" }), "client-1", "n1", now), { ok: false, reason: "issuer" });
+  check("expired rejected", checkIdToken(fakeJwt({ ...good, exp: now / 1000 - 3600 }), "client-1", "n1", now), { ok: false, reason: "expired" });
+  check("unverified email rejected", checkIdToken(fakeJwt({ ...good, email_verified: false }), "client-1", "n1", now), { ok: false, reason: "unverified" });
+  check("garbage rejected", checkIdToken("not-a-jwt", "client-1", "n1", now), { ok: false, reason: "malformed" });
+  check("safe path kept", safeOpsPath("/ops/sessions"), "/ops/sessions");
+  check("offsite path dropped", safeOpsPath("//evil.example"), "/ops");
+  check("non-ops path dropped", safeOpsPath("/admin"), "/ops");
+  check("backslash path dropped", safeOpsPath("/ops\\..\\x"), "/ops");
+  const flow = { state: "s", nonce: "n", verifier: "v", from: "/ops" };
+  check("flow cookie round-trips", decodeFlow(encodeFlow(flow)), flow);
+  check("bad flow cookie rejected", decodeFlow("{\"state\":1}"), null);
+  // RFC 7636 Appendix B test vector.
+  check("PKCE S256 challenge", await pkceChallenge("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
+}
+
+tokenChecks().then(googleChecks).then(() => {
   console.log(`\n${total - failures}/${total} passed`);
   if (failures > 0) process.exit(1);
 });

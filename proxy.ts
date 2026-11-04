@@ -32,6 +32,10 @@ export async function proxy(req: NextRequest) {
       : new NextResponse("Server misconfigured", { status: 500 });
   }
 
+  // Google sign-in runs before the caller has a session; its routes check
+  // the Google flow themselves.
+  if (pathname.startsWith("/api/ops/auth/google/")) return NextResponse.next();
+
   const token = req.cookies.get(ADMIN_COOKIE_NAME)?.value ?? "";
   const adminValid = token !== "" && (await verifySessionToken(token, secret));
   // /ops also takes a per-person team session. This only checks the
