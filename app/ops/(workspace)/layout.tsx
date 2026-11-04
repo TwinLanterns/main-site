@@ -62,9 +62,8 @@ export default async function OpsLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-ops-ground pt-14 text-ink">
       <div className="mx-auto flex max-w-[1500px] flex-col lg:flex-row">
         <aside className="flex flex-col border-b border-ops-line px-4 py-5 font-normal lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-60 lg:shrink-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
-          <Link href="/ops" className="flex items-center gap-2 px-2 text-sm font-semibold text-ink">
-            <OpsMark />
-            Twin Lanterns Operations
+          <Link href="/ops" className="px-2 text-sm font-semibold text-ink">
+            Operations Dashboard
           </Link>
           {ws && ws.projects.length > 0 && <ProjectSelect projects={ws.projects} current={ws.project?.id} />}
           {ws?.project && (
@@ -99,13 +98,3 @@ export default async function OpsLayout({ children }: { children: ReactNode }) {
   );
 }
 
-/** Small inline version of the site mark (public/mark.svg), drawn for the dark ground. */
-function OpsMark() {
-  return (
-    <svg aria-hidden viewBox="0 0 40 36" className="h-4 w-4 shrink-0">
-      <path d="M3 2.5 15.4 8v20L3 33.5V2.5Z" fill="currentColor" opacity="0.85" />
-      <path d="M37 2.5 24.6 8v20L37 33.5V2.5Z" fill="currentColor" opacity="0.85" />
-      <path d="M20 7.5c.9 5.9 2.1 7.6 8 8.5-5.9.9-7.1 2.6-8 8.5-.9-5.9-2.1-7.6-8-8.5 5.9-.9 7.1-2.6 8-8.5Z" className="fill-amber" />
-    </svg>
-  );
-}
