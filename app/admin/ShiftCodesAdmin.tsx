@@ -39,7 +39,7 @@ function summary(r: AddResult, sending: boolean) {
   return parts.join(" · ");
 }
 
-export default function ShiftCodesAdmin({ codes }: { codes: Row[] }) {
+export default function ShiftCodesAdmin({ codes, api = "/api/admin/shifts" }: { codes: Row[]; api?: string }) {
   const router = useRouter();
   const [people, setPeople] = useState("");
   const [sendEmails, setSendEmails] = useState(true);
@@ -50,7 +50,7 @@ export default function ShiftCodesAdmin({ codes }: { codes: Row[] }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   async function send(method: "POST" | "PATCH" | "DELETE", body: object) {
-    const res = await fetch("/api/admin/shifts/codes", {
+    const res = await fetch(`${api}/codes`, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

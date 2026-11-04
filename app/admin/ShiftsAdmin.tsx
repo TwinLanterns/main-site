@@ -28,7 +28,11 @@ function signupOf(row: Row): Signup | null {
   return one && typeof one === "object" ? (one as Signup) : null;
 }
 
-export default function ShiftsAdmin({ shifts, codes }: { shifts: Row[]; codes: Row[] }) {
+/**
+ * `api` is the endpoint base: /api/admin/shifts for the shared admin login,
+ * /api/ops/shifts in /ops (leadership + project managers).
+ */
+export default function ShiftsAdmin({ shifts, codes, api = "/api/admin/shifts" }: { shifts: Row[]; codes: Row[]; api?: string }) {
   const router = useRouter();
   const [form, setForm] = useState({
     date: "",
@@ -59,7 +63,7 @@ export default function ShiftsAdmin({ shifts, codes }: { shifts: Row[]; codes: R
   const openCount = upcoming.filter((r) => !signupOf(r)).length;
 
   async function send(method: "POST" | "DELETE", body: object) {
-    const res = await fetch("/api/admin/shifts", {
+    const res = await fetch(api, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -128,7 +132,7 @@ export default function ShiftsAdmin({ shifts, codes }: { shifts: Row[]; codes: R
         </button>
       </div>
 
-      <ShiftCodesAdmin codes={codes} />
+      <ShiftCodesAdmin codes={codes} api={api} />
 
       <form
         onSubmit={handleCreate}

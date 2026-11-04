@@ -298,7 +298,7 @@ export default async function OperatorPage({ params }: { params: Promise<{ id: s
 
             <Panel title="Shift board access">
               <p className="mb-3 text-xs text-neutral-500">
-                Link this person&apos;s /shifts access code so their bookings show up here. Codes are managed in /admin → Shifts.
+                Link this person&apos;s /shifts access code so their bookings show up here. Codes are managed on the Shift board.
               </p>
               <ActionForm action={linkShiftCode} inline submit="Save link" submitClassName={ghostButton}>
                 <input type="hidden" name="enrollment_id" value={e.id} />

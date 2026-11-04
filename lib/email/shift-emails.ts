@@ -3,7 +3,7 @@
 // Shift claim notifications. Same contract as data-request-emails.ts:
 // best-effort, never blocks the API response (the claim is already saved).
 // The internal email sets reply-to to the filmer. Also the access-code email
-// sent from /admin → Shifts, which does report failures.
+// sent from /admin → Shifts or /ops/shifts, which do report failures.
 
 import type {
   ClaimedShift,

@@ -1642,3 +1642,13 @@ state, swaps the code for an ID token, checks `iss`/`aud`/`exp`/`nonce`/
 `email_verified`, and signs in the **existing active** `team_members` row with
 that email (same `ops_session` cookie as password sign-in). It never creates
 accounts. Both routes are exempt from the `proxy.ts` session check.
+
+**Shift board in /ops** (`/ops/shifts`, `app/api/ops/shifts{,/codes}`):
+leadership and project managers post/reopen/delete shifts and add, resend or
+revoke `/shifts` access codes. Same UI (`app/admin/ShiftsAdmin.tsx` with an
+`api` prop) and the same handlers (`lib/submissions/shift-admin-handlers.ts`)
+as `/admin → Shifts`; the ops routes add a role check
+(`lib/ops/shift-auth.ts`) and an `ops_audit_events` row per change (entity
+`film_shift` / `film_shift_code`, `project_id` null). Shifts and codes are not
+project-scoped, so a manager can edit the whole board. Reviewers are excluded
+because the board shows filmer contact details.

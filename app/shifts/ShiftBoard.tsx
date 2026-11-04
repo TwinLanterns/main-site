@@ -4,7 +4,7 @@
 //
 // Public shift board: filmers share cameras, so each shift is one camera
 // for one time block, and whoever claims it first gets it. Admins create
-// shifts in /admin → Shifts.
+// shifts in /admin → Shifts or /ops/shifts.
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";

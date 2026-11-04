@@ -9,6 +9,7 @@ const ITEMS: { href: string; label: string; roles?: Role[] }[] = [
   { href: "/ops/operators", label: "Operator CRM" },
   { href: "/ops/onboarding", label: "Onboarding" },
   { href: "/ops/sessions", label: "Recording Operations" },
+  { href: "/ops/shifts", label: "Shift board", roles: ["leadership", "manager"] },
   { href: "/ops/files", label: "Files and Review" },
   { href: "/ops/issues", label: "Tasks and Issues" },
   { href: "/ops/forecast", label: "Production Forecasts" },

@@ -187,7 +187,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
               ))}
             </ul>
           ) : (
-            <Empty>No upcoming shifts posted. Post them in /admin → Shifts.</Empty>
+            <Empty>No upcoming shifts posted. Post them on the <Link className="underline" href="/ops/shifts">Shift board</Link>.</Empty>
           )}
         </Panel>
 

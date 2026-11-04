@@ -2,45 +2,14 @@
 //
 // Admin-only (gated in proxy.ts). POST creates shifts; DELETE either frees
 // a shift up ({ id, release: true }) or removes it entirely ({ id }).
+// Project managers use the same handlers via app/api/ops/shifts.
 
-import { NextResponse } from "next/server";
-import { badRequest, parseJsonBody } from "@/lib/http";
-import {
-  createShifts,
-  deleteShift,
-  parseNewShifts,
-  releaseShift,
-} from "@/lib/submissions/film-shifts";
+import { deleteShiftRequest, postShifts } from "@/lib/submissions/shift-admin-handlers";
 
-function failed(err: unknown) {
-  console.error("admin shifts failed", err);
-  return NextResponse.json(
-    { ok: false, error: err instanceof Error ? err.message : "Something went wrong" },
-    { status: 500 },
-  );
+export function POST(req: Request) {
+  return postShifts(req);
 }
 
-export async function POST(req: Request) {
-  const parsed = await parseNewShifts(req);
-  if (!parsed.ok) return badRequest(parsed.error);
-  try {
-    await createShifts(parsed.data);
-  } catch (err) {
-    return failed(err);
-  }
-  return NextResponse.json({ ok: true, created: parsed.data.rows.length });
-}
-
-export async function DELETE(req: Request) {
-  const parsed = await parseJsonBody(req);
-  const body = (parsed.ok ? parsed.body : null) as Record<string, unknown> | null;
-  const id = typeof body?.id === "string" ? body.id : "";
-  if (!id) return badRequest("Missing shift id");
-  try {
-    if (body?.release === true) await releaseShift(id);
-    else await deleteShift(id);
-  } catch (err) {
-    return failed(err);
-  }
-  return NextResponse.json({ ok: true });
+export function DELETE(req: Request) {
+  return deleteShiftRequest(req);
 }
