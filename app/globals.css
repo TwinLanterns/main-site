@@ -20,6 +20,13 @@
   --color-lime: #ffb547;
   --color-blush: #ffb547;
 
+  /* /ops workspace: a cool dark gray instead of the site's near-black,
+     one raised surface, a hairline that reads on that ground. Amber stays
+     the only accent (active nav, primary buttons, focus). */
+  --color-ops-ground: #111317;
+  --color-ops-raised: #171a1f;
+  --color-ops-line: #252930;
+
   /* neutral scale flipped so the admin tools follow the dark ground */
   --color-neutral-50: #0b0d10;
   --color-neutral-100: #111418;

@@ -15,7 +15,13 @@ export const button =
   "inline-flex items-center justify-center rounded-full bg-ink px-4 py-2 text-sm text-white transition-colors enabled:hover:bg-flame disabled:opacity-35 [&:not(button)]:hover:bg-flame";
 export const ghostButton =
   "inline-flex items-center justify-center rounded-full border border-dim px-4 py-2 text-sm text-ink transition-colors hover:border-muted disabled:opacity-35";
-export const th = "label px-3 py-2.5 text-left font-normal";
+/** /ops primary action: the workspace's one accent color. */
+export const accentButton =
+  "inline-flex h-9 items-center justify-center rounded-md bg-amber px-3.5 text-sm font-medium text-[#1b1407] transition-colors hover:bg-amber/85 disabled:opacity-40";
+/** /ops secondary action on the gray ground. */
+export const quietButton =
+  "inline-flex h-9 items-center justify-center rounded-md border border-ops-line px-3 text-sm text-ink transition-colors hover:border-dim disabled:opacity-40";
+export const th ="label px-3 py-2.5 text-left font-normal";
 export const td = "px-3 py-2.5 align-top text-sm text-neutral-800";
 
 type Tone = "neutral" | "amber" | "good" | "bad" | "info";

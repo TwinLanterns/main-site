@@ -22,7 +22,7 @@ export default function OpsNav({ role }: { role: Role }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Operations" className="mt-5">
-      <ul className="flex flex-wrap gap-1 lg:flex-col">
+      <ul className="flex flex-wrap gap-0.5 lg:flex-col">
         {ITEMS.filter((i) => !i.roles || i.roles.includes(role)).map((i) => {
           const active = i.href === "/ops" ? pathname === "/ops" : pathname.startsWith(i.href);
           return (
@@ -30,8 +30,8 @@ export default function OpsNav({ role }: { role: Role }) {
               <Link
                 href={i.href}
                 aria-current={active ? "page" : undefined}
-                className={`block rounded-full px-3.5 py-1.5 text-sm transition-colors ${
-                  active ? "bg-ink text-white" : "text-muted hover:bg-shell hover:text-ink"
+                className={`relative block rounded-md px-3 py-1.5 text-sm transition-colors before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full ${
+                  active ? "bg-ops-raised text-ink before:bg-amber" : "text-muted before:bg-transparent hover:bg-ops-raised/60 hover:text-ink"
                 }`}
               >
                 {i.label}
