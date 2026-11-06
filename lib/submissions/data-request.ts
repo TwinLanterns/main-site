@@ -64,7 +64,6 @@ export async function parseDataRequest(
 
   if (name.length < 2) return { ok: false, error: "Please add your name." };
   if (!isValidEmail(email)) return { ok: false, error: "Please add a valid email." };
-  if (message.length < 2) return { ok: false, error: "Please write a message." };
 
   const interestRaw = text(p, "interest", 40);
   if (interestRaw && !(interestRaw in INQUIRY_INTERESTS)) {

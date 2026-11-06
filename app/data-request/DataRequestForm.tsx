@@ -52,8 +52,7 @@ export default function DataRequestForm({ initialInterest = "" }: { initialInter
     form.name.trim().length > 1 &&
     isValidEmail(form.email) &&
     form.organization.trim().length > 1 &&
-    form.interest !== "" &&
-    form.message.trim().length > 1;
+    form.interest !== "";
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -187,7 +186,7 @@ export default function DataRequestForm({ initialInterest = "" }: { initialInter
               This volume is an estimate
             </label>
           )}
-          <Field label="Brief project description" required>
+          <Field label="Brief project description" hint="Optional. We'll cover the details on a call.">
             <Textarea
               rows={5}
               value={form.message}

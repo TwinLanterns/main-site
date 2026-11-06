@@ -26,7 +26,7 @@ function renderInternal(p: DataRequestPayload): string {
       ["Name", p.name],
       ["Email", p.email],
       ...inquiryDetails(p),
-      ["Message", p.message],
+      ["Message", p.message || "(none)"],
     ])}
     <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:${COLOR.muted}">Reply to this email to answer ${escapeHtml(p.name)} directly.</p>
   `;
