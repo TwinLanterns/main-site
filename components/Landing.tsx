@@ -507,7 +507,9 @@ export default function Landing() {
         <div className="wrap">
           <Mark className="h-[43px] w-auto text-ink" />
           <p className="statement">The physical world, on the record.</p>
-          <span className="mail">{CONTACT_EMAIL}</span>
+          <a className="mail" href={`mailto:${CONTACT_EMAIL}`}>
+            {CONTACT_EMAIL}
+          </a>
         </div>
       </section>
     </div>
