@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
 import Shape from "@/components/Shapes";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
+  path: "/earn/speech",
   title: "Earn — Speech conversation program",
   description:
     "Just talk: pair up for easy two-person conversations, indoors and out around Los Angeles, on a body camera we supply. A few sessions and you're done. Ages 16+.",
-};
+});
 
 const wrap = "mx-auto w-full max-w-[1240px] px-5";
 const btn =

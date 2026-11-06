@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, Section } from "@/components/LegalPage";
 import { LEGAL } from "@/lib/legal";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
+  path: "/terms",
   title: "Terms of Service",
   description: `The terms that apply when you use ${LEGAL.brand}.`,
-  alternates: { canonical: "/terms" },
-};
+});
 
 export default function TermsPage() {
   return (

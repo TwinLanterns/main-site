@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
 import Shape from "@/components/Shapes";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
+  path: "/earn/info",
   title: "Earn — Filming info & payouts",
   description:
     "Everything you need to film for Earn: hourly pay, ambassador payout tiers, supported phones, filming rules, and eligible tasks.",
-};
+});
 
 const wrap = "mx-auto w-full max-w-[1240px] px-5";
 const btn =

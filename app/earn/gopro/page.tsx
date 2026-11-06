@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
 import Shape from "@/components/Shapes";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
+  path: "/earn/gopro",
   title: "Earn — Get paid to tidy your own home",
   description:
     "Earn $10 for every approved hour — $500+ per home — recording yourself tidying your own home on a GoPro we supply. 18+, 50+ hours over 40 days.",
-};
+});
 
 const wrap = "mx-auto w-full max-w-[1240px] px-5";
 const btn =

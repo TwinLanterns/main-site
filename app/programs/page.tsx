@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
 import ProgramSearch from "@/components/ProgramSearch";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
+  path: "/programs",
   title: "All programs",
   description:
     "Get paid $10/hr to film everyday work or tidy your own home, or join the speech program. No résumé, no interview — sign up in two minutes.",
-  alternates: { canonical: "/programs" },
-};
+});
 
 export default function ProgramsPage() {
   return (

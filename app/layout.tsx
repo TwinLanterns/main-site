@@ -37,6 +37,12 @@ export const metadata: Metadata = {
     siteName: "Twin Lanterns",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Twin Lanterns",
+    description:
+      "We recruit the people, ship the cameras and run the shoots behind real-world video and speech data.",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -46,9 +52,8 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
     apple: "/icon.png",
   },
-  alternates: {
-    canonical: "/",
-  },
+  // No canonical here: it would be inherited by every page that doesn't set
+  // its own. Pages declare theirs via pageMetadata() in lib/seo.ts.
   verification: {
     other: {
       "msvalidate.01": "3A7AB2190FA3F842A117CD34926BD1F1",
