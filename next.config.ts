@@ -27,6 +27,8 @@ const nextConfig: NextConfig = {
       { source: "/cervo/:path*", destination: "/earn/:path*", permanent: true },
       // /jobs was folded into the searchable /programs page.
       { source: "/jobs", destination: "/programs", permanent: true },
+      // /earn has no index page of its own; send trimmed URLs to the program list.
+      { source: "/earn", destination: "/programs", permanent: true },
     ];
   },
 };
